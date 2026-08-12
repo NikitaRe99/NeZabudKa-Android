@@ -1,0 +1,1061 @@
+package ru.nezabudka.app
+
+import android.Manifest
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import android.os.Build
+import android.os.Bundle
+import android.os.PowerManager
+import android.os.SystemClock
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import ru.nezabudka.app.domain.Note
+import ru.nezabudka.app.domain.CommandScope
+import ru.nezabudka.app.ui.applyLegacySystemBarColors
+import ru.nezabudka.app.domain.ALARM_PRESENTATION_SCREEN
+import ru.nezabudka.app.application.ActionEffect
+import ru.nezabudka.app.ui.AppTheme
+import ru.nezabudka.app.ui.LocalAssistantTheme
+import ru.nezabudka.app.ui.AssistantViewModel
+import ru.nezabudka.app.ui.AssistantUiEvent
+import ru.nezabudka.app.ui.screens.AssistantScreen
+import ru.nezabudka.app.ui.screens.NoteEditorScreen
+import ru.nezabudka.app.ui.screens.NotesScreen
+import ru.nezabudka.app.ui.screens.ReminderEditorScreen
+import ru.nezabudka.app.ui.screens.ReminderSnoozeDialog
+import ru.nezabudka.app.ui.screens.AppAlertDialog
+import ru.nezabudka.app.ui.screens.RemindersScreen
+import ru.nezabudka.app.ui.screens.SettingsScreen
+import ru.nezabudka.app.notifications.EXTRA_OPEN_REMINDER_ID
+import ru.nezabudka.app.notifications.EXTRA_SNOOZE_REMINDER_ID
+import ru.nezabudka.app.notifications.DeviceAutoStartSettings
+import ru.nezabudka.app.notifications.NotificationChannels
+import ru.nezabudka.app.notifications.dismissReminderNotification
+import ru.nezabudka.app.widget.ACTION_QUICK_VOICE_NOTE
+
+class MainActivity : ComponentActivity() {
+    private var pendingMicrophoneAction: (() -> Unit)? = null
+    private var requestExactAfterNotifications = false
+    private val microphoneEducationVisible = mutableStateOf(false)
+    private val notificationEducationVisible = mutableStateOf(false)
+    private val exactAlarmEducationVisible = mutableStateOf(false)
+    private val fullScreenEducationVisible = mutableStateOf(false)
+    private val overlayEducationVisible = mutableStateOf(false)
+    private val onboardingStep = mutableIntStateOf(-1)
+    private var lastOnboardingAdvanceAt = 0L
+    private val permissionPreferences by lazy {
+        getSharedPreferences("permission_prompts", MODE_PRIVATE)
+    }
+    private val onboardingPreferences by lazy {
+        getSharedPreferences("onboarding", MODE_PRIVATE)
+    }
+    private val microphonePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val action = pendingMicrophoneAction
+        pendingMicrophoneAction = null
+        if (granted) action?.invoke()
+    }
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationsEnabled.value = granted && NotificationManagerCompat.from(this).areNotificationsEnabled()
+        if (granted && requestExactAfterNotifications) requestExactAlarmAccessIfNeeded()
+        requestExactAfterNotifications = false
+    }
+    private val viewModel: AssistantViewModel by viewModels { AssistantViewModel.Factory((application as AssistantApplication).container) }
+    private val requestedReminderId = mutableStateOf<Long?>(null)
+    private val requestedSnoozeId = mutableStateOf<Long?>(null)
+    private val requestedVoiceNote = mutableStateOf<Long?>(null)
+    private val notificationsEnabled = mutableStateOf(true)
+    private val exactAlarmsAllowed = mutableStateOf(true)
+    private val fullScreenAlarmsAllowed = mutableStateOf(true)
+    private val overlayWindowsAllowed = mutableStateOf(false)
+    private val backgroundRunAllowed = mutableStateOf(true)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        acceptReminderIntent(intent)
+        acceptVoiceNoteIntent(intent)
+        if (!onboardingPreferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)) {
+            onboardingStep.intValue = 0
+        }
+        setContent {
+            val appSettings by viewModel.settings.collectAsStateWithLifecycle()
+            val onboardingTargets = remember { mutableStateMapOf<OnboardingTarget, Rect>() }
+            val alarmVendorSettingsTitle = remember {
+                DeviceAutoStartSettings.alarmPermissionDestination(this)?.title
+            }
+            val autoStartSettingsTitle = remember {
+                DeviceAutoStartSettings.destination(this)?.title
+            }
+            val backgroundSettingsTitle = remember {
+                DeviceAutoStartSettings.backgroundDestination(this).title
+            }
+            val reducedUiEffects = when (appSettings.uiPerformanceMode) {
+                ru.nezabudka.app.domain.UI_PERFORMANCE_REDUCED -> true
+                ru.nezabudka.app.domain.UI_PERFORMANCE_FULL -> false
+                else -> viewModel.deviceCapabilities.reducedUiEffects
+            }
+            LocalAssistantTheme(appSettings, reduceEffects = reducedUiEffects) {
+            val colorScheme = MaterialTheme.colorScheme
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = colorScheme.background.luminance() > 0.5f
+                    isAppearanceLightNavigationBars = colorScheme.surfaceContainer.luminance() > 0.5f
+                }
+                applyLegacySystemBarColors(
+                    window,
+                    colorScheme.background.toArgb(),
+                    colorScheme.surfaceContainer.toArgb(),
+                )
+            }
+            AssistantApp(
+                viewModel,
+                requestedReminderId.value,
+                requestedSnoozeId.value,
+                requestedVoiceNote.value,
+                notificationsEnabled.value,
+                exactAlarmsAllowed.value,
+                fullScreenAlarmsAllowed.value,
+                overlayWindowsAllowed.value,
+                backgroundRunAllowed.value,
+                reducedUiEffects,
+                backgroundSettingsTitle,
+                alarmVendorSettingsTitle,
+                autoStartSettingsTitle,
+                consumeReminderIntent = { requestedReminderId.value = null },
+                consumeSnoozeIntent = { requestedSnoozeId.value = null },
+                consumeVoiceNoteIntent = { requestedVoiceNote.value = null },
+                openNotificationSettings = ::openNotificationSettings,
+                openExactAlarmSettings = ::openExactAlarmSettings,
+                openFullScreenAlarmSettings = ::openFullScreenAlarmSettings,
+                openOverlaySettings = ::openOverlaySettings,
+                openAlarmNotificationSettings = ::openAlarmNotificationSettings,
+                openBackgroundRunSettings = ::openBackgroundRunSettings,
+                openAlarmVendorSettings = ::openAlarmVendorSettings,
+                openAutoStartSettings = ::openAutoStartSettings,
+                withMicrophonePermission = ::withMicrophonePermission,
+                requestReminderAccess = ::requestReminderAccess,
+                requestFullScreenAccess = ::requestAlarmWindowAccessIfNeeded,
+                showOnboarding = { onboardingStep.intValue = 0 },
+                onboardingStep = onboardingStep.intValue,
+                onOnboardingTargetBounds = { target, bounds -> onboardingTargets[target] = bounds },
+            )
+            PermissionEducationDialogs(
+                microphoneVisible = microphoneEducationVisible.value,
+                notificationVisible = notificationEducationVisible.value,
+                exactAlarmVisible = exactAlarmEducationVisible.value,
+                fullScreenVisible = fullScreenEducationVisible.value,
+                overlayVisible = overlayEducationVisible.value,
+                dismissMicrophone = ::dismissMicrophoneEducation,
+                continueMicrophone = ::continueMicrophonePermission,
+                dismissNotification = ::dismissNotificationEducation,
+                continueNotification = ::continueNotificationPermission,
+                dismissExactAlarm = { exactAlarmEducationVisible.value = false },
+                continueExactAlarm = ::continueExactAlarmPermission,
+                dismissFullScreen = { fullScreenEducationVisible.value = false },
+                continueFullScreen = ::continueFullScreenPermission,
+                dismissOverlay = { overlayEducationVisible.value = false },
+                continueOverlay = ::continueOverlayPermission,
+            )
+            FirstLaunchOnboarding(
+                step = onboardingStep.intValue,
+                targetBounds = firstLaunchGuidePages().getOrNull(onboardingStep.intValue)?.target?.let(onboardingTargets::get),
+                targetClick = ::advanceOnboarding,
+                finish = ::finishOnboarding,
+            )
+            }
+        }
+        (application as AssistantApplication).startUiServices()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        acceptReminderIntent(intent)
+        acceptVoiceNoteIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        notificationsEnabled.value = NotificationManagerCompat.from(this).areNotificationsEnabled()
+        exactAlarmsAllowed.value = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+        fullScreenAlarmsAllowed.value = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+            getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+        overlayWindowsAllowed.value = Settings.canDrawOverlays(this)
+        backgroundRunAllowed.value = getSystemService(PowerManager::class.java)
+            .isIgnoringBatteryOptimizations(packageName)
+    }
+
+    override fun onStop() {
+        viewModel.onAppBackgrounded()
+        super.onStop()
+    }
+
+    private fun openNotificationSettings() {
+        startFirstAvailable(
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
+        )
+    }
+
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            startFirstAvailable(
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")),
+            )
+        }
+    }
+
+    private fun openFullScreenAlarmSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startFirstAvailable(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+        }
+    }
+
+    private fun openOverlaySettings() {
+        startFirstAvailable(
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+        )
+    }
+
+    private fun openAlarmNotificationSettings() {
+        val appNotificationSettings = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        val channelSettings = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            .putExtra(Settings.EXTRA_CHANNEL_ID, NotificationChannels.alarmChannelId(this))
+        startFirstAvailable(appNotificationSettings, channelSettings)
+    }
+
+    private fun openBackgroundRunSettings() {
+        startFirstAvailable(DeviceAutoStartSettings.backgroundDestination(this).intent)
+    }
+
+    private fun openAutoStartSettings() {
+        startFirstAvailable(*listOfNotNull(DeviceAutoStartSettings.destination(this)?.intent).toTypedArray())
+    }
+
+    private fun openAlarmVendorSettings() {
+        startFirstAvailable(*listOfNotNull(DeviceAutoStartSettings.alarmPermissionDestination(this)?.intent).toTypedArray())
+    }
+
+    private fun withMicrophonePermission(action: () -> Unit) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            action()
+            return
+        }
+        pendingMicrophoneAction = action
+        microphoneEducationVisible.value = true
+    }
+
+    private fun dismissMicrophoneEducation() {
+        microphoneEducationVisible.value = false
+        pendingMicrophoneAction = null
+    }
+
+    private fun continueMicrophonePermission() {
+        microphoneEducationVisible.value = false
+        val requestedBefore = permissionPreferences.getBoolean(KEY_MICROPHONE_REQUESTED, false)
+        if (requestedBefore && !shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
+            pendingMicrophoneAction = null
+            openAppDetailsSettings()
+        } else {
+            permissionPreferences.edit().putBoolean(KEY_MICROPHONE_REQUESTED, true).apply()
+            microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun requestReminderAccess(requiresExactTime: Boolean) {
+        val notificationsAllowed = NotificationManagerCompat.from(this).areNotificationsEnabled() &&
+            (Build.VERSION.SDK_INT < 33 ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+        if (!notificationsAllowed) {
+            if (!permissionPreferences.getBoolean(KEY_NOTIFICATION_REQUESTED, false)) {
+                requestExactAfterNotifications = requiresExactTime
+                notificationEducationVisible.value = true
+            }
+            return
+        }
+        if (requiresExactTime) requestExactAlarmAccessIfNeeded()
+    }
+
+    private fun dismissNotificationEducation() {
+        notificationEducationVisible.value = false
+        requestExactAfterNotifications = false
+    }
+
+    private fun continueNotificationPermission() {
+        notificationEducationVisible.value = false
+        permissionPreferences.edit().putBoolean(KEY_NOTIFICATION_REQUESTED, true).apply()
+        if (
+            Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            openNotificationSettings()
+            requestExactAfterNotifications = false
+        }
+    }
+
+    private fun requestExactAlarmAccessIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        if (getSystemService(AlarmManager::class.java).canScheduleExactAlarms()) return
+        if (permissionPreferences.getBoolean(KEY_EXACT_ALARM_EXPLAINED, false)) return
+        exactAlarmEducationVisible.value = true
+    }
+
+    private fun continueExactAlarmPermission() {
+        exactAlarmEducationVisible.value = false
+        permissionPreferences.edit().putBoolean(KEY_EXACT_ALARM_EXPLAINED, true).apply()
+        openExactAlarmSettings()
+    }
+
+    private fun requestFullScreenAccessIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        if (getSystemService(NotificationManager::class.java).canUseFullScreenIntent()) return
+        if (permissionPreferences.getBoolean(KEY_FULL_SCREEN_EXPLAINED, false)) return
+        fullScreenEducationVisible.value = true
+    }
+
+    private fun requestAlarmWindowAccessIfNeeded() {
+        if (!Settings.canDrawOverlays(this)) {
+            if (!permissionPreferences.getBoolean(KEY_OVERLAY_EXPLAINED, false)) {
+                overlayEducationVisible.value = true
+            }
+            return
+        }
+        requestFullScreenAccessIfNeeded()
+    }
+
+    private fun continueOverlayPermission() {
+        overlayEducationVisible.value = false
+        permissionPreferences.edit().putBoolean(KEY_OVERLAY_EXPLAINED, true).apply()
+        openOverlaySettings()
+    }
+
+    private fun continueFullScreenPermission() {
+        fullScreenEducationVisible.value = false
+        permissionPreferences.edit().putBoolean(KEY_FULL_SCREEN_EXPLAINED, true).apply()
+        openFullScreenAlarmSettings()
+    }
+
+    private fun startFirstAvailable(vararg intents: Intent) {
+        (intents.asList() + appDetailsIntent()).forEach { candidate ->
+            if (candidate.resolveActivity(packageManager) != null && runCatching { startActivity(candidate) }.isSuccess) {
+                return
+            }
+        }
+    }
+
+    private fun openAppDetailsSettings() = startFirstAvailable(appDetailsIntent())
+
+    private fun appDetailsIntent() = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.parse("package:$packageName"),
+    )
+
+    private fun advanceOnboarding() {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastOnboardingAdvanceAt < ONBOARDING_GESTURE_GUARD_MS) return
+        lastOnboardingAdvanceAt = now
+        if (onboardingStep.intValue >= firstLaunchGuidePages().lastIndex) {
+            finishOnboarding()
+        } else {
+            onboardingStep.intValue += 1
+        }
+    }
+
+    private fun finishOnboarding() {
+        if (SystemClock.elapsedRealtime() - lastOnboardingAdvanceAt < ONBOARDING_GESTURE_GUARD_MS) return
+        onboardingPreferences.edit().putBoolean(KEY_ONBOARDING_COMPLETED, true).apply()
+        onboardingStep.intValue = -1
+    }
+
+    private fun acceptReminderIntent(intent: Intent?) {
+        intent?.getLongExtra(EXTRA_OPEN_REMINDER_ID, -1L)?.takeIf { it > 0L }?.let {
+            dismissReminderNotification(this, it)
+            requestedReminderId.value = it
+            intent.removeExtra(EXTRA_OPEN_REMINDER_ID)
+        }
+        intent?.getLongExtra(EXTRA_SNOOZE_REMINDER_ID, -1L)?.takeIf { it > 0L }?.let {
+            dismissReminderNotification(this, it)
+            requestedSnoozeId.value = it
+            intent.removeExtra(EXTRA_SNOOZE_REMINDER_ID)
+        }
+    }
+
+    private fun acceptVoiceNoteIntent(intent: Intent?) {
+        if (intent?.action == ACTION_QUICK_VOICE_NOTE) {
+            requestedVoiceNote.value = SystemClock.elapsedRealtime()
+            intent.action = null
+        }
+    }
+
+    private companion object {
+        const val KEY_MICROPHONE_REQUESTED = "microphone_requested"
+        const val KEY_NOTIFICATION_REQUESTED = "notification_requested"
+        const val KEY_EXACT_ALARM_EXPLAINED = "exact_alarm_explained"
+        const val KEY_FULL_SCREEN_EXPLAINED = "full_screen_explained"
+        const val KEY_OVERLAY_EXPLAINED = "overlay_explained"
+        const val KEY_ONBOARDING_COMPLETED = "completed_v1"
+        const val ONBOARDING_GESTURE_GUARD_MS = 400L
+    }
+}
+
+@Composable
+private fun AssistantApp(
+    vm: AssistantViewModel,
+    requestedReminderId: Long?,
+    requestedSnoozeId: Long?,
+    requestedVoiceNote: Long?,
+    notificationsEnabled: Boolean,
+    exactAlarmsAllowed: Boolean,
+    fullScreenAlarmsAllowed: Boolean,
+    overlayWindowsAllowed: Boolean,
+    backgroundRunAllowed: Boolean,
+    reducedUiEffects: Boolean,
+    backgroundSettingsTitle: String,
+    alarmVendorSettingsTitle: String?,
+    autoStartSettingsTitle: String?,
+    consumeReminderIntent: () -> Unit,
+    consumeSnoozeIntent: () -> Unit,
+    consumeVoiceNoteIntent: () -> Unit,
+    openNotificationSettings: () -> Unit,
+    openExactAlarmSettings: () -> Unit,
+    openFullScreenAlarmSettings: () -> Unit,
+    openOverlaySettings: () -> Unit,
+    openAlarmNotificationSettings: () -> Unit,
+    openBackgroundRunSettings: () -> Unit,
+    openAlarmVendorSettings: () -> Unit,
+    openAutoStartSettings: () -> Unit,
+    withMicrophonePermission: (() -> Unit) -> Unit,
+    requestReminderAccess: (Boolean) -> Unit,
+    requestFullScreenAccess: () -> Unit,
+    showOnboarding: () -> Unit,
+    onboardingStep: Int,
+    onOnboardingTargetBounds: (OnboardingTarget, Rect) -> Unit,
+) {
+    val nav = rememberNavController()
+    val appSettings by vm.settings.collectAsStateWithLifecycle()
+    val event by vm.event.collectAsStateWithLifecycle()
+    val actionNotice = (event as? AssistantUiEvent.Action)?.notice
+    val themeTokens = AppTheme.tokens
+    val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    var editingNote by remember { mutableStateOf<Note?>(null) }
+    var editorFolderId by remember { mutableStateOf<Long?>(null) }
+    var editorSessionId by remember { mutableLongStateOf(0L) }
+    var voiceWidgetSessionId by remember { mutableStateOf<Long?>(null) }
+    val destinations = remember { listOf(
+        Triple("assistant", "Помощник", Icons.Default.Mic),
+        Triple("reminders", "Напоминания", Icons.Default.Notifications),
+        Triple("notes", "Заметки", Icons.Default.Description),
+        Triple("settings", "Настройки", Icons.Default.Settings),
+    ) }
+    BackHandler(enabled = destinations.any { it.first == currentRoute }) { }
+    val openTopLevelDestination: (String) -> Unit = { route ->
+        if (currentRoute != route) {
+            nav.navigate(route) {
+                popUpTo(nav.graph.id)
+                launchSingleTop = true
+            }
+        }
+    }
+    LaunchedEffect(onboardingStep) {
+        onboardingRouteAfterStep(onboardingStep)?.let(openTopLevelDestination)
+    }
+    LaunchedEffect(requestedReminderId) {
+        requestedReminderId?.let { id ->
+            nav.navigate("reminderEditor/$id/false") { launchSingleTop = true }
+            consumeReminderIntent()
+        }
+    }
+    LaunchedEffect(requestedVoiceNote) {
+        requestedVoiceNote?.let { requestId ->
+            editingNote = null
+            editorFolderId = null
+            editorSessionId = requestId
+            voiceWidgetSessionId = requestId
+            nav.navigate("noteEditor") { launchSingleTop = true }
+            consumeVoiceNoteIntent()
+        }
+    }
+    LaunchedEffect(actionNotice?.id) {
+        val created = actionNotice?.effect as? ActionEffect.ReminderCreated
+        if (created != null) requestReminderAccess(created.reminder.remindAt != null)
+    }
+    Scaffold(bottomBar = {
+        if (!imeVisible && currentRoute != "noteEditor" && currentRoute != "reminderEditor/{id}/{changeTime}") {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(themeTokens.colors.navigation)
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+            ) {
+                NavigationBar(
+                    modifier = Modifier.height(72.dp),
+                    containerColor = themeTokens.colors.navigation,
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                ) {
+                    destinations.forEach { (route, label, icon) ->
+                        NavigationBarItem(
+                            modifier = Modifier.onGloballyPositioned { coordinates ->
+                                onOnboardingTargetBounds(onboardingTargetForRoute(route), coordinates.boundsInRoot())
+                            },
+                            selected = currentRoute == route,
+                            onClick = { openTopLevelDestination(route) },
+                            icon = { Icon(icon, contentDescription = label) },
+                            label = if (appSettings.showNavigationLabels) ({ Text(label, maxLines = 1) }) else null,
+                            alwaysShowLabel = appSettings.showNavigationLabels,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = themeTokens.colors.accent,
+                                selectedTextColor = themeTokens.colors.accent,
+                                indicatorColor = themeTokens.colors.selected,
+                                unselectedIconColor = themeTokens.colors.textSecondary,
+                                unselectedTextColor = themeTokens.colors.textSecondary,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }) { padding ->
+        Box(Modifier.fillMaxSize()) {
+        NavHost(
+            navController = nav,
+            startDestination = "assistant",
+            modifier = Modifier.padding(padding),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+        ) {
+            composable("assistant") {
+                val ui by vm.ui.collectAsStateWithLifecycle()
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                AssistantScreen(
+                    ui, actionNotice, settings, vm::editText,
+                    { vm.primaryAction(CommandScope.ASSISTANT) },
+                    { withMicrophonePermission { vm.beginPushToTalk(CommandScope.ASSISTANT) } },
+                    vm::endPushToTalk, vm::playLast,
+                    editCreatedNote = { note -> editingNote = note; editorFolderId = note.folderId; vm.dismissNoteNotice(); nav.navigate("noteEditor") },
+                    changeCreatedFolder = { note -> editingNote = note; editorFolderId = note.folderId; vm.dismissNoteNotice(); nav.navigate("noteEditor") },
+                    openReminder = { reminder -> nav.navigate("reminderEditor/${reminder.id}/false") },
+                    changeReminderTime = { reminder, remindAt ->
+                        vm.changeReminderTime(reminder, remindAt)
+                        if (remindAt != null) requestReminderAccess(true)
+                    },
+                    undoLastAction = vm::undoLastAction,
+                    dismissNotice = vm::dismissActionNotice,
+                    answerReminderDateClarification = vm::answerReminderDateClarification,
+                    onVoiceControlBounds = { bounds ->
+                        onOnboardingTargetBounds(OnboardingTarget.VOICE, bounds)
+                    },
+                )
+            }
+            composable("settings") {
+                LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
+                val ui by vm.ui.collectAsStateWithLifecycle()
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                val whisperModels by vm.whisperModels.collectAsStateWithLifecycle()
+                val whisperRuntime by vm.whisperRuntime.collectAsStateWithLifecycle()
+                val modelStorage by vm.modelStorage.collectAsStateWithLifecycle()
+                val classicNluModel by vm.classicNluModel.collectAsStateWithLifecycle()
+                val cloudSttCredentials by vm.cloudSttCredentials.collectAsStateWithLifecycle()
+                SettingsScreen(
+                    ui, settings, vm.engines, modelStorage, whisperModels, whisperRuntime, vm.whisperDownloads,
+                    classicNluModel, vm.classicNluDownloadAvailable, cloudSttCredentials, vm.deviceCapabilities,
+                    vm::selectSttEngine, vm::setKeepWhisperModelLoaded, vm::setWhisperThreadCount,
+                    vm::setAudioPreprocessing, vm::setShowPlaybackButton, vm::setShowTechnicalLog,
+                    vm::setTrustStt, vm::setTheme, vm::setCustomTheme,
+                    vm::setPopupDurationSeconds,
+                    vm::setLocalOnly, vm::setClassicNluEnabled,
+                    vm::setExternalDataBackupEnabled, vm::setTimeOfDaySettings,
+                    vm::setNoteTrashRetentionDays,
+                    vm::setShowNavigationLabels, vm::setUiPerformanceMode,
+                    vm::setNotificationSound, vm::setNotificationVibrationEnabled,
+                    { enabled ->
+                        vm.setReminderAlarmMode(enabled)
+                        if (enabled) {
+                            requestReminderAccess(true)
+                            if (settings.reminderAlarmPresentation == ALARM_PRESENTATION_SCREEN) {
+                                requestFullScreenAccess()
+                            }
+                        }
+                    },
+                    { value ->
+                        vm.setReminderAlarmPresentation(value)
+                        if (value == ALARM_PRESENTATION_SCREEN) requestFullScreenAccess()
+                    },
+                    vm::setReminderAlarmSound,
+                    vm::setNotificationWakeScreen,
+                    vm::setReminderAlarmRingSeconds,
+                    vm::setReminderAlarmPauseMinutes,
+                    vm::setReminderAlarmRepeatCount,
+                    vm::selectWhisperModel, vm::downloadWhisperModel, vm::importWhisperModel,
+                    vm::downloadClassicNluModel, vm::importClassicNluModel,
+                    vm::selectModelsDirectory, vm::clearModelCache,
+                    vm::saveYandexCredentials, vm::saveGoogleCredentials, vm::saveVkCredentials,
+                    notificationsEnabled, exactAlarmsAllowed, fullScreenAlarmsAllowed, overlayWindowsAllowed, backgroundRunAllowed, backgroundSettingsTitle, alarmVendorSettingsTitle, autoStartSettingsTitle,
+                    openNotificationSettings, openExactAlarmSettings, openFullScreenAlarmSettings, openOverlaySettings, openAlarmNotificationSettings, openBackgroundRunSettings,
+                    openAlarmVendorSettings, openAutoStartSettings,
+                    showOnboarding,
+                )
+            }
+            composable("reminders") {
+                val reminders by vm.reminders.collectAsStateWithLifecycle()
+                val ui by vm.voiceActionUi.collectAsStateWithLifecycle()
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                RemindersScreen(
+                    reminders = reminders,
+                    ui = ui,
+                    actionNotice = actionNotice,
+                    popupDurationSeconds = settings.popupDurationSeconds,
+                    reducedUiEffects = reducedUiEffects,
+                    sort = ru.nezabudka.app.ui.ReminderSort.fromKey(settings.reminderSort),
+                    setSort = vm::setReminderSort,
+                    delete = vm::deleteReminder,
+                    move = vm::moveReminder,
+                    restore = vm::restoreReminder,
+                    favorite = vm::toggleReminderFavorite,
+                    complete = vm::toggleReminderCompleted,
+                    undoCompleted = { id -> vm.setReminderCompleted(id, false) },
+                    deleteOverdue = vm::deleteOverdueReminders,
+                    deleteCompleted = vm::deleteCompletedReminders,
+                    create = { text, remindAt, recurrence, favorite, onCreated ->
+                        vm.createReminder(text, remindAt, recurrence, favorite) {
+                            onCreated()
+                            requestReminderAccess(remindAt != null)
+                        }
+                    },
+                    beginPushToTalk = { withMicrophonePermission { vm.beginPushToTalk(CommandScope.REMINDERS) } },
+                    endPushToTalk = vm::endPushToTalk,
+                    primaryAction = { vm.primaryAction(CommandScope.REMINDERS) },
+                    editRecognizedText = vm::editText,
+                    openReminder = { reminder -> nav.navigate("reminderEditor/${reminder.id}/false") },
+                    changeReminderTime = { reminder, remindAt ->
+                        vm.changeReminderTime(reminder, remindAt)
+                        if (remindAt != null) requestReminderAccess(true)
+                    },
+                    undoLastAction = vm::undoLastAction,
+                    dismissNotice = vm::dismissActionNotice,
+                    answerReminderDateClarification = vm::answerReminderDateClarification,
+                )
+            }
+            composable(
+                route = "notes",
+                exitTransition = {
+                    if (targetState.destination.route == "noteEditor") ExitTransition.None else null
+                },
+                popEnterTransition = {
+                    if (initialState.destination.route == "noteEditor") EnterTransition.None else null
+                },
+            ) {
+                val notesUi by vm.notesUi.collectAsStateWithLifecycle()
+                val ui by vm.voiceActionUi.collectAsStateWithLifecycle()
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                NotesScreen(
+                notesUi.folders, notesUi.allNotes, notesUi.selectedFolderId, ui, actionNotice, vm::selectFolder,
+                { withMicrophonePermission { vm.beginPushToTalk(CommandScope.NOTES) } }, vm::endPushToTalk,
+                { vm.primaryAction(CommandScope.NOTES) },
+                editRecognizedText = vm::editText, undoLastAction = vm::undoLastAction, dismissNotice = vm::dismissActionNotice,
+                noteSort = settings.noteSort, noteColumns = settings.noteColumns,
+                noteFolderInterface = settings.noteFolderInterface,
+                setNoteSort = vm::setNoteSort, setNoteColumns = vm::setNoteColumns,
+                setNoteFolderInterface = vm::setNoteFolderInterface,
+                pinNotes = vm::pinNotes, colorNotes = vm::colorNotes, archiveNotes = vm::archiveNotes,
+                trashNotes = vm::trashNotes, emptyTrash = vm::emptyNoteTrash, setNotesFolder = vm::setNotesFolder,
+                createFolder = { name, done -> vm.createNoteFolder(name, done) },
+                createFolderSilently = { name, done -> vm.createNoteFolderSilently(name, done) },
+                renameFolder = vm::renameNoteFolder, moveFolder = vm::moveNoteFolder, deleteFolder = vm::deleteNoteFolder,
+                moveNote = vm::moveNote,
+                openNote = { note -> editingNote = note; editorFolderId = note.folderId; nav.navigate("noteEditor") },
+                newNote = { folderId ->
+                    editingNote = null
+                    editorFolderId = folderId
+                    editorSessionId = SystemClock.elapsedRealtime()
+                    voiceWidgetSessionId = null
+                    nav.navigate("noteEditor")
+                },
+                reducedUiEffects = reducedUiEffects,
+                )
+            }
+            composable("reminderEditor/{id}/{changeTime}") { entry ->
+                val id = entry.arguments?.getString("id")?.toLongOrNull()
+                val reminderFlow = remember(id) { id?.let(vm::observeReminder) }
+                val reminder = reminderFlow?.collectAsStateWithLifecycle(initialValue = null)?.value
+                if (reminder == null) Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    CircularProgressIndicator()
+                } else ReminderEditorScreen(
+                    reminder = reminder,
+                    back = {
+                        if (!nav.popBackStack("reminders", inclusive = false)) {
+                            nav.navigate("reminders") {
+                                popUpTo(nav.graph.id)
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    save = vm::saveReminder,
+                    delete = { reminderId, done -> vm.deleteReminder(reminderId); done() },
+                    openDatePickerInitially = entry.arguments?.getString("changeTime").toBoolean(),
+                    onTimedReminderSaved = { requestReminderAccess(true) },
+                )
+            }
+            composable(
+                route = "noteEditor",
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None },
+            ) {
+                val folders by vm.folders.collectAsStateWithLifecycle()
+                val dictationUi by vm.noteDictationUi.collectAsStateWithLifecycle()
+                val dictationSessionId = remember(editingNote?.id, editorSessionId) { System.nanoTime() }
+                NoteEditorScreen(
+                note = editingNote, folders = folders, initialFolderId = editorFolderId,
+                editorSessionId = editorSessionId,
+                openedFromVoiceWidget = voiceWidgetSessionId == editorSessionId,
+                back = {
+                    voiceWidgetSessionId = null
+                    nav.popBackStack()
+                },
+                save = { id, selectedFolders, title, text, pinned, archived, color ->
+                    vm.saveNote(id, selectedFolders, title, text, pinned, archived, color) {
+                        voiceWidgetSessionId = null
+                        nav.popBackStack()
+                    }
+                },
+                createFolder = { name, done -> vm.createNoteFolder(name, done) },
+                createReminder = { text, remindAt, recurrence, onCreated ->
+                    vm.createReminder(text, remindAt, recurrence, favorite = false) {
+                        onCreated()
+                        requestReminderAccess(true)
+                    }
+                },
+                trash = { note ->
+                    voiceWidgetSessionId = null
+                    vm.trashNote(note)
+                    nav.popBackStack()
+                },
+                dictatedText = dictationUi.result
+                    ?.takeIf { it.sessionId == dictationSessionId }
+                    ?.text,
+                dictationActive = dictationUi.active,
+                dictationRecording = dictationUi.recording,
+                beginDictation = { withMicrophonePermission { vm.beginNoteDictation(dictationSessionId) } },
+                endDictation = { vm.endNoteDictation(dictationSessionId) },
+                consumeDictation = { vm.consumeNoteDictation(dictationSessionId) },
+                cancelDictation = { vm.cancelNoteDictation(dictationSessionId) },
+                )
+            }
+        }
+        }
+    }
+    if (requestedSnoozeId != null) {
+        val snoozeReminders by vm.reminders.collectAsStateWithLifecycle()
+        snoozeReminders.firstOrNull { it.id == requestedSnoozeId }?.let { reminder ->
+            ReminderSnoozeDialog(
+                reminder = reminder,
+                dismiss = consumeSnoozeIntent,
+                snooze = { date -> vm.snoozeReminder(reminder, date, consumeSnoozeIntent) },
+            )
+        }
+    }
+}
+
+internal data class FirstLaunchGuidePage(
+    val title: String,
+    val text: String,
+    val target: OnboardingTarget?,
+    val instruction: String,
+)
+
+internal enum class OnboardingTarget { NOTES, REMINDERS, ASSISTANT, VOICE, SETTINGS }
+
+internal fun firstLaunchGuidePages(): List<FirstLaunchGuidePage> = listOf(
+    FirstLaunchGuidePage(
+        title = "Заметки",
+        text = "Здесь создаются записи и папки. Порядок карточек можно менять длительным нажатием.",
+        target = OnboardingTarget.NOTES,
+        instruction = "Нажмите подсвеченную вкладку «Заметки».",
+    ),
+    FirstLaunchGuidePage(
+        title = "Напоминания",
+        text = "Во вкладке видны предстоящие, просроченные и выполненные дела. Нажмите карточку, чтобы открыть редактор.",
+        target = OnboardingTarget.REMINDERS,
+        instruction = "Нажмите подсвеченную вкладку «Напоминания».",
+    ),
+    FirstLaunchGuidePage(
+        title = "Помощник",
+        text = "Помощник создаёт заметки, папки и напоминания по текстовой или голосовой команде.",
+        target = OnboardingTarget.ASSISTANT,
+        instruction = "Нажмите подсвеченную вкладку «Помощник».",
+    ),
+    FirstLaunchGuidePage(
+        title = "Голосовой ввод",
+        text = "В работе удерживайте кнопку, говорите и отпустите её для распознавания. Микрофон будет запрошен только при первом использовании.",
+        target = OnboardingTarget.VOICE,
+        instruction = "Сейчас просто коснитесь подсвеченной кнопки — запись не начнётся.",
+    ),
+    FirstLaunchGuidePage(
+        title = "Настройки",
+        text = "Здесь выбираются внешний вид, распознавание речи, уведомления, модели и резервное копирование.",
+        target = OnboardingTarget.SETTINGS,
+        instruction = "Нажмите подсвеченную вкладку «Настройки».",
+    ),
+    FirstLaunchGuidePage(
+        title = "Можно начинать",
+        text = "По умолчанию используются обычные уведомления, а режим будильника выключен. При желании включите будильник в настройках. " +
+            "Для речи доступны системное распознавание, офлайн Whisper и облачные STT — облачные сервисы включаются вручную.",
+        target = null,
+        instruction = "Разрешения запрашиваются только перед использованием соответствующей функции.",
+    ),
+)
+
+internal fun onboardingRouteAfterStep(step: Int): String? = when (step) {
+    1 -> "notes"
+    2 -> "reminders"
+    3, 4 -> "assistant"
+    5 -> "settings"
+    else -> null
+}
+
+private fun onboardingTargetForRoute(route: String): OnboardingTarget = when (route) {
+    "notes" -> OnboardingTarget.NOTES
+    "reminders" -> OnboardingTarget.REMINDERS
+    "settings" -> OnboardingTarget.SETTINGS
+    else -> OnboardingTarget.ASSISTANT
+}
+
+@Composable
+private fun FirstLaunchOnboarding(
+    step: Int,
+    targetBounds: Rect?,
+    targetClick: () -> Unit,
+    finish: () -> Unit,
+) {
+    val pages = remember { firstLaunchGuidePages() }
+    val page = pages.getOrNull(step) ?: return
+    val density = LocalDensity.current
+    val highlightPadding = with(density) { 8.dp.toPx() }
+    val cornerRadius = with(density) { 18.dp.toPx() }
+    val borderWidth = with(density) { 2.dp.toPx() }
+    val scrim = MaterialTheme.colorScheme.scrim.copy(alpha = 0.78f)
+    val accent = MaterialTheme.colorScheme.primary
+    val highlighted = targetBounds?.let {
+        Rect(
+            left = it.left - highlightPadding,
+            top = it.top - highlightPadding,
+            right = it.right + highlightPadding,
+            bottom = it.bottom + highlightPadding,
+        )
+    }
+    Box(Modifier.fillMaxSize()) {
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(step, highlighted) {
+                    detectTapGestures { tap ->
+                        if (page.target != null && highlighted?.contains(tap) == true) targetClick()
+                    }
+                },
+        ) {
+            val hole = highlighted?.let {
+                Rect(
+                    left = it.left.coerceIn(0f, size.width),
+                    top = it.top.coerceIn(0f, size.height),
+                    right = it.right.coerceIn(0f, size.width),
+                    bottom = it.bottom.coerceIn(0f, size.height),
+                )
+            }
+            if (hole == null || hole.width <= 0f || hole.height <= 0f) {
+                drawRect(scrim)
+            } else {
+                drawRect(scrim, size = Size(size.width, hole.top))
+                drawRect(scrim, topLeft = Offset(0f, hole.bottom), size = Size(size.width, size.height - hole.bottom))
+                drawRect(scrim, topLeft = Offset(0f, hole.top), size = Size(hole.left, hole.height))
+                drawRect(scrim, topLeft = Offset(hole.right, hole.top), size = Size(size.width - hole.right, hole.height))
+                drawRoundRect(
+                    color = accent,
+                    topLeft = Offset(hole.left, hole.top),
+                    size = Size(hole.width, hole.height),
+                    cornerRadius = CornerRadius(cornerRadius),
+                    style = Stroke(borderWidth),
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 24.dp, vertical = 64.dp),
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 8.dp,
+        ) {
+            Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                Text(page.title, style = MaterialTheme.typography.titleLarge)
+                Text(page.text, modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    page.instruction,
+                    modifier = Modifier.padding(top = 12.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    "${step + 1} из ${pages.size}",
+                    modifier = Modifier.padding(top = 12.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                if (page.target == null) {
+                    Box(Modifier.fillMaxWidth()) {
+                        TextButton(onClick = finish, modifier = Modifier.align(Alignment.CenterEnd)) {
+                            Text("Начать")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionEducationDialogs(
+    microphoneVisible: Boolean,
+    notificationVisible: Boolean,
+    exactAlarmVisible: Boolean,
+    fullScreenVisible: Boolean,
+    overlayVisible: Boolean,
+    dismissMicrophone: () -> Unit,
+    continueMicrophone: () -> Unit,
+    dismissNotification: () -> Unit,
+    continueNotification: () -> Unit,
+    dismissExactAlarm: () -> Unit,
+    continueExactAlarm: () -> Unit,
+    dismissFullScreen: () -> Unit,
+    continueFullScreen: () -> Unit,
+    dismissOverlay: () -> Unit,
+    continueOverlay: () -> Unit,
+) {
+    val dialog = when {
+        microphoneVisible -> PermissionDialogContent(
+            title = "Доступ к микрофону",
+            text = "Микрофон нужен только во время голосового ввода. Без разрешения текстовый ввод продолжит работать.",
+            dismiss = dismissMicrophone,
+            confirm = continueMicrophone,
+        )
+        notificationVisible -> PermissionDialogContent(
+            title = "Разрешите уведомления",
+            text = "Уведомления нужны, чтобы созданные напоминания появлялись вовремя. При отказе записи сохранятся, но Android не покажет сигнал.",
+            dismiss = dismissNotification,
+            confirm = continueNotification,
+        )
+        exactAlarmVisible -> PermissionDialogContent(
+            title = "Точное время напоминаний",
+            text = "Специальный доступ нужен для срабатывания в выбранную минуту. При отказе Android поставит энергосберегающий неточный будильник, который может задержаться.",
+            dismiss = dismissExactAlarm,
+            confirm = continueExactAlarm,
+        )
+        fullScreenVisible -> PermissionDialogContent(
+            title = "Будильник отдельным окном",
+            text = "Полноэкранный доступ нужен только для выбранного режима отдельного окна на заблокированном экране. При отказе останется обычное уведомление.",
+            dismiss = dismissFullScreen,
+            confirm = continueFullScreen,
+        )
+        overlayVisible -> PermissionDialogContent(
+            title = "Окно поверх приложений",
+            text = "Доступ нужен только для автоматического компактного окна будильника на разблокированном экране. Без него останется уведомление, которое можно открыть нажатием.",
+            dismiss = dismissOverlay,
+            confirm = continueOverlay,
+        )
+        else -> null
+    } ?: return
+    AppAlertDialog(
+        onDismissRequest = dialog.dismiss,
+        title = { Text(dialog.title) },
+        text = { Text(dialog.text) },
+        dismissButton = { TextButton(onClick = dialog.dismiss) { Text("Не сейчас") } },
+        confirmButton = { TextButton(onClick = dialog.confirm) { Text("Продолжить") } },
+    )
+}
+
+private data class PermissionDialogContent(
+    val title: String,
+    val text: String,
+    val dismiss: () -> Unit,
+    val confirm: () -> Unit,
+)

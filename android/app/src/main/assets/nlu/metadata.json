@@ -1,0 +1,35 @@
+{
+  "base_model": "cointegrated/rubert-tiny2",
+  "max_length": 64,
+  "do_lower_case": false,
+  "intent_labels": [
+    "create_reminder",
+    "list_reminders",
+    "delete_reminder",
+    "create_note",
+    "create_folder",
+    "delete_folder",
+    "unknown"
+  ],
+  "slot_labels": [
+    "O",
+    "B-TEXT",
+    "I-TEXT",
+    "B-TARGET",
+    "I-TARGET",
+    "B-FOLDER",
+    "I-FOLDER",
+    "B-DATE",
+    "I-DATE",
+    "B-TIME",
+    "I-TIME",
+    "B-RECURRENCE",
+    "I-RECURRENCE"
+  ],
+  "intent_threshold": 0.72,
+  "intent_thresholds": {
+    "create_reminder": 0.65
+  },
+  "explicit_destructive_intent_threshold": 0.5,
+  "destructive_intent_threshold": 0.9
+}

@@ -1,0 +1,42 @@
+*.iml
+.gradle
+.kotlin/
+.idea/
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+bugreport*.zip
+local.properties
+.nlu-venv/
+.nlu-cache/
+tools/nlu/output/
+tools/nlu/__pycache__/
+
+# Local assistant/agent instructions and work state
+/.agents/
+/AGENTS.md
+
+# Private configuration and signing material
+/.env
+/.env.*
+/secrets.properties
+/google-services.json
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Build packages and separately distributed ML models
+*.apk
+*.aab
+/tools/*.bin

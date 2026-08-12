@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">НеЗабудьКа</string>
+    <string name="app_tagline">Всё важное — вовремя</string>
+    <string name="widget_voice_note_title">Голосовая заметка</string>
+    <string name="widget_voice_note_subtitle">Открыть и удерживать микрофон</string>
+    <string name="widget_voice_note_description">Быстрое создание заметки голосом</string>
+</resources>

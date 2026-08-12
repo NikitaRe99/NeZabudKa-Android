@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Напометка / WordDone app icon</title>
+  <desc id="desc">A note with a folded corner and a clock, suitable for both app names.</desc>
+  <rect width="512" height="512" fill="#6868F4"/>
+  <path fill="#FFFFFF" d="M159 95h133l79 79v179c0 22-18 40-40 40H159c-22 0-40-18-40-40V135c0-22 18-40 40-40Z"/>
+  <path fill="#DCDCFF" d="M292 95l79 79h-51c-15.5 0-28-12.5-28-28V95Z"/>
+  <path fill="none" stroke="#AAA9F5" stroke-linecap="round" stroke-width="18" d="M174 202h91M174 247h65"/>
+  <circle cx="309" cy="309" r="81" fill="#4C4AD3"/>
+  <path fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="18" d="M309 259v50l36 23"/>
+</svg>
