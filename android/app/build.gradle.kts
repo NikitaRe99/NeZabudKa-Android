@@ -9,6 +9,22 @@ android {
     namespace = "ru.nezabudka.app"
     compileSdk = 36
 
+    val releaseKeyStorePath = providers.environmentVariable("NEZABUDKA_KEYSTORE_PATH").orNull
+    val releaseStorePassword = providers.environmentVariable("NEZABUDKA_STORE_PASSWORD").orNull
+    val releaseKeyAlias = providers.environmentVariable("NEZABUDKA_KEY_ALIAS").orNull
+    val releaseKeyPassword = providers.environmentVariable("NEZABUDKA_KEY_PASSWORD").orNull
+
+    signingConfigs {
+        if (listOf(releaseKeyStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseKeyStorePath))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "ru.nezabudka.app"
         // Android 10 (API 29) is the oldest supported runtime.
@@ -67,6 +83,7 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
