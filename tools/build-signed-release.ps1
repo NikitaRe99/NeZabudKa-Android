@@ -6,9 +6,15 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$gradleWrapper = Join-Path $projectRoot "gradlew.bat"
 
 if (-not (Test-Path -LiteralPath $KeyStorePath -PathType Leaf)) {
     throw "Keystore not found: $KeyStorePath"
+}
+
+if (-not (Test-Path -LiteralPath $gradleWrapper -PathType Leaf)) {
+    throw "Gradle wrapper not found: $gradleWrapper"
 }
 
 function ConvertTo-PlainText([Security.SecureString]$Value) {
@@ -29,12 +35,14 @@ $env:NEZABUDKA_KEY_ALIAS = $KeyAlias
 $env:NEZABUDKA_KEY_PASSWORD = $keyPassword
 
 try {
-    & ".\gradlew.bat" :app:assembleRelease
+    Push-Location $projectRoot
+    & $gradleWrapper :app:assembleRelease
     if ($LASTEXITCODE -ne 0) {
         throw "Gradle release build failed with exit code $LASTEXITCODE"
     }
     Write-Host "Signed release APKs are ready." -ForegroundColor Green
 } finally {
+    Pop-Location
     Remove-Item Env:NEZABUDKA_KEYSTORE_PATH -ErrorAction SilentlyContinue
     Remove-Item Env:NEZABUDKA_STORE_PASSWORD -ErrorAction SilentlyContinue
     Remove-Item Env:NEZABUDKA_KEY_ALIAS -ErrorAction SilentlyContinue
