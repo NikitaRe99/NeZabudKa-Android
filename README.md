@@ -39,8 +39,7 @@ Android. Благодаря этому правила дат, повторов �
 ## Структура репозитория
 
 ```text
-Ai/
-├── AGENTS.md                    правила безопасного сопровождения проекта
+NeZabudKa-Android/
 ├── README.md                    этот документ
 ├── settings.gradle.kts          список Gradle-модулей и их расположение
 ├── build.gradle.kts             версии Android/Kotlin Gradle-плагинов
