@@ -31,8 +31,8 @@ android {
         // compileSdk stays current so modern Compose/Room APIs can compile.
         minSdk = 29
         targetSdk = 36
-        versionCode = 23
-        versionName = "0.2.0"
+        versionCode = 76
+        versionName = "0.2.53"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(
@@ -81,6 +81,21 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+        }
+        // Daily on-device testing with production optimizations, using the debug
+        // identity/signature so switching from debug preserves existing data.
+        create("preview") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }

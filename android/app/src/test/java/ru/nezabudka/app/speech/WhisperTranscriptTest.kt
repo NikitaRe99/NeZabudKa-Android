@@ -6,6 +6,96 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WhisperTranscriptTest {
+    @Test fun `an implausible decoder cycle triggers verification without treating spoken repeats as a loop`() {
+        val loop = List(14) { "После, завтра, восемь вечера" }.joinToString(", ") + ", завтра, вос"
+        assertTrue(loop.hasWhisperDecoderLoop(2.98))
+        assertFalse("Привет привет, очень очень важно".hasWhisperDecoderLoop(2.5))
+        assertFalse("Купить билеты. Купить билеты. Купить билеты.".hasWhisperDecoderLoop(8.0))
+    }
+    @Test fun `split day after tomorrow is joined only in reminder commands or date replies`() {
+        listOf("после завтра", "после, завтра", "после,завтра").forEach { day ->
+            assertEquals("Напомни послезавтра проверить фильтр", "Напомни $day проверить фильтр".normalizeWhisperTranscript())
+            assertEquals("Покажи напоминания послезавтра", "Покажи напоминания $day".normalizeWhisperTranscript())
+            assertEquals("послезавтра в десять двадцать пять", normalizeExpectedDateReply("$day десять двадцать пять"))
+            val note = "Создай заметку фраза $day будет другой"
+            assertEquals(note, note.normalizeWhisperTranscript())
+            val dictation = "Напомни $day проверить фильтр"
+            assertEquals(dictation, dictation.normalizeWhisperTranscript(commandMode = false))
+        }
+        assertEquals("Послезавтра утром", normalizeExpectedDateReply("После, завтра утром"))
+        assertEquals("Напомни после завтрака позвонить", "Напомни после завтрака позвонить".normalizeWhisperTranscript())
+    }
+
+    @Test fun `command date pauses do not become commas in a reminder`() {
+        assertEquals(
+            "Напомни завтра выбросить мусор и сходить в магазин за колбасой.",
+            "Напомни завтра, выбросить мусор и сходить в магазин за колбасой.".normalizeWhisperTranscript(),
+        )
+        assertEquals("Послезавтра в восемь вечера.", "После, завтра в восемь вечера.".normalizeWhisperTranscript())
+        assertEquals("Напомни послезавтра купить хлеб, молоко и сыр", "Напомни после, завтра, купить хлеб, молоко и сыр".normalizeWhisperTranscript())
+        assertEquals("Напомни завтра в восемь вечера купить хлеб", "Напомни завтра, в восемь вечера купить хлеб".normalizeWhisperTranscript())
+        assertEquals("Послезавтра в восемь вечера.", normalizeExpectedDateReply("Послезавтра, в восемь вечера."))
+    }
+
+    @Test fun `date comma cleanup keeps punctuation in note text and dictation`() {
+        val note = "Создай заметку завтра, купить хлеб, молоко и сыр"
+        assertEquals(note, note.normalizeWhisperTranscript())
+        assertEquals(note, note.normalizeWhisperTranscript(commandMode = false))
+        val reminder = "Напомни купить хлеб, молоко и сыр завтра"
+        assertEquals(reminder, reminder.normalizeWhisperTranscript())
+    }
+    @Test fun `short fast inference uses a punctuated vocabulary without dynamic folder names`() {
+        val original = contextualWhisperPrompt(listOf("Работа", "Катя"))
+        val short = whisperPromptForInference(original, true, 208, 1)
+        assertTrue(short.contains("Напомни, напоминание, заметка"))
+        assertTrue(short.contains("отмени"))
+        assertFalse(short.contains("Работа"))
+        assertFalse(short.contains("Катя"))
+        assertEquals("", whisperPromptForInference(original, false, 208, 1))
+        assertEquals(original, whisperPromptForInference(original, true, 768, 3))
+        assertEquals(original, whisperPromptForInference(original, true, 512, 1))
+        assertEquals(original, whisperPromptForInference(original, true, 0, 1))
+    }
+
+    @Test fun `word repetition signals a retry without rewriting intentional dictation`() {
+        val intentional = "Да. Да, очень очень важно!"
+        assertTrue(intentional.hasConsecutiveWhisperWordRepetition())
+        assertEquals(intentional, intentional.collapseWhisperRepetition())
+        assertFalse("Привет приветствие".hasConsecutiveWhisperWordRepetition())
+        assertFalse("Я передам привет и приду завтра".hasConsecutiveWhisperWordRepetition())
+    }
+
+    @Test fun `split cancel is corrected only before an explicit command object`() {
+        assertEquals("отмени напоминание проверить договор", speechCommandAlternatives("от меня напоминание проверить договор").first())
+        assertEquals("от меня поступило сообщение", speechCommandAlternatives("от меня поступило сообщение").first())
+        assertEquals("Создай заметку сообщение от меня передай завтра", speechCommandAlternatives("Создай заметку сообщение от меня передай завтра").first())
+    }
+    @Test fun `note dictation keeps commas and does not rewrite reminder wording`() {
+        val note = "Напомню, завтра, восемь утра. Создай папку новую работу."
+        assertEquals(note, note.normalizeWhisperTranscript(commandMode = false))
+    }
+
+    @Test fun `note segments keep sentence boundaries and repeated words`() {
+        assertEquals("Да. Да, я согласен!", mergeWhisperSegments("Да.", "Да, я согласен!", commandMode = false))
+        assertEquals("Куплю хлеб, если успею. Что ещё нужно?", mergeWhisperSegments("Куплю хлеб, если успею.", "Что ещё нужно?", commandMode = false))
+        assertEquals("Если успею, куплю хлеб.", mergeWhisperSegments("Если успею,", "куплю хлеб.", commandMode = false))
+    }
+
+    @Test fun `empty note segments do not add whitespace`() {
+        assertEquals("Заметка.", mergeWhisperSegments(" ", " Заметка. ", commandMode = false))
+        assertEquals("Заметка.", mergeWhisperSegments(" Заметка. ", " ", commandMode = false))
+    }
+
+    @Test fun `commands still normalize overlapping transcript segments`() {
+        assertEquals("Напомни позвонить Кате завтра", mergeWhisperSegments("Напомни позвонить Кате.", "позвонить Кате завтра", commandMode = true))
+    }
+
+    @Test fun `note dictation is not prompted with command examples in either mode`() {
+        listOf(true, false).forEach { examples ->
+            assertEquals("", contextualWhisperPrompt(listOf("Работа"), includeCommandExamples = examples, useCommandVocabulary = false))
+        }
+    }
+
     @Test fun `напомню at command start is corrected without changing name`() {
         assertEquals(
             "Напомни позвонить Иннокентию",
@@ -143,6 +233,21 @@ class WhisperTranscriptTest {
         assertTrue(RUSSIAN_WHISPER_PROMPT.contains("о встрече"))
         assertTrue(RUSSIAN_WHISPER_PROMPT.contains("для работы"))
         assertTrue(RUSSIAN_WHISPER_PROMPT.contains("на следующую неделю"))
+    }
+
+    @Test fun `default prompt contains vocabulary without invented dates or note contents`() {
+        val prompt = contextualWhisperPrompt(listOf("Работа"))
+        assertEquals("$WHISPER_COMMAND_VOCABULARY Работа", prompt)
+        assertFalse(prompt.contains("восемь утра"))
+        assertFalse(prompt.contains("позвонить Кате"))
+        assertFalse(prompt.contains("Слова пользователя"))
+    }
+
+    @Test fun `accurate prompt contains vocabulary without canned command sentences`() {
+        assertEquals(WHISPER_COMMAND_VOCABULARY, contextualWhisperPrompt(emptyList(), includeCommandExamples = false))
+        assertEquals("", contextualWhisperPrompt(emptyList(), includeCommandExamples = false, useCommandVocabulary = false))
+        assertEquals("$WHISPER_COMMAND_VOCABULARY Работа Катя", contextualWhisperPrompt(listOf("Работа", "Катя", "Работа"), includeCommandExamples = false))
+        assertFalse(contextualWhisperPrompt(listOf("Работа"), false).contains("Создай заметку"))
     }
 
 }

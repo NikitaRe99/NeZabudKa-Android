@@ -2,6 +2,7 @@ package ru.nezabudka.app.ports
 
 import ru.nezabudka.app.domain.AssistantCommand
 import ru.nezabudka.app.domain.CommandContext
+import ru.nezabudka.app.domain.CommandScope
 import ru.nezabudka.app.domain.Note
 import ru.nezabudka.app.domain.NoteFolder
 import ru.nezabudka.app.domain.DeletedNoteFolder
@@ -103,8 +104,11 @@ interface SettingsPort {
     fun setSttEngine(value: String)
     fun setKeepWhisperModelLoaded(enabled: Boolean)
     fun setWhisperThreadCount(value: Int)
+    fun setWhisperAccurateMode(enabled: Boolean)
+    fun setNotePunctuationModel(value: String)
     fun setAudioPreprocessing(enabled: Boolean)
     fun setShowPlaybackButton(enabled: Boolean)
+    fun setShowAssistantWelcomeCard(enabled: Boolean) {}
     fun setShowTechnicalLog(enabled: Boolean)
     fun setTrustStt(enabled: Boolean)
     fun setReminderSort(value: String)
@@ -134,6 +138,9 @@ interface SpeechToTextEngine {
 
 interface ContextualSpeechToTextEngine {
     fun setContextHints(hints: List<String>)
+    fun setCommandVocabularyEnabled(enabled: Boolean) {}
+    fun setAwaitingDateResponse(enabled: Boolean) {}
+    fun setCommandScope(scope: CommandScope) {}
 }
 
 interface LiveSpeechToTextEngine : SpeechToTextEngine {
@@ -149,6 +156,8 @@ data class SpeechRecognition(
     val text: String,
     val confidence: Float? = null,
     val alternatives: List<String> = emptyList(),
+    val notice: String? = null,
+    val requiresConfirmation: Boolean = false,
 )
 
 interface AudioPreprocessor {

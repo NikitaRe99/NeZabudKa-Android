@@ -498,11 +498,7 @@ class ReminderActionReceiver : BroadcastReceiver() {
                     val reminder = repository.find(id, null, false)
                     when (intent.action) {
                         ACTION_COMPLETE -> {
-                            if (normalizeReminderRecurrence(reminder?.recurrence) != null) {
-                                actions.advanceRecurring(id)
-                            } else {
-                                actions.setCompleted(id, true)
-                            }
+                            actions.completeFromNotification(id)
                         }
                         ACTION_SNOOZE -> {
                             val snoozeAt = intent.getLongExtra(EXTRA_SNOOZE_AT, -1L)

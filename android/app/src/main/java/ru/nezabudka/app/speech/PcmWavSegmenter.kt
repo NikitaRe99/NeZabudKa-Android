@@ -13,20 +13,63 @@ internal object PcmWavSegmenter {
     private const val BYTES_PER_SECOND = 16_000 * 2
     private const val COPY_BUFFER_BYTES = 64 * 1024
 
+    /** VAD finds speech; it must not erase weak syllables in either decode mode. */
+    fun splitForWhisper(
+        source: File,
+        workDirectory: File,
+        boundaries: LongArray,
+        targetSeconds: Int,
+    ): List<File> = splitAtSpeechRanges(
+        source, workDirectory, boundaries, targetSeconds,
+        keepWholeRecordingsUpToSeconds = 12,
+        speechPaddingBeforeMillis = 100,
+        speechPaddingAfterMillis = 300,
+        preserveShortGapsMillis = 1000,
+    )
+
+    fun copyFirstSeconds(source: File, destination: File, seconds: Int): File {
+        require(seconds > 0 && source.absolutePath != destination.absolutePath)
+        val bytes = minOf(validateAndPcmBytes(source), seconds.toLong() * BYTES_PER_SECOND)
+        require(bytes > 0) { "Запись пуста. Сначала запишите тестовую фразу." }
+        RandomAccessFile(source, "r").use { input ->
+            FileOutputStream(destination).use { output ->
+                output.write(wavHeader(bytes))
+                input.seek(HEADER_BYTES.toLong())
+                copyBytes(input, output, bytes, ByteArray(COPY_BUFFER_BYTES))
+            }
+        }
+        return destination
+    }
+
     fun splitAtSpeechRanges(
         source: File,
         workDirectory: File,
         boundaries: LongArray,
         targetSeconds: Int,
         bridgeSilenceMillis: Int = 100,
+        keepWholeRecordingsUpToSeconds: Int = 0,
+        speechPaddingBeforeMillis: Int = 0,
+        speechPaddingAfterMillis: Int = 0,
+        preserveShortGapsMillis: Int = 0,
     ): List<File> {
         require(targetSeconds > 0 && bridgeSilenceMillis >= 0)
+        require(keepWholeRecordingsUpToSeconds >= 0 && speechPaddingBeforeMillis >= 0 &&
+            speechPaddingAfterMillis >= 0 && preserveShortGapsMillis >= 0)
         val totalSamples = validateAndPcmBytes(source) / 2L
         val ranges = splitAtPreferredPauses(
-            normalizedSpeechRanges(boundaries, totalSamples),
+            normalizedSpeechRanges(
+                boundaries, totalSamples,
+                speechPaddingBeforeMillis.toLong() * 16L,
+                speechPaddingAfterMillis.toLong() * 16L,
+                preserveShortGapsMillis.toLong() * 16L,
+            ),
             preferredPauseSamples(boundaries, totalSamples),
         )
         if (ranges.isEmpty()) return listOf(source)
+        // VAD has established that speech exists. Keep every sample of a short
+        // recording: weak consonants and standalone prepositions can fall outside
+        // the detected ranges, even when surrounding words are confidently found.
+        if (totalSamples <= keepWholeRecordingsUpToSeconds.toLong() * 16_000L) return listOf(source)
 
         val targetSamples = targetSeconds.toLong() * 16_000L
         val bridgeSamples = bridgeSilenceMillis.toLong() * 16L
@@ -131,20 +174,31 @@ internal object PcmWavSegmenter {
         segments.firstOrNull()?.parentFile?.deleteRecursively()
     }
 
-    private fun normalizedSpeechRanges(boundaries: LongArray, totalSamples: Long): List<SpeechRange> {
+    private fun normalizedSpeechRanges(
+        boundaries: LongArray,
+        totalSamples: Long,
+        beforeSamples: Long = 0,
+        afterSamples: Long = 0,
+        preservedGapSamples: Long = 0,
+    ): List<SpeechRange> {
         if (boundaries.size % 2 != 0) return emptyList()
         val sorted = boundaries.asSequence().chunked(2)
             .mapNotNull { values ->
                 val start = values[0].coerceIn(0L, totalSamples)
                 val end = values[1].coerceIn(start, totalSamples)
-                if (end > start) SpeechRange(start, end) else null
+                if (end > start) SpeechRange(
+                    (start - beforeSamples).coerceAtLeast(0L),
+                    (end + afterSamples).coerceAtMost(totalSamples),
+                ) else null
             }
             .sortedBy(SpeechRange::startSample)
             .toList()
         val merged = mutableListOf<SpeechRange>()
         sorted.forEach { range ->
             val previous = merged.lastOrNull()
-            if (previous != null && range.startSample <= previous.endExclusiveSample) {
+            // Joining ranges copies the original gap, rather than synthesizing
+            // silence over quiet short words that the detector may have missed.
+            if (previous != null && range.startSample - previous.endExclusiveSample <= preservedGapSamples) {
                 merged[merged.lastIndex] = previous.copy(
                     endExclusiveSample = maxOf(previous.endExclusiveSample, range.endExclusiveSample),
                 )

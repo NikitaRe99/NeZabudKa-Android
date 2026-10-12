@@ -1,0 +1,13 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:orientation="vertical" android:paddingHorizontal="10dp" android:paddingVertical="6dp" android:background="@drawable/widget_card_light">
+    <TextView android:layout_width="match_parent" android:layout_height="44dp" android:gravity="center_vertical" android:text="Личное ⌄"
+        android:textColor="#1782F2" android:textSize="14sp" android:fontFamily="sans-serif-medium" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Идеи для кухни"
+        android:textColor="#121418" android:textSize="13sp" android:paddingBottom="4dp" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Открытая полка и тёплая подсветка"
+        android:textColor="#5F6875" android:textSize="10.5sp" android:paddingBottom="12dp" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Что взять в поездку"
+        android:textColor="#121418" android:textSize="13sp" android:paddingBottom="4dp" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Зарядка, документы, наушники"
+        android:textColor="#5F6875" android:textSize="10.5sp" />
+</LinearLayout>

@@ -31,9 +31,12 @@ class AndroidModelLibrary(
         return ModelSelectionSnapshot(installed, selected)
     }
 
-    fun selectedFile(missingMessage: String): File {
+    fun selectedFile(
+        missingMessage: String,
+        missingException: () -> IllegalStateException = { IllegalStateException(missingMessage) },
+    ): File {
         val current = snapshot()
-        val selected = current.selectedName ?: throw IllegalStateException(missingMessage)
+        val selected = current.selectedName ?: throw missingException()
         return storage.materialize(kind, selected)
     }
 

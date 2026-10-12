@@ -8,8 +8,67 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClassicNluCommandMapperTest {
+    @Test fun `an explicit note keeps acronyms even if the model drops them`() {
+        assertEquals("проверить API", mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "проверить"), "Создай заметку проверить API", now).noteText)
+        val withoutFolder = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "позвонить поставщику"), "Сохрани заметку без папки позвонить поставщику", now)
+        assertEquals("позвонить поставщику", withoutFolder.noteText)
+        assertNull(withoutFolder.noteFolder)
+    }
+
+    @Test fun `folder insertion carrier separates a multiword unquoted folder`() {
+        val result = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "в сером пенале"), "Закинь в Тестовый блокнот запись о том что запасные насадки лежат в сером пенале", now)
+        assertEquals("Тестовый блокнот", result.noteFolder)
+        assertEquals("запасные насадки лежат в сером пенале", result.noteText)
+    }
+    @Test fun `speech carriers preserve the full body without punctuation`() {
+        val first = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "семь килограммов"), "Для папки Тестовый блокнот сохрани следующую мысль верхняя полка выдерживает семь килограммов", now)
+        assertEquals("Тестовый блокнот", first.noteFolder)
+        assertEquals("верхняя полка выдерживает семь килограммов", first.noteText)
+        val second = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "миллиметра"), "Хочу оставить себе такую запись размер переходника двадцать два миллиметра", now)
+        assertEquals("размер переходника двадцать два миллиметра", second.noteText)
+    }
+
+    @Test fun `spoken repeat is attached to a reminder`() {
+        val command = mapper.map(CommandIntent.CREATE_REMINDER, mapOf("TEXT" to "полить рассаду"), "Напомни каждый день в десять двадцать пять полить рассаду", now)
+        assertEquals("daily", command.recurrence)
+        assertEquals("полить рассаду", command.text)
+    }
     private val mapper = ClassicNluCommandMapper()
     private val now = LocalDateTime.of(2026, 8, 8, 12, 0)
+
+    @Test fun `folder preceding the action excludes the action verb from its name`() {
+        val command = mapper.map(CommandIntent.CREATE_NOTE, mapOf("FOLDER" to "Рецепты добавь", "TEXT" to "соус из томатов"),
+            "В папку Рецепты добавь заметку соус из томатов", now)
+        assertEquals("Рецепты", command.noteFolder)
+        assertEquals("соус из томатов", command.noteText)
+    }
+
+    @Test fun `recognized reminder carrier keeps a complete verb even when BIO drops it`() {
+        val phrases = listOf("Подай мне сигнал перед тем, как продлить абонемент на парковку", "Мне потребуется вовремя продлить абонемент на парковку")
+        phrases.forEach { phrase ->
+            assertEquals("продлить абонемент на парковку", mapper.map(CommandIntent.CREATE_REMINDER,
+                mapOf("TEXT" to "абонемент на парковку"), phrase, now).text)
+        }
+    }
+
+    @Test fun `an unfamiliar noun after a generic creation verb is not copied into the payload`() {
+        assertEquals("купить страховку", mapper.map(CommandIntent.CREATE_REMINDER,
+            mapOf("TEXT" to "купить страховку"), "Оставь контрольную точку: купить страховку", now).text)
+        assertEquals("проверить водяной насос", mapper.map(CommandIntent.CREATE_REMINDER,
+            mapOf("TEXT" to "проверить водяной насос"), "Создай контрольный пункт проверить водяной насос", now).text)
+    }
+
+    @Test fun `note carrier keeps every original word instead of an incomplete slot`() {
+        assertEquals("контакт мастера 89201234567", mapper.map(CommandIntent.CREATE_NOTE,
+            mapOf("TEXT" to "мастера 89201234567"), "Оформи карточку с содержимым контакт мастера 89201234567", now).noteText)
+        assertEquals("номер счётчика 547812", mapper.map(CommandIntent.CREATE_NOTE,
+            mapOf("TEXT" to "номер счётчика 547812"), "Запиши в личную памятку номер счётчика 547812", now).noteText)
+    }
+
+    @Test fun `stop tracking extracts the whole reminder target`() {
+        assertEquals("проверку нового водяного фильтра", mapper.map(CommandIntent.DELETE_REMINDER,
+            mapOf("TARGET" to "фильтра"), "Не отслеживай больше задачу проверку нового водяного фильтра", now).targetText)
+    }
 
     @Test fun `reminder date always comes from original phrase`() {
         val command = mapper.map(

@@ -24,6 +24,14 @@ class DateTimeConverters {
 
 @Dao
 interface ReminderDao {
+    @Query("SELECT * FROM reminders WHERE status = 'active' AND remind_at < :end ORDER BY remind_at, id LIMIT :limit")
+    suspend fun widgetRows(end: LocalDateTime, limit: Int = 500): List<ReminderEntity>
+    @Query("SELECT COUNT(*) FROM reminders WHERE status = 'active' AND remind_at < :end")
+    suspend fun widgetCount(end: LocalDateTime): Int
+    @Query("SELECT * FROM reminders WHERE status = 'completed' AND completed_at >= :start AND completed_at < :end ORDER BY completed_at DESC, id DESC LIMIT :limit")
+    suspend fun widgetCompletedRows(start: LocalDateTime, end: LocalDateTime, limit: Int = 500): List<ReminderEntity>
+    @Query("SELECT COUNT(*) FROM reminders WHERE status = 'completed' AND completed_at >= :start AND completed_at < :end")
+    suspend fun widgetCompletedCount(start: LocalDateTime, end: LocalDateTime): Int
     @Insert suspend fun insert(value: ReminderEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun restore(value: ReminderEntity): Long
     @Update suspend fun update(value: ReminderEntity)
@@ -76,6 +84,14 @@ interface ReminderDao {
 
 @Dao
 interface NotesDao {
+    @Query("""SELECT n.id, n.title, substr(n.text, 1, 500) AS text, n.updated_at, n.pinned FROM notes n
+        WHERE n.trashed = 0 AND n.archived = 0
+        AND (:folderId IS NULL OR EXISTS (SELECT 1 FROM note_folder_refs r WHERE r.note_id = n.id AND r.folder_id = :folderId))
+        ORDER BY n.pinned DESC, n.updated_at DESC, n.id DESC LIMIT :limit""")
+    suspend fun widgetRows(folderId: Long?, limit: Int = 500): List<WidgetNoteRow>
+    @Query("""SELECT COUNT(*) FROM notes n WHERE n.trashed = 0 AND n.archived = 0
+        AND (:folderId IS NULL OR EXISTS (SELECT 1 FROM note_folder_refs r WHERE r.note_id = n.id AND r.folder_id = :folderId))""")
+    suspend fun widgetCount(folderId: Long?): Int
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertFolder(value: NoteFolderEntity): Long
     @Query("SELECT note_id FROM note_folder_refs WHERE folder_id=:folderId")
     suspend fun noteIdsForFolder(folderId: Long): List<Long>

@@ -20,6 +20,8 @@ local.properties
 .nlu-cache/
 tools/nlu/output/
 tools/nlu/__pycache__/
+**/__pycache__/
+/gradle/gradle-daemon-jvm.properties
 
 # Local assistant/agent instructions and work state
 /.agents/

@@ -1,0 +1,302 @@
+[
+  {
+    "id": "new-nlu-001",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, подай мне сигнал перед тем, как проверить срок гарантии роутера",
+    "intent": "create_reminder",
+    "text": "проверить срок гарантии роутера"
+  },
+  {
+    "id": "new-nlu-002",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя проверить срок гарантии роутера",
+    "intent": "create_reminder",
+    "text": "проверить срок гарантии роутера"
+  },
+  {
+    "id": "new-nlu-003",
+    "scope": "assistant",
+    "utterance": "Напомни мне проверить срок гарантии роутера",
+    "intent": "create_reminder",
+    "text": "проверить срок гарантии роутера"
+  },
+  {
+    "id": "new-nlu-004",
+    "scope": "assistant",
+    "utterance": "Нужно не забыть проверить срок гарантии роутера",
+    "intent": "create_reminder",
+    "text": "проверить срок гарантии роутера"
+  },
+  {
+    "id": "new-nlu-005",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, подай мне сигнал перед тем, как забрать кроссовки из химчистки",
+    "intent": "create_reminder",
+    "text": "забрать кроссовки из химчистки"
+  },
+  {
+    "id": "new-nlu-006",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя забрать кроссовки из химчистки",
+    "intent": "create_reminder",
+    "text": "забрать кроссовки из химчистки"
+  },
+  {
+    "id": "new-nlu-007",
+    "scope": "assistant",
+    "utterance": "Напомни мне забрать кроссовки из химчистки",
+    "intent": "create_reminder",
+    "text": "забрать кроссовки из химчистки"
+  },
+  {
+    "id": "new-nlu-008",
+    "scope": "assistant",
+    "utterance": "Нужно не забыть забрать кроссовки из химчистки",
+    "intent": "create_reminder",
+    "text": "забрать кроссовки из химчистки"
+  },
+  {
+    "id": "new-nlu-009",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, подай мне сигнал перед тем, как поменять батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "поменять батарейки в датчике"
+  },
+  {
+    "id": "new-nlu-010",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя поменять батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "поменять батарейки в датчике"
+  },
+  {
+    "id": "new-nlu-011",
+    "scope": "assistant",
+    "utterance": "Напомни мне поменять батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "поменять батарейки в датчике"
+  },
+  {
+    "id": "new-nlu-012",
+    "scope": "assistant",
+    "utterance": "Нужно не забыть поменять батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "поменять батарейки в датчике"
+  },
+  {
+    "id": "new-nlu-013",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, подай мне сигнал перед тем, как перезвонить тренеру после работы",
+    "intent": "create_reminder",
+    "text": "перезвонить тренеру после работы"
+  },
+  {
+    "id": "new-nlu-014",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя перезвонить тренеру после работы",
+    "intent": "create_reminder",
+    "text": "перезвонить тренеру после работы"
+  },
+  {
+    "id": "new-nlu-015",
+    "scope": "assistant",
+    "utterance": "Напомни мне перезвонить тренеру после работы",
+    "intent": "create_reminder",
+    "text": "перезвонить тренеру после работы"
+  },
+  {
+    "id": "new-nlu-016",
+    "scope": "assistant",
+    "utterance": "Нужно не забыть перезвонить тренеру после работы",
+    "intent": "create_reminder",
+    "text": "перезвонить тренеру после работы"
+  },
+  {
+    "id": "new-nlu-017",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, оформи карточку с содержимым серийный номер пылесоса VC-90471",
+    "intent": "create_note",
+    "text": "серийный номер пылесоса VC-90471"
+  },
+  {
+    "id": "new-nlu-018",
+    "scope": "assistant",
+    "utterance": "Запиши в памятку серийный номер пылесоса VC-90471",
+    "intent": "create_note",
+    "text": "серийный номер пылесоса VC-90471"
+  },
+  {
+    "id": "new-nlu-019",
+    "scope": "assistant",
+    "utterance": "Запомни серийный номер пылесоса VC-90471",
+    "intent": "create_note",
+    "text": "серийный номер пылесоса VC-90471"
+  },
+  {
+    "id": "new-nlu-020",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку серийный номер пылесоса VC-90471",
+    "intent": "create_note",
+    "text": "серийный номер пылесоса VC-90471"
+  },
+  {
+    "id": "new-nlu-021",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, оформи карточку с содержимым контакт сантехника 89161239876",
+    "intent": "create_note",
+    "text": "контакт сантехника 89161239876"
+  },
+  {
+    "id": "new-nlu-022",
+    "scope": "assistant",
+    "utterance": "Запиши в памятку контакт сантехника 89161239876",
+    "intent": "create_note",
+    "text": "контакт сантехника 89161239876"
+  },
+  {
+    "id": "new-nlu-023",
+    "scope": "assistant",
+    "utterance": "Запомни контакт сантехника 89161239876",
+    "intent": "create_note",
+    "text": "контакт сантехника 89161239876"
+  },
+  {
+    "id": "new-nlu-024",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку контакт сантехника 89161239876",
+    "intent": "create_note",
+    "text": "контакт сантехника 89161239876"
+  },
+  {
+    "id": "new-nlu-025",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, оформи карточку с содержимым код двери 7432",
+    "intent": "create_note",
+    "text": "код двери 7432"
+  },
+  {
+    "id": "new-nlu-026",
+    "scope": "assistant",
+    "utterance": "Запиши в памятку код двери 7432",
+    "intent": "create_note",
+    "text": "код двери 7432"
+  },
+  {
+    "id": "new-nlu-027",
+    "scope": "assistant",
+    "utterance": "Запомни код двери 7432",
+    "intent": "create_note",
+    "text": "код двери 7432"
+  },
+  {
+    "id": "new-nlu-028",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку код двери 7432",
+    "intent": "create_note",
+    "text": "код двери 7432"
+  },
+  {
+    "id": "new-nlu-029",
+    "scope": "assistant",
+    "utterance": "Пожалуйста, оформи карточку с содержимым высота потолка 2.75 метра",
+    "intent": "create_note",
+    "text": "высота потолка 2.75 метра"
+  },
+  {
+    "id": "new-nlu-030",
+    "scope": "assistant",
+    "utterance": "Запиши в памятку высота потолка 2.75 метра",
+    "intent": "create_note",
+    "text": "высота потолка 2.75 метра"
+  },
+  {
+    "id": "new-nlu-031",
+    "scope": "assistant",
+    "utterance": "Запомни высота потолка 2.75 метра",
+    "intent": "create_note",
+    "text": "высота потолка 2.75 метра"
+  },
+  {
+    "id": "new-nlu-032",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку высота потолка 2.75 метра",
+    "intent": "create_note",
+    "text": "высота потолка 2.75 метра"
+  },
+  {
+    "id": "new-nlu-033",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше задачу поездку за новой тумбочкой",
+    "intent": "delete_reminder",
+    "target": "поездку за новой тумбочкой"
+  },
+  {
+    "id": "new-nlu-034",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше задачу проверку дымового датчика",
+    "intent": "delete_reminder",
+    "target": "проверку дымового датчика"
+  },
+  {
+    "id": "new-nlu-035",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше задачу звонок сервисному мастеру",
+    "intent": "delete_reminder",
+    "target": "звонок сервисному мастеру"
+  },
+  {
+    "id": "new-nlu-036",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше задачу заказ расходников для принтера",
+    "intent": "delete_reminder",
+    "target": "заказ расходников для принтера"
+  },
+  {
+    "id": "new-nlu-037",
+    "scope": "assistant",
+    "utterance": "Запиши аудио с микрофона",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-038",
+    "scope": "assistant",
+    "utterance": "Сохрани фото из галереи",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-039",
+    "scope": "assistant",
+    "utterance": "Я уже сохранил номер страховки",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-040",
+    "scope": "assistant",
+    "utterance": "Мы завершили записать контакты",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-041",
+    "scope": "assistant",
+    "utterance": "Можешь записать видео с камеры",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-042",
+    "scope": "assistant",
+    "utterance": "Создай презентацию с картинками",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-043",
+    "scope": "assistant",
+    "utterance": "Что означает слово напоминание",
+    "intent": "unknown"
+  },
+  {
+    "id": "new-nlu-044",
+    "scope": "assistant",
+    "utterance": "Я хочу посмотреть фильм",
+    "intent": "unknown"
+  }
+]

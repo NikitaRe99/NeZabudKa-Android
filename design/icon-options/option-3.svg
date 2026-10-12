@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 108 108"><defs><clipPath id="mask"><rect width="108" height="108" rx="25"/></clipPath></defs><g clip-path="url(#mask)"><rect width="108" height="108" fill="#1782F2"/><rect x="28" y="29" width="42" height="50" rx="9" fill="white"/>
+<path d="M39 42 H57 M39 52 H52" stroke="#BBDDFE" stroke-width="4" stroke-linecap="round"/>
+<circle cx="68" cy="65" r="15" fill="#1065C6" stroke="#1782F2" stroke-width="3"/>
+<path d="M68 57 V65 L74 69" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>

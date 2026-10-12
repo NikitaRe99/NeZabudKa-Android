@@ -1,6 +1,10 @@
 package ru.nezabudka.app.domain
 
 fun extractNoteParts(value: String): Pair<String?, String?> {
+    Regex("(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:создай|добавь|запиши|сохрани)\\s+заметку\\s+без\\s+папки\\s*[:;—–-]?\\s+(.+)$")
+        .matchEntire(value)?.let { return null to it.groupValues[1].trim() }
+    extractFolderNoteInsertion(value)?.let { return it }
+    extractSpokenNoteCarrier(value)?.let { return it }
     val createAndAddToQuotedFolder = Regex(
         "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:создай|создать|добавь|добавить|запиши|записать)" +
             "\\s+заметк[\\p{L}]*\\s+(?:и\\s+)?(?:добавь|добавить|помести|поместить)" +
@@ -70,6 +74,60 @@ fun extractNoteParts(value: String): Pair<String?, String?> {
         .find(value)?.groupValues?.get(1)?.let(::cleanQuoted)
     return null to text
 }
+
+/** Linguistic carriers delimit fields even when dictation has no quotes or colon. */
+fun extractSpokenNoteCarrier(value: String): Pair<String?, String>? {
+    SPOKEN_INSERTION_NOTE.find(value)?.let { match ->
+        return cleanQuoted(match.groupValues[1]).trim(',', ':', ';').trim() to
+            cleanQuoted(match.groupValues[2]).trim('.', '!', '?').trim()
+    }
+    SPOKEN_FOLDER_NOTE.find(value)?.let { match ->
+        val folder = cleanQuoted(match.groupValues[1]).trim(',', ':', ';').trim()
+        val text = cleanQuoted(match.groupValues[2]).trim('.', '!', '?').trim()
+        if (folder.isNotBlank() && text.isNotBlank()) return folder to text
+    }
+    SPOKEN_NOTE.find(value)?.let { match ->
+        val text = cleanQuoted(match.groupValues[1]).trim('.', '!', '?').trim()
+        if (text.isNotBlank()) return null to text
+    }
+    return null
+}
+
+private val SPOKEN_INSERTION_NOTE = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:закинь|сохрани|добавь|помести)\\s+в\\s+" +
+        "(.+?)\\s+запись\\s+о\\s+том\\s*,?\\s*что\\s+(.+)$",
+)
+
+private val SPOKEN_FOLDER_NOTE = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
+        "(?:для\\s+папки|в\\s+папку)\\s+(.+?)\\s+(?:сохрани|добавь|запиши|зафиксируй)" +
+        "\\s+(?:(?:следующую|такую)\\s+)?(?:мысль|запись|заметку)\\s*[,.:;—–-]?\\s+(.+)" +
+        ")$",
+)
+private val SPOKEN_NOTE = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
+        "хочу\\s+оставить\\s+себе\\s+(?:такую\\s+)?запись|" +
+        "внеси\\s+в\\s+(?:мои\\s+)?заметки|" +
+        "сохрани\\s+(?:следующую\\s+)?мысль|зафиксируй\\s+в\\s+заметках" +
+        ")\\s*[,.:;—–-]?\\s+(.+)$",
+)
+
+/** The action separates the folder from note content, including punctuation emitted by STT. */
+fun extractFolderNoteInsertion(value: String): Pair<String, String>? {
+    val match = FOLDER_NOTE_INSERTION.find(value) ?: return null
+    val folder = match.groupValues[1].ifBlank {
+        match.groupValues[2].trim().trim(',', '.', ':', ';', '—', '–', '-').trim()
+    }
+    val text = cleanQuoted(match.groupValues[3])
+    return if (folder.isNotBlank() && text.isNotBlank()) folder to text else null
+}
+
+private val FOLDER_NOTE_INSERTION = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?в\\s+папк(?:у|е)\\s+" +
+        "(?:[«“\"](.+?)[»”\"]|(.+?))(?:\\s+|\\s*[,.:;—–-]+\\s*)" +
+        "(?:добавь|добавить|создай|создать|запиши|записать|сохрани|сохранить)[\\s,.:;—–-]+" +
+        "(?:заметк[\\p{L}]*[\\s,.:;—–-]+)?(.+)$",
+)
 
 private fun cleanNoteInstruction(value: String): String? = value
     .replace(Regex("(?iu)^\\s*(?:создай|создать|добавь|добавить|запиши|записать)?\\s*заметк[\\p{L}]*\\s*[:—–-]?\\s*"), "")

@@ -30,7 +30,8 @@ class RussianTemporalParser(
     private val wordStart = "(?<![\\p{L}\\p{N}_])"
     private val wordEnd = "(?![\\p{L}\\p{N}_])"
     private val delayRegex = Regex("${wordStart}через\\s+(?:([\\d.,]+|[а-яё]+(?:\\s+[а-яё]+){0,2})\\s+)?($unitPattern)$wordEnd", RegexOption.IGNORE_CASE)
-    private val relativeDayRegex = Regex("$wordStart(послезавтра|завтра|сегодня)$wordEnd", RegexOption.IGNORE_CASE)
+    // Match the whole split date before looking for tomorrow inside it.
+    private val relativeDayRegex = Regex("$wordStart(послезавтра|после(?:\\s+|\\s*,\\s*)завтра|завтра|сегодня)$wordEnd", RegexOption.IGNORE_CASE)
     private val weekdayRegex = Regex("${wordStart}(?:в\\s+|на\\s+)?(следующ(?:ий|ую|ее))?\\s*(понедельник|вторник|среду|среда|четверг|пятницу|пятница|субботу|суббота|воскресенье)$wordEnd", RegexOption.IGNORE_CASE)
     private val numericDateRegex = Regex("${wordStart}(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?$wordEnd")
     private val namedDateRegex = Regex("${wordStart}(\\d{1,2})\\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?:\\s+(\\d{4}))?$wordEnd", RegexOption.IGNORE_CASE)
@@ -50,8 +51,11 @@ class RussianTemporalParser(
         RegexOption.IGNORE_CASE,
     )
     private val digitTimeRegex = Regex("${wordStart}в\\s+([01]?\\d|2[0-3])(?:(?::|\\s+)([0-5]\\d))?\\s*(?:час(?:а|ов)?\\s*)?(утра|дня|вечера|ночи)?$wordEnd", RegexOption.IGNORE_CASE)
-    private val timeWords = numberWords.keys.sortedByDescending { it.length }.joinToString("|")
-    private val wordTimeRegex = Regex("${wordStart}в\\s+($timeWords)(?:\\s+($timeWords(?:\\s+(?:один|одну|два|две|три|четыре|пять|шесть|семь|восемь|девять))?))?\\s*(?:час(?:а|ов)?\\s*)?(утра|дня|вечера|ночи)?$wordEnd", RegexOption.IGNORE_CASE)
+    private val clockUnits = "один|одну|одна|два|две|три|четыре|пять|шесть|семь|восемь|девять"
+    private val clockTeens = "десять|одиннадцать|двенадцать|тринадцать|четырнадцать|пятнадцать|шестнадцать|семнадцать|восемнадцать|девятнадцать"
+    private val clockHours = "двадцать(?:\\s+(?:один|два|три))?|$clockTeens|$clockUnits|ноль"
+    private val clockMinutes = "(?:двадцать|тридцать|сорок|пятьдесят)(?:\\s+(?:$clockUnits))?|$clockTeens|(?:ноль\\s+)?(?:$clockUnits)|ноль"
+    private val wordTimeRegex = Regex("${wordStart}в\\s+($clockHours)(?:\\s+($clockMinutes))?\\s*(?:час(?:а|ов)?\\s*)?(утра|дня|вечера|ночи)?$wordEnd", RegexOption.IGNORE_CASE)
     private val monthPartPattern = "начал(?:о|е|а|у)|середин(?:а|е|ы|у)|кон(?:ец|це|ца|цу)"
     private val relativeMonthPartRegex = Regex(
         "${wordStart}(?:ближе\\s+к\\s+|в\\s+|на\\s+|к\\s+)?($monthPartPattern)\\s+" +
@@ -134,6 +138,11 @@ class RussianTemporalParser(
     }
 
     fun extractDateRange(text: String, now: LocalDateTime): CalendarDateRange? {
+        Regex("(?iu)(?<![\\p{L}])ближайши[ех]\\s+(\\d+|один|два|две|три|четыре|пять|шесть|семь|восемь|девять|десять)\\s+(?:дня|дней|день)(?![\\p{L}])")
+            .find(text)?.let { match ->
+                val days = parseNumber(match.groupValues[1]).toInt()
+                if (days in 1..366) return CalendarDateRange(now.toLocalDate(), now.toLocalDate().plusDays(days.toLong()))
+            }
         relativeMonthPartRegex.find(text)?.let { match ->
             val modifier = match.groupValues[2].lowercase()
             val month = YearMonth.from(now).let {
@@ -166,6 +175,14 @@ class RussianTemporalParser(
             if (hour in 0..23 && minute in 0..59) return LocalTime.of(applyPeriod(hour, it.groupValues[3]), minute)
         }
         return findNamedTime(text)?.second
+    }
+
+    /** The vague phrase actually supplying the time, rather than an explicit clock or delay. */
+    fun namedTimePhraseUsed(text: String): String? {
+        if (digitTimeRegex.containsMatchIn(text) || wordTimeRegex.containsMatchIn(text) ||
+            Regex("$wordStart(?:в\\s+полдень|в\\s+полночь)$wordEnd", RegexOption.IGNORE_CASE).containsMatchIn(text)) return null
+        if (extractDelay(text)?.unit in setOf(DelayUnit.MINUTE, DelayUnit.HOUR)) return null
+        return findNamedTime(text)?.first
     }
 
     fun addDelay(now: LocalDateTime, value: Double, unit: DelayUnit): LocalDateTime = when (unit) {
@@ -293,9 +310,12 @@ class RussianTemporalParser(
 
     private fun findNamedTime(text: String): Pair<String, LocalTime>? {
         val normalizedText = text.lowercase().replace('ё', 'е')
-        val entries = configuredNamedTimes().entries
-            .filter { it.key.isNotBlank() }
-            .sortedByDescending { it.key.length }
+        val configured = configuredNamedTimes().entries.filter { it.key.isNotBlank() }.map { it.key to it.value }
+        val afternoonAlias = if (configured.none { it.first.trim().lowercase().replace('ё', 'е') == "после обеда" }) {
+            configured.firstOrNull { it.first.trim().lowercase().replace('ё', 'е') == "днем" }
+                ?.let { listOf("после обеда" to it.second) }.orEmpty()
+        } else emptyList()
+        val entries = (configured + afternoonAlias).sortedByDescending { it.first.length }
         entries.forEach { (phrase, time) ->
             val normalizedPhrase = phrase.trim().lowercase().replace('ё', 'е')
             val phrasePattern = normalizedPhrase.split(Regex("\\s+")).joinToString("\\s+") { Regex.escape(it) }
@@ -307,7 +327,7 @@ class RussianTemporalParser(
 
     private fun parseNumber(raw: String): Double {
         raw.replace(',', '.').toDoubleOrNull()?.let { return it }
-        val values = raw.lowercase().trim().split(Regex("\\s+")).map { numberWords[it] ?: throw CommandValidationException("Не удалось разобрать число: $raw") }
+        val values = raw.lowercase().trim().split(Regex("\\s+")).map { if (it == "ноль") 0.0 else numberWords[it] ?: throw CommandValidationException("Не удалось разобрать число: $raw") }
         return values.sum()
     }
 

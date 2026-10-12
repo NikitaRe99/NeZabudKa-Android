@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -21,13 +24,24 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.MicNone
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,9 +61,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -87,11 +98,12 @@ internal fun AssistantScreen(
     editCreatedNote: (Note) -> Unit,
     changeCreatedFolder: (Note) -> Unit,
     openReminder: (Reminder) -> Unit,
-    changeReminderTime: (Reminder, LocalDateTime?) -> Unit,
+    changeReminderTime: (Reminder, LocalDateTime?, String?) -> Unit,
     undoLastAction: () -> Unit,
     dismissNotice: () -> Unit,
     answerReminderDateClarification: (String) -> Unit,
-    onVoiceControlBounds: (Rect) -> Unit = {},
+    openWhisperModels: () -> Unit = {},
+    hideWelcomeCard: () -> Unit = {},
 ) {
     var helpExpanded by remember { mutableStateOf(false) }
     var noticeTimeReminder by remember { mutableStateOf<Reminder?>(null) }
@@ -111,8 +123,9 @@ internal fun AssistantScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
                     minLines = 2,
                     maxLines = 4,
+                    shape = RoundedCornerShape(theme.shapes.card),
                     label = {
-                        Text(if (state.awaitingSttConfirmation) "Проверьте распознанный текст" else "Введите текст")
+                        Text(if (state.awaitingSttConfirmation) "Проверьте распознанный текст" else "Что нужно запомнить?")
                     },
                     trailingIcon = {
                         if (state.recognizedText.isNotEmpty()) IconButton(onClick = { edit("") }) {
@@ -148,7 +161,6 @@ internal fun AssistantScreen(
                         color = if (state.isProcessing) theme.colors.input else theme.colors.talkButton,
                         contentColor = if (state.isProcessing) theme.colors.textSecondary else theme.colors.onTalkButton,
                         modifier = Modifier.weight(1f).height(58.dp)
-                            .onGloballyPositioned { onVoiceControlBounds(it.boundsInRoot()) }
                             .pushToTalkGesture(
                             enabled = !state.isProcessing,
                             hasRecognizedText = state.recognizedText.isNotBlank(),
@@ -157,13 +169,26 @@ internal fun AssistantScreen(
                             primaryAction = primaryAction,
                         ),
                     ) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Row(
+                            Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (state.isProcessing) {
+                                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    if (state.recognizedText.isNotBlank()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
+                                    null,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                             Text(when {
                                 state.isRecording -> "Отпустите для распознавания"
                                 state.isProcessing -> "Выполняю…"
                                 state.recognizedText.isNotBlank() -> "Выполнить"
-                                else -> "Удерживайте, чтобы говорить"
-                            })
+                                else -> "Удерживайте и говорите"
+                            }, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -171,30 +196,220 @@ internal fun AssistantScreen(
         },
     ) { inner -> LazyColumn(
         Modifier.fillMaxSize().padding(inner).padding(horizontal = AppLayout.horizontalPadding),
-        contentPadding = PaddingValues(bottom = AppLayout.sectionSpacing),
+        contentPadding = PaddingValues(top = AppLayout.contentTopPadding, bottom = AppLayout.sectionSpacing),
         verticalArrangement = Arrangement.spacedBy(AppLayout.sectionSpacing),
     ) {
         item {
-            Text(
-                "НеЗабудьКа (название может быть временным)",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth().padding(end = 56.dp),
-            )
+            Column(
+                Modifier.fillMaxWidth().padding(end = 56.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                AppScreenHeading("НеЗабудьКа", "Место для мыслей и важных дел")
+            }
         }
-        if (helpExpanded) item {
+        if (state.awaitingSttConfirmation) item { Text("Проверьте распознанный текст и нажмите «Выполнить».", style = MaterialTheme.typography.bodySmall) }
+        if (state.isProcessing) item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                Text("Распознаю и выполняю команду…")
+            }
+        }
+        state.error?.let { error -> item {
+            Column {
+                Text(error, color = MaterialTheme.colorScheme.error)
+                if (state.whisperModelMissing) TextButton(onClick = openWhisperModels) {
+                    Text("Выбрать и скачать модель")
+                }
+            }
+        } }
+        state.result?.let { result -> item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(theme.shapes.card),
+                colors = CardDefaults.cardColors(containerColor = theme.colors.card),
+                elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
+            ) { Text(result, Modifier.padding(12.dp)) }
+        } }
+        if (settings.showTechnicalLog) item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(theme.shapes.card),
+                colors = CardDefaults.cardColors(containerColor = theme.colors.card),
                 elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
             ) {
                 Column(
-                    Modifier.padding(12.dp),
+                    Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("Доступные команды", style = MaterialTheme.typography.titleMedium)
+                    Text("Технический лог", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Событий в текущем сеансе: ${state.log.size}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    SelectionContainer {
+                        Text(
+                            remember(state.log) { state.log.joinToString("\n").ifBlank { "Событий пока нет" } },
+                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        )
+                    }
+                }
+            }
+        }
+        if (settings.showAssistantWelcomeCard) item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(theme.shapes.panel),
+                colors = CardDefaults.cardColors(containerColor = theme.colors.card),
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.MicNone, null, Modifier.size(26.dp), tint = theme.colors.accent)
+                        Text("Скажите — и сохраните", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    }
+                    Text(
+                        "Создавайте заметки, планируйте дела и собирайте идеи в папки. Удерживайте кнопку внизу или введите команду текстом.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = theme.colors.textSecondary,
+                    )
+                    Text("Попробуйте команду", style = MaterialTheme.typography.labelLarge)
+                    Column {
+                        AssistChip(
+                            onClick = { edit("Напомни завтра в 9:00 полить цветы") },
+                            label = { Text("Напомни завтра полить цветы") },
+                            leadingIcon = { Icon(Icons.Default.Schedule, null, Modifier.size(18.dp)) },
+                        )
+                        AssistChip(
+                            onClick = { edit("Создай заметку: идеи для выходных") },
+                            label = { Text("Создай заметку с идеей") },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null, Modifier.size(18.dp)) },
+                        )
+                        AssistChip(
+                            onClick = { edit("Создай папку Путешествия") },
+                            label = { Text("Создай папку Путешествия") },
+                            leadingIcon = { Icon(Icons.Default.FolderOpen, null, Modifier.size(18.dp)) },
+                        )
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().toggleable(value = false, role = Role.Checkbox, onValueChange = { if (it) hideWelcomeCard() }),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = false, onCheckedChange = null)
+                        Text("Больше не показывать", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    } }
+    Surface(
+        modifier = Modifier.align(Alignment.TopEnd).padding(end = AppLayout.horizontalPadding, top = AppLayout.contentTopPadding),
+        shape = RoundedCornerShape(50),
+        color = theme.colors.background,
+    ) {
+        IconButton(onClick = { helpExpanded = !helpExpanded }, modifier = Modifier.size(56.dp)) {
+            Icon(Icons.AutoMirrored.Filled.HelpOutline, "Открыть справку по командам", Modifier.size(34.dp), tint = theme.colors.textPrimary)
+        }
+    }
+    if (helpExpanded) AssistantHelpDialog { helpExpanded = false }
+    actionNotice?.let { notice ->
+        AppNoticeCard(
+            message = notice.message,
+            onDismiss = dismissNotice,
+            modifier = Modifier.align(Alignment.BottomCenter)
+                .offset { IntOffset(0, -bottomControlsHeight) },
+        ) {
+            when (val effect = notice.effect) {
+                is ActionEffect.ReminderCreated -> {
+                    AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); openReminder(effect.reminder) })
+                    AppNoticeAction(Icons.Default.Schedule, "Сменить время", { noticeTimeReminder = effect.reminder })
+                }
+                is ActionEffect.NoteCreated -> {
+                    AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); editCreatedNote(effect.note) })
+                    AppNoticeAction(Icons.Default.FolderOpen, "Сменить папку", { dismissNotice(); changeCreatedFolder(effect.note) })
+                }
+                is ActionEffect.ReminderDateRequested -> {
+                    AppNoticeTextAction("Без времени", { answerReminderDateClarification("без даты") })
+                    AppNoticeTextAction("Отмена", { answerReminderDateClarification("отмена") })
+                }
+                else -> Unit
+            }
+            if (notice.effect is ActionEffect.ReminderCreated ||
+                notice.effect is ActionEffect.ReminderDeleted ||
+                notice.effect is ActionEffect.NoteCreated ||
+                notice.effect is ActionEffect.FolderCreated ||
+                notice.effect is ActionEffect.FolderDeleted
+            ) AppNoticeAction(Icons.AutoMirrored.Filled.Undo, "Отменить", undoLastAction)
+        }
+    }
+    }
+    noticeTimeReminder?.let { reminder ->
+        ReminderDateTimeDialog(
+            initialDate = reminder.remindAt?.toLocalDate(),
+            initialTime = reminder.remindAt?.toLocalTime(),
+            initialRecurrence = reminder.recurrence,
+            dismiss = { noticeTimeReminder = null },
+            clear = { changeReminderTime(reminder, null, null); noticeTimeReminder = null },
+            confirm = { date, time ->
+                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)), reminder.recurrence)
+                noticeTimeReminder = null
+            },
+            confirmWithRecurrence = { date, time, recurrence ->
+                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)), recurrence)
+                noticeTimeReminder = null
+            },
+        )
+    }
+}
+
+@Composable
+private fun HighlightedCommandBullet(
+    label: String,
+    commands: List<String>,
+    suffix: String = "",
+) {
+    Text(
+        buildAnnotatedString {
+            append("• ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append("$label: ") }
+            commands.forEachIndexed { index, command ->
+                when {
+                    index == 0 -> Unit
+                    index == commands.lastIndex -> append(" или ")
+                    else -> append(", ")
+                }
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(command) }
+            }
+            append(".")
+            if (suffix.isNotBlank()) append(" $suffix")
+        },
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun HelpBullet(text: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("•", style = MaterialTheme.typography.bodyMedium)
+        Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun AssistantHelpDialog(onDismiss: () -> Unit) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Команды помощника") },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Понятно") } },
+        text = {
+            Box(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
+                Column(
+                    Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Text(
                         "На вкладке «Помощник» можно использовать команды для напоминаний, заметок и папок. На остальных вкладках выполняются только команды соответствующего раздела.",
                         style = MaterialTheme.typography.bodySmall,
                     )
+                    Text("Для записи удерживайте кнопку микрофона, говорите и отпустите её для распознавания.", style = MaterialTheme.typography.bodySmall)
                     Text("Стандартные команды", style = MaterialTheme.typography.titleSmall)
                     Text(
                         "Работают сразу и наиболее надёжно. Начинайте фразу с понятного действия.",
@@ -252,132 +467,6 @@ internal fun AssistantScreen(
                     )
                 }
             }
-        }
-        if (state.awaitingSttConfirmation) item { Text("Проверьте распознанный текст и нажмите «Выполнить».", style = MaterialTheme.typography.bodySmall) }
-        if (state.isProcessing) item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CircularProgressIndicator()
-                Text("Распознаю и выполняю команду…")
-            }
-        }
-        state.error?.let { error -> item { Text(error, color = MaterialTheme.colorScheme.error) } }
-        state.result?.let { result -> item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
-            ) { Text(result, Modifier.padding(12.dp)) }
-        } }
-        if (settings.showTechnicalLog) item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
-            ) {
-                Column(
-                    Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text("Технический лог", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Событий в текущем сеансе: ${state.log.size}",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    SelectionContainer {
-                        Text(
-                            state.log.joinToString("\n").ifBlank { "Событий пока нет" },
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                        )
-                    }
-                }
-            }
-        }
-    } }
-    Surface(
-        modifier = Modifier.align(Alignment.TopEnd).padding(end = AppLayout.horizontalPadding),
-        shape = RoundedCornerShape(50),
-        color = theme.colors.background,
-    ) {
-        OutlinedIconButton(onClick = { helpExpanded = !helpExpanded }) {
-            Text("?", style = MaterialTheme.typography.titleLarge)
-        }
-    }
-    actionNotice?.let { notice ->
-        AppNoticeCard(
-            message = notice.message,
-            onDismiss = dismissNotice,
-            modifier = Modifier.align(Alignment.BottomCenter)
-                .offset { IntOffset(0, -bottomControlsHeight) },
-        ) {
-            when (val effect = notice.effect) {
-                is ActionEffect.ReminderCreated -> {
-                    IconButton(onClick = { dismissNotice(); openReminder(effect.reminder) }) {
-                        Icon(Icons.Default.Edit, "Редактировать")
-                    }
-                    IconButton(onClick = { noticeTimeReminder = effect.reminder }) {
-                        Icon(Icons.Default.Schedule, "Сменить время")
-                    }
-                }
-                is ActionEffect.NoteCreated -> {
-                    TextButton(onClick = { dismissNotice(); editCreatedNote(effect.note) }) { Text("Редактировать") }
-                    TextButton(onClick = { dismissNotice(); changeCreatedFolder(effect.note) }) { Text("Сменить папку") }
-                }
-                is ActionEffect.ReminderDateRequested -> {
-                    TextButton(onClick = { answerReminderDateClarification("отмена") }) { Text("Отмена") }
-                    TextButton(onClick = { answerReminderDateClarification("без даты") }) { Text("Без времени") }
-                }
-                else -> Unit
-            }
-            if (notice.effect is ActionEffect.ReminderCreated ||
-                notice.effect is ActionEffect.ReminderDeleted ||
-                notice.effect is ActionEffect.NoteCreated ||
-                notice.effect is ActionEffect.FolderCreated ||
-                notice.effect is ActionEffect.FolderDeleted
-            ) TextButton(onClick = undoLastAction) { Text("Отменить") }
-        }
-    }
-    }
-    noticeTimeReminder?.let { reminder ->
-        ReminderDateTimeDialog(
-            initialDate = reminder.remindAt?.toLocalDate(),
-            initialTime = reminder.remindAt?.toLocalTime(),
-            dismiss = { noticeTimeReminder = null },
-            clear = { changeReminderTime(reminder, null); noticeTimeReminder = null },
-            confirm = { date, time ->
-                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)))
-                noticeTimeReminder = null
-            },
-        )
-    }
-}
-
-@Composable
-private fun HighlightedCommandBullet(
-    label: String,
-    commands: List<String>,
-    suffix: String = "",
-) {
-    Text(
-        buildAnnotatedString {
-            append("• ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append("$label: ") }
-            commands.forEachIndexed { index, command ->
-                when {
-                    index == 0 -> Unit
-                    index == commands.lastIndex -> append(" или ")
-                    else -> append(", ")
-                }
-                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(command) }
-            }
-            append(".")
-            if (suffix.isNotBlank()) append(" $suffix")
         },
-        style = MaterialTheme.typography.bodyMedium,
     )
-}
-
-@Composable
-private fun HelpBullet(text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("•", style = MaterialTheme.typography.bodyMedium)
-        Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-    }
 }

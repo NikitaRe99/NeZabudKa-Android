@@ -33,12 +33,53 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LocalAssistant">
         <profileable android:shell="true" />
-        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:windowSoftInputMode="adjustResize">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".widget.WidgetEntryActivity" android:exported="false"
+            android:excludeFromRecents="true" android:noHistory="true" android:theme="@style/Theme.LocalAssistant.WidgetEntry" />
+        <activity android:name=".widget.WidgetFolderActivity" android:exported="true"
+            android:excludeFromRecents="true" android:theme="@style/Theme.LocalAssistant.WidgetFolder">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
+        <receiver android:name=".widget.RemindersWidgetProvider" android:exported="false" android:label="@string/widget_reminders_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/reminders_widget_info" />
+        </receiver>
+        <receiver android:name=".widget.NotesWidgetProvider" android:exported="false" android:label="@string/widget_notes_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/notes_widget_info" />
+        </receiver>
+        <service android:name=".widget.WidgetListService" android:exported="false" android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <receiver android:name=".widget.WidgetActionReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <activity-alias android:name=".LauncherNoteCheck" android:targetActivity=".MainActivity"
+            android:enabled="true" android:exported="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias android:name=".LauncherFlower" android:targetActivity=".MainActivity"
+            android:enabled="false" android:exported="true" android:icon="@mipmap/ic_launcher_flower" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".LauncherNoteClock" android:targetActivity=".MainActivity"
+            android:enabled="false" android:exported="true" android:icon="@mipmap/ic_launcher_clock" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
         <activity
             android:name=".notifications.ReminderAlertActivity"
             android:enableOnBackInvokedCallback="false"
@@ -65,16 +106,6 @@
             android:name=".notifications.ReminderAlarmReceiver"
             android:exported="false" />
         <receiver android:name=".notifications.ReminderActionReceiver" android:exported="false" />
-        <receiver
-            android:name=".widget.VoiceNoteWidgetProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/voice_note_widget_info" />
-        </receiver>
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"

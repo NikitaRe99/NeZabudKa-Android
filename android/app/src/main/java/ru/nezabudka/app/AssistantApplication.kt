@@ -41,6 +41,10 @@ import java.time.LocalTime
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AssistantApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        ru.nezabudka.app.widget.HomeWidgets.start(this)
+    }
     private val containerDelegate = lazy(LazyThreadSafetyMode.SYNCHRONIZED) { AppContainer(this) }
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val uiServicesStarted = AtomicBoolean(false)
@@ -75,6 +79,7 @@ class AssistantApplication : Application() {
 }
 
 class AppContainer(val app: Application) {
+    val appIcons = ru.nezabudka.app.data.AppIconManager(app)
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val portableResourcesLoaded = AtomicBoolean(false)
     private val dataBackupStarted = AtomicBoolean(false)
@@ -103,8 +108,9 @@ class AppContainer(val app: Application) {
         dispatcher,
         temporal = temporalParser,
     )
-    val recorder = WavAudioRecorder(app) { settings.state.value.audioPreprocessingEnabled }
+    val recorder = WavAudioRecorder(app, recordingTailMs = 180) { settings.state.value.audioPreprocessingEnabled }
     val preprocessor = PcmAudioPreprocessor(app)
+    val notePunctuation = ru.nezabudka.app.speech.NotePunctuation(app, modelStorage)
     val whisperModels = WhisperModelManager(app, modelStorage)
     private val whisperVadModel = WhisperVadModelProvider(app)
     val cloudSttCredentials = CloudSttCredentials(app)
@@ -126,6 +132,7 @@ class AppContainer(val app: Application) {
             settings.state.value.sttEngine == "whisper" && settings.state.value.keepWhisperModelLoaded
         },
         configuredThreadCount = { settings.state.value.whisperThreadCount },
+        accurateMode = { settings.state.value.whisperAccurateMode },
     )
     val stt = SttRegistry(listOf(
         AndroidSpeechRecognizerEngine(app), whisper,
@@ -138,6 +145,7 @@ class AppContainer(val app: Application) {
         loadPortableResources()
         whisperModels.start()
         classicNlu.startModelObserver(applicationScope)
+        notePunctuation.models.start(applicationScope)
     }
 
     /** Must be called from a background dispatcher. */

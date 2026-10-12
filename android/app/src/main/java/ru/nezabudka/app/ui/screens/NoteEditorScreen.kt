@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -207,6 +208,7 @@ internal fun NoteCard(
     val background = resolveNoteColor(note.color)
     val contentColor = theme.colors.textPrimary
     val shape = RoundedCornerShape(theme.shapes.noteCard)
+    val preview = remember(note.text) { noteCardPreview(note.text) }
     Card(
         modifier = Modifier
             .then(modifier)
@@ -227,7 +229,7 @@ internal fun NoteCard(
                 if (note.text.isNotBlank()) Spacer(Modifier.height(6.dp))
             }
             if (note.text.isNotBlank()) {
-                Row { Text(note.text, Modifier.weight(1f), maxLines = 8) }
+                Row { Text(preview, Modifier.weight(1f), maxLines = 8, overflow = TextOverflow.Ellipsis) }
             }
             if (note.folderNames.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
@@ -256,7 +258,6 @@ internal fun NoteCard(
 internal fun NoteEditorScreen(
     note: Note?, folders: List<NoteFolder>, initialFolderId: Long?, back: () -> Unit,
     editorSessionId: Long,
-    openedFromVoiceWidget: Boolean,
     save: (Long?, List<String>, String, String, Boolean, Boolean, String?) -> Unit,
     createFolder: (String, (NoteFolder) -> Unit) -> Unit,
     createReminder: (String, LocalDateTime, String?, () -> Unit) -> Unit,
@@ -402,7 +403,7 @@ internal fun NoteEditorScreen(
         contentColor = editorContentColor,
         onBack = exitEditor,
         imeAware = true,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { AppSnackbarHost(snackbarHostState) },
         actions = {
             NoteEditorActionButton(
                 icon = Icons.Default.PushPin,
@@ -483,13 +484,6 @@ internal fun NoteEditorScreen(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).focusRequester(titleFocus),
                 singleLine = true,
             )
-            if (openedFromVoiceWidget && titleValue.text.isBlank() && textValue.text.isBlank()) {
-                Text(
-                    "Удерживайте кнопку микрофона внизу, говорите и отпустите для распознавания",
-                    color = editorContentColor.copy(alpha = 0.68f),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
             AppEditorTextField(
                 value = textValue,
                 onValueChange = updateBody,

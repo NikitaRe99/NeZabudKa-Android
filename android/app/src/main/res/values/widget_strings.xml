@@ -1,0 +1,18 @@
+<resources>
+    <string name="widget_reminders_name">Напоминания — Сегодня</string>
+    <string name="widget_notes_name">Заметки — Папка</string>
+    <string name="widget_reminders_description">Сегодняшние и просроченные дела с отметкой выполнения</string>
+    <string name="widget_notes_description">Прокручиваемые заметки выбранной папки</string>
+    <string name="widget_today">Сегодня</string>
+    <string name="widget_all_notes">Все заметки</string>
+    <string name="widget_all_reminders">Все дела</string>
+    <string name="widget_today_empty">На сегодня всё выполнено</string>
+    <string name="widget_notes_empty">В этой папке пока нет заметок</string>
+    <string name="widget_folder_deleted">Папка удалена. Выберите другую в заголовке.</string>
+    <string name="widget_complete">Отметить выполненным</string>
+    <string name="widget_add_reminder">Добавить напоминание</string>
+    <string name="widget_add_note">Добавить заметку</string>
+    <string name="widget_choose_folder">Выбрать папку виджета</string>
+    <string name="widget_scroll_list">Прокручиваемый список</string>
+    <string name="widget_undo">Отменить</string>
+</resources>

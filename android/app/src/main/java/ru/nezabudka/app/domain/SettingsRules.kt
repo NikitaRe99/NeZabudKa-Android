@@ -9,7 +9,6 @@ private val ALARM_PRESENTATIONS = setOf(ALARM_PRESENTATION_SCREEN, ALARM_PRESENT
 private val UI_PERFORMANCE_MODES = setOf(UI_PERFORMANCE_AUTO, UI_PERFORMANCE_REDUCED, UI_PERFORMANCE_FULL)
 val NOTE_TRASH_RETENTION_OPTIONS = listOf(0, 1, 7, 30, 90)
 const val AUTOMATIC_WHISPER_THREAD_COUNT = 0
-const val MAX_MANUAL_WHISPER_THREAD_COUNT = 8
 
 fun normalizeTheme(value: String): String = value.takeIf(THEMES::contains) ?: "light"
 fun normalizeSttEngine(value: String): String = value.takeIf(STT_ENGINES::contains) ?: "whisper"
@@ -23,17 +22,9 @@ fun normalizeUiPerformanceMode(value: String): String =
 fun normalizeNoteTrashRetentionDays(value: Int): Int =
     value.takeIf(NOTE_TRASH_RETENTION_OPTIONS::contains) ?: DEFAULT_NOTE_TRASH_RETENTION_DAYS
 fun normalizeWhisperThreadCount(value: Int): Int =
-    value.coerceIn(AUTOMATIC_WHISPER_THREAD_COUNT, MAX_MANUAL_WHISPER_THREAD_COUNT)
+    value.coerceAtLeast(AUTOMATIC_WHISPER_THREAD_COUNT)
 
-fun maximumWhisperThreadCount(cpuCores: Int, lowRamDevice: Boolean, memoryClassMb: Int): Int {
-    val cores = cpuCores.coerceAtLeast(1)
-    return when {
-        cores <= 2 -> cores
-        lowRamDevice || memoryClassMb <= 192 -> minOf(2, cores)
-        memoryClassMb <= 256 -> minOf(4, cores)
-        else -> minOf(MAX_MANUAL_WHISPER_THREAD_COUNT, cores)
-    }
-}
+fun maximumWhisperThreadCount(cpuCores: Int): Int = cpuCores.coerceAtLeast(1)
 
 fun automaticWhisperThreadCount(cpuCores: Int, lowRamDevice: Boolean, memoryClassMb: Int): Int {
     val cores = cpuCores.coerceAtLeast(1)
@@ -51,7 +42,7 @@ fun effectiveWhisperThreadCount(
     lowRamDevice: Boolean,
     memoryClassMb: Int,
 ): Int {
-    val available = maximumWhisperThreadCount(cpuCores, lowRamDevice, memoryClassMb)
+    val available = maximumWhisperThreadCount(cpuCores)
     val normalized = normalizeWhisperThreadCount(configured)
     return if (normalized == AUTOMATIC_WHISPER_THREAD_COUNT) {
         automaticWhisperThreadCount(cpuCores, lowRamDevice, memoryClassMb)

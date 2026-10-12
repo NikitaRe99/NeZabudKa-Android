@@ -25,4 +25,15 @@ class ModelSelectionRulesTest {
         assertEquals(true, hasNativeMemoryHeadroom(whisperPeak, 2_000L * mib, 4_000L * mib))
         assertEquals(false, hasNativeMemoryHeadroom(whisperPeak, 200L * mib, 1_000L * mib))
     }
+
+    @Test
+    fun `retaining weights still reserves an inference workspace`() {
+        val mib = 1024L * 1024L
+        val modelBytes = 190L * mib
+        val cold = estimatedWhisperPeakBytes(modelBytes, 2L * mib)
+        val retained = estimatedWhisperPeakBytes(modelBytes, 2L * mib, modelWeightsRetained = true)
+        assertEquals(modelBytes, cold - retained)
+        assertEquals(true, retained > estimatedWhisperPeakBytes(0, 2L * mib))
+        assertEquals(false, hasNativeMemoryHeadroom(retained, 200L * mib, 1_000L * mib))
+    }
 }

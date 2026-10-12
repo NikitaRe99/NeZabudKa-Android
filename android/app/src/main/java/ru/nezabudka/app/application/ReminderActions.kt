@@ -62,10 +62,10 @@ class ReminderActions(
             effectiveRemindAt,
             normalizedRecurrence,
             favorite,
-            completed,
+            completed && !(normalizedRecurrence != null && effectiveRemindAt != null),
         )
         if (completed) {
-            scheduler.cancel(updated.id)
+            return setCompleted(updated.id, true)
         } else if (
             original.status == "completed" ||
             original.remindAt != updated.remindAt ||
@@ -88,6 +88,16 @@ class ReminderActions(
     }
 
     suspend fun setCompleted(id: Long, completed: Boolean): Reminder {
+        if (completed) {
+            val current = reminders.find(id, null, false) ?: throw NoSuchElementException("Напоминание $id не найдено")
+            val date = current.remindAt
+            if (current.status != "completed" && date != null) {
+                nextReminderOccurrence(date, current.recurrence, maxOf(date, LocalDateTime.now(clock)))?.let { next ->
+                    scheduler.cancel(id)
+                    return reminders.reschedule(id, current.text, next).also(scheduler::schedule)
+                }
+            }
+        }
         var updated = reminders.setCompleted(id, completed)
         if (completed) {
             scheduler.cancel(id)
@@ -100,6 +110,23 @@ class ReminderActions(
             }
             scheduler.schedule(updated)
         }
+        return updated
+    }
+
+    /** Alarm delivery may already have advanced the row. Completing that notification is idempotent. */
+    suspend fun completeFromNotification(id: Long): Reminder? {
+        val current = reminders.find(id, null, false) ?: return null
+        if (normalizeReminderRecurrence(current.recurrence) != null &&
+            current.remindAt?.isAfter(LocalDateTime.now(clock).plusMinutes(1)) == true) return current
+        return setCompleted(id, true)
+    }
+
+    suspend fun rescheduleWithRecurrence(reminder: Reminder, date: LocalDateTime?, recurrence: String?): Reminder {
+        scheduler.cancel(reminder.id)
+        var updated = reminders.reschedule(reminder.id, reminder.text, date)
+        val normalized = if (date == null) null else normalizeReminderRecurrence(recurrence)
+        if (updated.recurrence != normalized) updated = reminders.setRecurrence(updated.id, normalized)
+        scheduler.schedule(updated)
         return updated
     }
 

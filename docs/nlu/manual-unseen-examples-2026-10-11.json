@@ -1,0 +1,248 @@
+{
+  "training_examples": 21634,
+  "checked_examples": 24577,
+  "cases": [
+    {
+      "id": 1,
+      "kind": "folder",
+      "utterance": "Заведи отдельную папку под названием «Тестовый блокнот».",
+      "payload": "Тестовый блокнот",
+      "expected": "Создать папку «Тестовый блокнот»",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 2,
+      "kind": "folder",
+      "utterance": "Выдели под мои записи папку «Макеты для печати».",
+      "payload": "Макеты для печати",
+      "expected": "Создать папку «Макеты для печати»",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 3,
+      "kind": "note",
+      "utterance": "Для папки «Тестовый блокнот» сохрани следующую мысль: верхняя полка выдерживает семь килограммов.",
+      "payload": "верхняя полка выдерживает семь килограммов",
+      "expected": "Заметка в «Тестовый блокнот»: верхняя полка выдерживает семь килограммов",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 4,
+      "kind": "note",
+      "utterance": "Закинь в «Тестовый блокнот» запись о том, что запасные насадки лежат в сером пенале.",
+      "payload": "запасные насадки лежат в сером пенале",
+      "expected": "Заметка в «Тестовый блокнот»: запасные насадки лежат в сером пенале",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 5,
+      "kind": "note",
+      "utterance": "Хочу оставить себе такую запись — размер переходника двадцать два миллиметра.",
+      "payload": "размер переходника двадцать два миллиметра",
+      "expected": "Заметка: размер переходника двадцать два миллиметра",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 6,
+      "kind": "note",
+      "utterance": "Внеси в мои заметки: код учебного стенда — зелёный фонарь.",
+      "payload": "код учебного стенда — зелёный фонарь",
+      "expected": "Заметка: код учебного стенда — зелёный фонарь",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 7,
+      "kind": "reminder",
+      "utterance": "Пусть приложение предупредит меня завтра в 10:25, что пора повернуть горшок с базиликом.",
+      "payload": "повернуть горшок с базиликом",
+      "expected": "Напоминание завтра в 10:25: повернуть горшок с базиликом",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 8,
+      "kind": "reminder",
+      "utterance": "В следующий вторник в 17:40 хочу получить напоминание проверить крепление белой полки.",
+      "payload": "проверить крепление белой полки",
+      "expected": "Напоминание в следующий вторник в 17:40: проверить крепление белой полки",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 9,
+      "kind": "reminder",
+      "utterance": "Ровно через сорок пять минут хочу, чтобы ты напомнил закрыть вентиляционный люк.",
+      "payload": "закрыть вентиляционный люк",
+      "expected": "Напоминание через 45 минут: закрыть вентиляционный люк",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 10,
+      "kind": "reminder",
+      "utterance": "Через три часа сообщи мне, что пора снять бельё с сушилки.",
+      "payload": "снять бельё с сушилки",
+      "expected": "Напоминание через 3 часа: снять бельё с сушилки",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 11,
+      "kind": "reminder",
+      "utterance": "Верни эту задачу в поле зрения послезавтра утром: разобрать коробку с кабелями.",
+      "payload": "разобрать коробку с кабелями",
+      "expected": "Напоминание послезавтра во время «утром»: разобрать коробку с кабелями",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 12,
+      "kind": "list",
+      "utterance": "Покажи мне, чем заняты мои ближайшие три дня.",
+      "payload": null,
+      "expected": "Показать напоминания на ближайшие три дня",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 13,
+      "kind": "list",
+      "utterance": "Собери в один список напоминания, которые должны сработать завтра.",
+      "payload": null,
+      "expected": "Показать напоминания на завтра",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 14,
+      "kind": "list",
+      "utterance": "Есть у меня на послезавтра что-нибудь незавершённое?",
+      "payload": null,
+      "expected": "Показать напоминания на послезавтра",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 15,
+      "kind": "delete_reminder",
+      "utterance": "Сотри из напоминаний пункт «проверить крепление белой полки».",
+      "payload": "проверить крепление белой полки",
+      "expected": "Удалить тестовое напоминание про крепление белой полки",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 16,
+      "kind": "delete_folder",
+      "utterance": "Давай уберём папку «Макеты для печати», она была нужна только для проверки.",
+      "payload": "Макеты для печати",
+      "expected": "Удалить тестовую папку «Макеты для печати»",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 17,
+      "kind": "unknown",
+      "utterance": "Не создавай напоминание про очистку принтера.",
+      "payload": null,
+      "expected": "Ничего не создавать",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 18,
+      "kind": "unknown",
+      "utterance": "Объясни, чем заметка отличается от напоминания.",
+      "payload": null,
+      "expected": "Ничего не создавать и не удалять",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 19,
+      "kind": "unknown",
+      "utterance": "Перекинь заметку с чертежом из одной папки в другую.",
+      "payload": null,
+      "expected": "Сообщить, что такая команда не поддерживается",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    },
+    {
+      "id": 20,
+      "kind": "unknown",
+      "utterance": "Отмени удаление папки «Тестовый блокнот».",
+      "payload": null,
+      "expected": "Не удалять папку",
+      "overlaps": {
+        "exact": false,
+        "frame": false,
+        "source": false
+      }
+    }
+  ],
+  "status": "seen corrective regression after user voice trial",
+  "user_input": "voice then manual text correction; no dash, colon or quotes; case 7 had spoken words десять двадцать пять"
+}

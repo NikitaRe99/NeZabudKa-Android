@@ -13,10 +13,20 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Add
+import ru.nezabudka.app.ui.VoiceActionUiState
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
@@ -65,6 +76,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog as PlatformDialog
@@ -73,6 +85,38 @@ import androidx.compose.ui.window.DialogProperties
 import ru.nezabudka.app.ui.AppTheme
 import ru.nezabudka.app.ui.AppLayout
 import ru.nezabudka.app.ui.appShadowElevation
+
+/** Empty collections explain both the current state and the next useful step. */
+@Composable
+internal fun AppEmptyState(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier,
+) {
+    val theme = AppTheme.tokens
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(theme.shapes.card),
+            color = theme.colors.selected,
+            contentColor = theme.colors.accent,
+        ) {
+            Icon(icon, null, Modifier.padding(18.dp).size(28.dp))
+        }
+        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Text(
+            description,
+            modifier = Modifier.widthIn(max = 320.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = theme.colors.textSecondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
 
 @Composable
 internal fun Modifier.pushToTalkGesture(
@@ -109,6 +153,7 @@ internal fun Modifier.pushToTalkGesture(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AppNoticeCard(
     message: String,
@@ -120,21 +165,53 @@ internal fun AppNoticeCard(
     val theme = AppTheme.tokens
     Card(
         modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.notice),
+        shape = RoundedCornerShape(theme.shapes.card),
+        colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.notice, contentColor = theme.colors.textPrimary),
         elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                Text(message, Modifier.weight(1f), maxLines = 3)
-                IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Clear, "Закрыть")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Clear, "Закрыть", Modifier.size(18.dp), tint = theme.colors.textSecondary)
                 }
             }
-            Row(
+            Text(message, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium)
+            FlowRow(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                content = actions,
-            )
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                actions()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun RowScope.AppNoticeAction(icon: ImageVector, label: String, onClick: () -> Unit, tint: Color? = null) {
+    if (label == "Отменить") AppNoticeTextAction("Отмена", onClick)
+    else IconButton(onClick = onClick, modifier = Modifier.align(Alignment.CenterVertically).size(44.dp)) {
+        Icon(icon, label, Modifier.size(22.dp), tint = tint ?: AppTheme.tokens.colors.accent)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun RowScope.AppNoticeTextAction(label: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.align(Alignment.CenterVertically), contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+@Composable
+internal fun AppSnackbarHost(state: SnackbarHostState) {
+    SnackbarHost(state) { data ->
+        AppNoticeCard(data.visuals.message, data::dismiss) {
+            data.visuals.actionLabel?.let { label ->
+                if (label == "Отменить") AppNoticeAction(Icons.AutoMirrored.Filled.Undo, label, data::performAction)
+                else AppNoticeTextAction(label, data::performAction)
+            }
         }
     }
 }
@@ -257,7 +334,12 @@ internal fun AppAlertDialog(
     confirmButton: @Composable () -> Unit,
     dismissButton: @Composable () -> Unit = {},
 ) {
+    val theme = AppTheme.tokens
     AlertDialog(
+        shape = RoundedCornerShape(theme.shapes.dialog),
+        containerColor = theme.colors.modal,
+        titleContentColor = theme.colors.textPrimary,
+        textContentColor = theme.colors.textSecondary,
         onDismissRequest = onDismissRequest,
         title = {
             AppDialogScrimEffect(dimBackground = true)
@@ -267,6 +349,52 @@ internal fun AppAlertDialog(
         confirmButton = confirmButton,
         dismissButton = dismissButton,
     )
+}
+
+@Composable
+internal fun AppScreenHeading(title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(title, style = MaterialTheme.typography.headlineSmall, color = AppTheme.tokens.colors.textPrimary)
+        subtitle?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = AppTheme.tokens.colors.textSecondary) }
+    }
+}
+
+/** The same action sizes, labels and gesture behavior on both collection screens. */
+@Composable
+internal fun AppVoiceActionBar(
+    ui: VoiceActionUiState,
+    begin: () -> Unit,
+    end: () -> Unit,
+    execute: () -> Unit,
+    add: () -> Unit,
+    addDescription: String,
+) {
+    val theme = AppTheme.tokens
+    Row(Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(AppLayout.sectionSpacing), verticalAlignment = Alignment.CenterVertically) {
+        Surface(
+            shape = RoundedCornerShape(theme.shapes.action), color = theme.colors.talkButton, contentColor = theme.colors.onTalkButton,
+            modifier = Modifier.weight(1f).heightIn(min = 58.dp).pushToTalkGesture(
+                enabled = !ui.isProcessing, hasRecognizedText = ui.recognizedText.isNotBlank(),
+                beginPushToTalk = begin, endPushToTalk = end, primaryAction = execute,
+            ),
+        ) {
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(Icons.Default.Mic, null, Modifier.size(22.dp))
+                Text(when {
+                    ui.isRecording -> "Отпустите для распознавания"
+                    ui.isProcessing -> "Выполняю…"
+                    ui.recognizedText.isNotBlank() -> "Выполнить"
+                    else -> "Удерживайте и говорите"
+                }, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        Surface(shape = CircleShape, color = theme.colors.selected, contentColor = theme.colors.accent,
+            modifier = Modifier.size(58.dp).clickable(onClick = add)) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, addDescription) }
+        }
+    }
 }
 
 @Composable
@@ -467,6 +595,8 @@ internal fun AppSearchField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = theme.colors.input,
             unfocusedContainerColor = theme.colors.input,
+            unfocusedBorderColor = theme.colors.outline.copy(alpha = 0.65f),
+            focusedBorderColor = theme.colors.accent,
         ),
     )
 }

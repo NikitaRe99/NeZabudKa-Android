@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 import random
 import shutil
+import re
+import hashlib
+import tempfile
 from collections import Counter
 
 import numpy as np
@@ -42,15 +45,22 @@ class JointNluModel(nn.Module):
 
 
 class NluDataset(Dataset):
-    def __init__(self, examples: list[Example], tokenizer):
+    def __init__(self, examples: list[Example], tokenizer, retained: set[Example] | None = None):
         self.examples = examples
         self.tokenizer = tokenizer
+        self.retained = retained or set()
+        self.cache = [self.encode(example) for example in examples]
 
     def __len__(self):
         return len(self.examples)
 
     def __getitem__(self, index):
-        example = self.examples[index]
+        return self.cache[index]
+
+    def encode(self, example):
+        full_length = len(self.tokenizer(example.text)["input_ids"])
+        if full_length > MAX_LENGTH:
+            raise ValueError(f"Refusing truncated training example ({full_length}): {example.text}")
         encoded = self.tokenizer(
             example.text,
             max_length=MAX_LENGTH,
@@ -78,6 +88,7 @@ class NluDataset(Dataset):
             "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
             "intent_labels": torch.tensor(INTENTS.index(example.intent), dtype=torch.long),
             "slot_labels": torch.tensor(labels, dtype=torch.long),
+            "retain_teacher": torch.tensor(example in self.retained, dtype=torch.bool),
         }
 
 
@@ -134,14 +145,27 @@ def validation_metrics(model, loader, device):
     }
 
 
+def template_group(example: Example) -> str:
+    text = example.text
+    for start, end, slot in sorted(example.spans, reverse=True):
+        text = text[:start] + f" ENTITY{slot} " + text[end:]
+    return example.intent + ":" + re.sub(r"[^\w]+", " ", text.casefold().replace("ё", "е")).strip()
+
+
 def stratified_split(examples: list[Example], validation_fraction: float = 0.14) -> tuple[list[Example], list[Example]]:
     train: list[Example] = []
     validation: list[Example] = []
     for intent in INTENTS:
-        group = [example for example in examples if example.intent == intent]
-        validation_size = max(1, round(len(group) * validation_fraction))
-        validation.extend(group[:validation_size])
-        train.extend(group[validation_size:])
+        families = {}
+        for example in examples:
+            if example.intent == intent:
+                families.setdefault(template_group(example), []).append(example)
+        keys = sorted(families)
+        random.Random(SEED + INTENTS.index(intent)).shuffle(keys)
+        validation_size = max(1, round(len(keys) * validation_fraction))
+        for index, key in enumerate(keys):
+            (validation if index < validation_size else train).extend(families[key])
+    assert not {template_group(e) for e in train} & {template_group(e) for e in validation}
     random.Random(SEED + 1).shuffle(train)
     random.Random(SEED + 2).shuffle(validation)
     return train, validation
@@ -159,6 +183,10 @@ def resolve_device(requested: str) -> torch.device:
 
 def export_model(model, tokenizer, output: Path):
     output.mkdir(parents=True, exist_ok=True)
+    # Windows sandbox temp may forbid ONNX external tensor files; use owned workspace.
+    temporary = output / "export-tmp"
+    temporary.mkdir(exist_ok=True)
+    tempfile.tempdir = str(temporary.resolve())
     model.eval().cpu()
     dummy = tokenizer(
         "напомни завтра позвонить врачу",
@@ -207,7 +235,11 @@ def export_model(model, tokenizer, output: Path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("tools/nlu/output"))
-    parser.add_argument("--assets", type=Path, default=Path("android/app/src/main/assets/nlu"))
+    parser.add_argument("--assets", type=Path, help="Optional reviewed metadata/vocab destination; weights stay downloadable")
+    parser.add_argument("--recovery-v6", action="store_true")
+    parser.add_argument("--warm-start", type=Path)
+    parser.add_argument("--learning-rate", type=float, default=3e-5)
+    parser.add_argument("--retain-teacher", action="store_true", help="Distill deployed model while learning corrective data")
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--per-intent", type=int, default=800)
@@ -220,14 +252,25 @@ def main():
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
     examples = build_training_examples(per_intent=args.per_intent, unknown_count=args.unknown_count)
+    retained = set(examples)
+    if args.recovery_v6:
+        from recovery_v6 import build_recovery_examples, speech_surface
+        examples = sorted(set(examples + build_recovery_examples() + [speech_surface(e) for e in examples]), key=lambda e: (e.intent, e.text, e.spans))
     train_examples, validation_examples = stratified_split(examples)
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, use_fast=True)
-    train_loader = DataLoader(NluDataset(train_examples, tokenizer), batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(NluDataset(train_examples, tokenizer, retained), batch_size=args.batch_size, shuffle=True)
     validation_loader = DataLoader(NluDataset(validation_examples, tokenizer), batch_size=args.batch_size)
 
     device = resolve_device(args.device)
     model = JointNluModel(BASE_MODEL, len(INTENTS), len(SLOT_LABELS)).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=0.01)
+    if args.warm_start:
+        model.load_state_dict(torch.load(args.warm_start, map_location=device, weights_only=True))
+    teacher = None
+    if args.retain_teacher:
+        if not args.warm_start: raise ValueError("Teacher retention needs the deployed checkpoint")
+        teacher = copy.deepcopy(model).eval()
+        for parameter in teacher.parameters(): parameter.requires_grad_(False)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=0.01)
     counts = Counter(example.intent for example in train_examples)
     largest_class = max(counts.values())
     class_weights = torch.tensor(
@@ -245,6 +288,7 @@ def main():
     best_score = -1.0
     best_state = None
     best_metrics = None
+    best_epoch = None
     for epoch in range(args.epochs):
         model.train()
         total_loss = 0.0
@@ -258,6 +302,17 @@ def main():
             loss = intent_loss(intent_logits, batch["intent_labels"].to(device)) + slot_loss(
                 slot_logits.reshape(-1, len(SLOT_LABELS)), batch["slot_labels"].to(device).reshape(-1)
             )
+            if teacher is not None:
+                with torch.no_grad():
+                    old_intent, old_slot = teacher(batch["input_ids"].to(device), batch["attention_mask"].to(device), batch["token_type_ids"].to(device))
+                # Retain the deployed model's distributions rather than relearning all heads.
+                retain = batch["retain_teacher"].to(device)
+                mask = (batch["slot_labels"].to(device) != -100) & retain[:, None]
+                mask = mask.reshape(-1)
+                temperature = 2.0
+                kl = nn.functional.kl_div(nn.functional.log_softmax(intent_logits[retain] / temperature, -1), nn.functional.softmax(old_intent[retain] / temperature, -1), reduction="batchmean") if retain.any() else intent_logits.sum() * 0
+                slot_kl = nn.functional.kl_div(nn.functional.log_softmax(slot_logits.reshape(-1, len(SLOT_LABELS))[mask] / temperature, -1), nn.functional.softmax(old_slot.reshape(-1, len(SLOT_LABELS))[mask] / temperature, -1), reduction="batchmean") if mask.any() else slot_logits.sum() * 0
+                loss += 0.5 * temperature ** 2 * (kl + slot_kl)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -268,6 +323,7 @@ def main():
             best_score = score
             best_state = copy.deepcopy(model.state_dict())
             best_metrics = metrics
+            best_epoch = epoch + 1
         print(
             f"epoch={epoch + 1} loss={total_loss / len(train_loader):.4f} "
             f"intent_acc={metrics['intent_accuracy']:.4f} intent_macro_f1={metrics['intent_macro_f1']:.4f} "
@@ -288,14 +344,27 @@ def main():
         "validation_examples": len(validation_examples),
         "class_counts": dict(sorted(Counter(example.intent for example in examples).items())),
         "best_validation": best_metrics,
+        "best_epoch": best_epoch,
+        "seed": SEED,
+        "torch_version": torch.__version__,
+        "split": "intent-stratified normalized slot-template groups; no template/case/punctuation overlap",
+        "recovery_v6": args.recovery_v6,
+        "warm_start_sha256": hashlib.sha256(args.warm_start.read_bytes()).hexdigest() if args.warm_start else None,
+        "teacher_retention": args.retain_teacher,
+        "learning_rate": args.learning_rate,
     }
+    for name, subset in (("training", train_examples), ("validation", validation_examples)):
+        content = json.dumps([{"text": e.text, "intent": e.intent, "spans": e.spans, "group": template_group(e)} for e in subset], ensure_ascii=False, indent=2)
+        (args.output / f"{name}_manifest.json").write_text(content, encoding="utf-8")
+        training_report[f"{name}_sha256"] = hashlib.sha256(content.encode("utf-8")).hexdigest()
     (args.output / "training_report.json").write_text(
         json.dumps(training_report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     fp32_path, int8_path = export_model(model, tokenizer, args.output)
-    args.assets.mkdir(parents=True, exist_ok=True)
-    for name in ("classic_nlu_int8.onnx", "vocab.txt", "metadata.json"):
-        shutil.copy2(args.output / name, args.assets / name)
+    if args.assets is not None:
+        args.assets.mkdir(parents=True, exist_ok=True)
+        for name in ("vocab.txt", "metadata.json"):
+            shutil.copy2(args.output / name, args.assets / name)
     print(f"exported_fp32={fp32_path} bytes={fp32_path.stat().st_size}")
     print(f"exported_int8={int8_path} bytes={int8_path.stat().st_size}")
 

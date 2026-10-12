@@ -47,6 +47,7 @@ data class AppSettings(
     val notificationSound: String,
     val classicNluEnabled: Boolean = true,
     val showTechnicalLog: Boolean = false,
+    val showAssistantWelcomeCard: Boolean = true,
     val reminderAlarmMode: Boolean = false,
     val reminderAlarmPresentation: String = ALARM_PRESENTATION_SCREEN,
     val reminderAlarmSound: String = "content://settings/system/alarm_alert",
@@ -56,5 +57,7 @@ data class AppSettings(
     val reminderAlarmRepeatCount: Int = DEFAULT_ALARM_REPEAT_COUNT,
     val notificationVibrationEnabled: Boolean = true,
     val whisperThreadCount: Int = 0,
+    val whisperAccurateMode: Boolean = false,
+    val notePunctuationModel: String = "whisper",
     val uiPerformanceMode: String = UI_PERFORMANCE_AUTO,
 )

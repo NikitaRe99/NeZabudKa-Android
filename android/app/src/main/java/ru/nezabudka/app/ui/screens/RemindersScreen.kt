@@ -1,5 +1,7 @@
 package ru.nezabudka.app.ui.screens
 
+import kotlin.math.abs
+
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +35,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
@@ -73,6 +76,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -93,6 +97,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -163,10 +168,12 @@ internal fun RemindersScreen(
     primaryAction: () -> Unit,
     editRecognizedText: (String) -> Unit,
     openReminder: (Reminder) -> Unit,
-    changeReminderTime: (Reminder, LocalDateTime?) -> Unit,
+    changeReminderTime: (Reminder, LocalDateTime?, String?) -> Unit,
     undoLastAction: () -> Unit,
     dismissNotice: () -> Unit,
     answerReminderDateClarification: (String) -> Unit,
+    requestCreate: Boolean = false,
+    consumeCreateRequest: () -> Unit = {},
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -174,6 +181,9 @@ internal fun RemindersScreen(
     var overdueExpanded by remember { mutableStateOf(true) }
     var completedExpanded by remember { mutableStateOf(true) }
     var showCreator by remember { mutableStateOf(false) }
+    LaunchedEffect(requestCreate) {
+        if (requestCreate) { showCreator = true; consumeCreateRequest() }
+    }
     var noticeTimeReminder by remember { mutableStateOf<Reminder?>(null) }
     var currentTime by remember { mutableStateOf(LocalDateTime.now()) }
     val manualOverdue = remember { mutableStateListOf<Reminder>() }
@@ -531,7 +541,7 @@ internal fun RemindersScreen(
     }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { AppSnackbarHost(snackbar) },
         bottomBar = {
             Column(Modifier.imePadding()) {
                 val notice = actionNotice
@@ -541,56 +551,23 @@ internal fun RemindersScreen(
                 if (notice != null && (reminderEffect != null || reminderDeleted != null || dateRequested != null)) {
                     AppNoticeCard(notice.message, dismissNotice) {
                         if (reminderEffect != null) {
-                            IconButton(onClick = { dismissNotice(); openReminder(reminderEffect.reminder) }) {
-                                Icon(Icons.Default.Edit, "Редактировать")
-                            }
-                            IconButton(onClick = { noticeTimeReminder = reminderEffect.reminder }) {
-                                Icon(Icons.Default.Schedule, "Сменить время")
-                            }
+                            AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); openReminder(reminderEffect.reminder) })
+                            AppNoticeAction(Icons.Default.Schedule, "Сменить время", { noticeTimeReminder = reminderEffect.reminder })
                         }
                         if (dateRequested != null) {
-                            TextButton(onClick = { answerReminderDateClarification("отмена") }) { Text("Отмена") }
-                            TextButton(onClick = { answerReminderDateClarification("без даты") }) { Text("Без времени") }
+                            AppNoticeTextAction("Без времени", { answerReminderDateClarification("без даты") })
+                            AppNoticeTextAction("Отмена", { answerReminderDateClarification("отмена") })
                         } else {
-                            TextButton(onClick = undoLastAction) { Text("Отменить") }
+                            AppNoticeAction(Icons.AutoMirrored.Filled.Undo, "Отменить", undoLastAction)
                         }
                     }
                 }
                 if (ui.awaitingSttConfirmation && ui.recognizedText.isNotBlank()) {
                     SttConfirmationCard(ui.recognizedText, editRecognizedText)
                 }
-                if (draggingReminderId == null) Row(
-                    Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(theme.shapes.action),
-                        color = theme.colors.talkButton,
-                        contentColor = theme.colors.onTalkButton,
-                        modifier = Modifier.weight(1f).height(58.dp).pushToTalkGesture(
-                            enabled = !ui.isProcessing,
-                            hasRecognizedText = ui.recognizedText.isNotBlank(),
-                            beginPushToTalk = beginPushToTalk,
-                            endPushToTalk = endPushToTalk,
-                            primaryAction = primaryAction,
-                        ),
-                    ) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(when {
-                                ui.isRecording -> "Отпустите для распознавания"
-                                ui.isProcessing -> "Выполняю…"
-                                ui.recognizedText.isNotBlank() -> "Выполнить"
-                                else -> "Удерживайте, чтобы говорить"
-                            })
-                        }
-                    }
-                    Surface(
-                        shape = CircleShape,
-                        color = theme.colors.selected,
-                        modifier = Modifier.size(58.dp).clickable { showCreator = true },
-                    ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, "Новое напоминание") } }
-                }
+                if (draggingReminderId == null) AppVoiceActionBar(
+                    ui, beginPushToTalk, endPushToTalk, primaryAction, { showCreator = true }, "Новое напоминание",
+                )
             }
         },
     ) { inner ->
@@ -707,11 +684,16 @@ internal fun RemindersScreen(
             }
         }
         if (filteredActive.isEmpty()) item(key = "active-empty", contentType = "empty-state") {
-            Text(
-                when {
+            AppEmptyState(
+                icon = Icons.Default.Schedule,
+                title = when {
                     query.isNotBlank() && completed.isEmpty() -> "Ничего не найдено"
                     query.isNotBlank() -> "Активные напоминания не найдены"
-                    else -> "Активных напоминаний пока нет"
+                    else -> "Всё под контролем"
+                },
+                description = when {
+                    query.isNotBlank() -> "Попробуйте другое слово или измените запрос."
+                    else -> "Активных напоминаний пока нет. Нажмите «+» или скажите, о чём и когда напомнить."
                 },
             )
         }
@@ -797,10 +779,15 @@ internal fun RemindersScreen(
         ReminderDateTimeDialog(
             initialDate = reminder.remindAt?.toLocalDate(),
             initialTime = reminder.remindAt?.toLocalTime(),
+            initialRecurrence = reminder.recurrence,
             dismiss = { noticeTimeReminder = null },
-            clear = { changeReminderTime(reminder, null); noticeTimeReminder = null },
+            clear = { changeReminderTime(reminder, null, null); noticeTimeReminder = null },
             confirm = { date, time ->
-                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)))
+                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)), reminder.recurrence)
+                noticeTimeReminder = null
+            },
+            confirmWithRecurrence = { date, time, recurrence ->
+                changeReminderTime(reminder, date.atTime(time ?: LocalTime.of(9, 0)), recurrence)
                 noticeTimeReminder = null
             },
         )
@@ -1349,7 +1336,7 @@ private fun formatReminderDateTimeCompact(date: LocalDate, time: LocalTime?): St
 }
 
 @Composable
-private fun SwipeableReminderRow(
+internal fun SwipeableReminderRow(
     reminder: Reminder,
     completed: Boolean,
     dateMode: Boolean,
@@ -1364,19 +1351,31 @@ private fun SwipeableReminderRow(
     val theme = AppTheme.tokens
     val currentReminder by rememberUpdatedState(reminder)
     val currentDelete by rememberUpdatedState(delete)
-    val confirmDismiss = remember {
+    val swipeStateHolder = remember { arrayOfNulls<SwipeToDismissBoxState>(1) }
+    var swipeWidth by remember { mutableStateOf(0) }
+    val minimumSwipe = with(LocalDensity.current) { 72.dp.toPx() }
+    val confirmDismiss = remember(minimumSwipe) {
         { value: SwipeToDismissBoxValue ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                currentDelete(currentReminder)
+            val offset = swipeStateHolder[0]?.let { runCatching { abs(it.requireOffset()) }.getOrDefault(0f) } ?: 0f
+            if (value == SwipeToDismissBoxValue.EndToStart && swipeWidth > 0 &&
+                offset >= maxOf(minimumSwipe, swipeWidth * 0.5f)) {
                 true
-            } else false
+            } else value == SwipeToDismissBoxValue.Settled
         }
     }
-    val threshold = remember { { distance: Float -> distance * 0.6f } }
+    val threshold = remember { { distance: Float -> distance * 0.5f } }
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = confirmDismiss,
         positionalThreshold = threshold,
     )
+    swipeStateHolder[0] = state
+    LaunchedEffect(state.currentValue) {
+        if (state.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            currentDelete(currentReminder)
+            // A restored item must start settled, rather than delete itself again.
+            state.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
     val secondaryText = remember(reminder.remindAt, reminder.recurrence, reminder.completedAt, completed, dateMode, overdueAt) {
         val base = if (completed) "Выполнено: ${reminder.completedAt?.format(REMINDER_DATE_TIME_FORMATTER) ?: "—"}"
         else if (overdueAt != null && reminder.remindAt != null) overdueReminderText(reminder.remindAt, overdueAt)
@@ -1388,19 +1387,24 @@ private fun SwipeableReminderRow(
             base
         }
     }
+    val preview = remember(reminder.text) { noteCardPreview(reminder.text) }
     SwipeToDismissBox(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer(translationY = if (dragging) dragOffset else 0f),
+            .onSizeChanged { swipeWidth = it.width }
+            .then(if (dragging) Modifier.graphicsLayer { translationY = dragOffset } else Modifier),
         state = state,
         enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = !dragging,
         backgroundContent = {
+            if (state.dismissDirection != SwipeToDismissBoxValue.Settled) {
             Box(
                 Modifier.fillMaxSize().heightIn(min = 88.dp)
                     .background(theme.colors.dangerContainer, RoundedCornerShape(theme.shapes.card))
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) { Icon(Icons.Default.DeleteSweep, "Удалить", tint = theme.colors.onDangerContainer) }
+            }
         },
     ) {
         Card(
@@ -1416,7 +1420,8 @@ private fun SwipeableReminderRow(
             Row(Modifier.fillMaxWidth().heightIn(min = 88.dp).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { complete(reminder) }) { Icon(if (completed) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked, if (completed) "Вернуть в активные" else "Отметить выполненным") }
                 Column(Modifier.weight(1f)) {
-                    Text(reminder.text, maxLines = 2, textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None)
+                    Text(preview, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (overdueAt != null) {
                             Icon(

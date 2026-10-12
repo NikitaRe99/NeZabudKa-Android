@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:paddingHorizontal="10dp" android:paddingVertical="6dp" android:background="@drawable/widget_card_light"
+    android:clipToOutline="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="44dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <ImageView android:id="@+id/widget_kind_icon" android:layout_width="18dp" android:layout_height="18dp"
+            android:layout_marginEnd="8dp" android:importantForAccessibility="no" android:src="@drawable/ic_home_widget_bell" />
+        <LinearLayout android:id="@+id/widget_folder_picker" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:minHeight="44dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/widget_title" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/widget_today" android:textSize="14sp"
+                android:fontFamily="sans-serif-medium" android:maxLines="2" android:ellipsize="end" android:textColor="#1782F2" />
+        </LinearLayout>
+        <ImageView android:id="@+id/widget_folder_chevron" android:layout_width="44dp" android:layout_height="44dp"
+            android:padding="14dp" android:contentDescription="@string/widget_choose_folder"
+            android:src="@drawable/ic_home_widget_chevron" android:visibility="gone" />
+        <TextView android:id="@+id/widget_count" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp" android:paddingVertical="4dp" android:textSize="11sp"
+            android:text="0" android:textColor="#1782F2" android:background="@drawable/widget_count_light" />
+        <ImageView android:id="@+id/widget_undo" android:layout_width="44dp" android:layout_height="44dp"
+            android:padding="13dp" android:src="@drawable/ic_home_widget_undo" android:contentDescription="@string/widget_undo" android:visibility="gone" />
+        <ImageView android:id="@+id/widget_add" android:layout_width="44dp" android:layout_height="44dp"
+            android:padding="13dp" android:src="@drawable/ic_home_widget_plus" android:contentDescription="@string/widget_add_reminder" />
+    </LinearLayout>
+    <ListView android:id="@+id/widget_list" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:divider="@android:color/transparent" android:dividerHeight="0dp"
+        android:scrollbars="vertical" android:scrollbarStyle="insideOverlay" android:clipToPadding="false"
+        android:contentDescription="@string/widget_scroll_list" />
+    <TextView android:id="@+id/widget_empty" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:gravity="center_vertical" android:text="@string/widget_today_empty"
+        android:textSize="14sp" android:textColor="#5F6875" android:paddingVertical="8dp" android:visibility="gone" />
+</LinearLayout>

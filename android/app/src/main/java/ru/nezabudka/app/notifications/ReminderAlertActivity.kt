@@ -20,6 +20,10 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -250,6 +254,7 @@ class ReminderCompactAlertActivity : ReminderAlertActivity() {
     override val compactPresentation: Boolean = true
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AlarmSurface(
     reminderText: String,
@@ -289,23 +294,24 @@ internal fun AlarmSurface(
                     Text("НеЗабудьКа", style = MaterialTheme.typography.titleMedium)
                     Text(reminderText, style = MaterialTheme.typography.bodyLarge, maxLines = 3)
                     if (!showSnoozeOptions) {
-                        Row(
+                        FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Button(
                                 onClick = complete,
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier.widthIn(min = 120.dp).heightIn(min = 48.dp),
                                 shape = RoundedCornerShape(theme.shapes.action),
                             ) {
-                                Text("Выполнено", style = MaterialTheme.typography.titleMedium)
+                                Text("Выполнено", style = MaterialTheme.typography.labelLarge)
                             }
                             OutlinedButton(
                                 onClick = { showSnoozeOptions = true },
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier.widthIn(min = 120.dp).heightIn(min = 48.dp),
                                 shape = RoundedCornerShape(theme.shapes.action),
                             ) {
-                                Text("Отложить", style = MaterialTheme.typography.titleMedium)
+                                Text("Отложить", style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     } else {
@@ -393,10 +399,10 @@ internal fun AlarmSurface(
             Spacer(Modifier.height(10.dp))
             OutlinedButton(
                 onClick = { showSnoozeOptions = true },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                 shape = RoundedCornerShape(theme.shapes.action),
             ) {
-                Text("Отложить", style = MaterialTheme.typography.titleMedium)
+                Text("Отложить", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

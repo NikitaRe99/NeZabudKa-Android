@@ -28,6 +28,7 @@ import ru.nezabudka.app.domain.normalizeTheme
 import ru.nezabudka.app.domain.normalizeUiPerformanceMode
 import ru.nezabudka.app.domain.normalizeWhisperThreadCount
 import ru.nezabudka.app.ports.SettingsPort
+import ru.nezabudka.app.speech.normalizeNotePunctuationModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -46,9 +47,12 @@ data class PortableAppSettings(
     val sttEngine: String = "whisper",
     val keepWhisperModelLoaded: Boolean = false,
     val whisperThreadCount: Int = 0,
+    val whisperAccurateMode: Boolean = false,
+    val notePunctuationModel: String = "whisper",
     val audioPreprocessingEnabled: Boolean = true,
     val showPlaybackButton: Boolean = false,
     val showTechnicalLog: Boolean = false,
+    val showAssistantWelcomeCard: Boolean = true,
     val trustStt: Boolean = false,
     val reminderSort: String = "my_order",
     val noteSort: String = "updated",
@@ -98,9 +102,12 @@ fun AppSettings.toPortableSettings(
     sttEngine = sttEngine,
     keepWhisperModelLoaded = keepWhisperModelLoaded,
     whisperThreadCount = whisperThreadCount,
+    whisperAccurateMode = whisperAccurateMode,
+    notePunctuationModel = notePunctuationModel,
     audioPreprocessingEnabled = audioPreprocessingEnabled,
     showPlaybackButton = showPlaybackButton,
     showTechnicalLog = showTechnicalLog,
+    showAssistantWelcomeCard = showAssistantWelcomeCard,
     trustStt = trustStt,
     reminderSort = reminderSort,
     noteSort = noteSort,
@@ -210,6 +217,7 @@ class SettingsStore(context: Context) : SettingsPort {
         prefs.edit().putString("custom_theme", json.encodeToString(normalized)).apply()
         _state.value = read()
     }
+    override fun setShowAssistantWelcomeCard(enabled: Boolean) { prefs.edit().putBoolean("show_assistant_welcome_card", enabled).apply(); _state.value = read() }
     override fun setPopupDurationSeconds(value: Int) { prefs.edit().putInt("popup_duration_seconds", value.coerceIn(0, 60)).apply(); _state.value = read() }
     override fun setLocalOnly(enabled: Boolean) { prefs.edit().putBoolean("local_only", enabled).apply(); _state.value = read() }
     override fun setClassicNluEnabled(enabled: Boolean) { prefs.edit().putBoolean("classic_nlu_enabled", enabled).apply(); _state.value = read() }
@@ -237,6 +245,14 @@ class SettingsStore(context: Context) : SettingsPort {
     }
     override fun setWhisperThreadCount(value: Int) {
         prefs.edit().putInt("whisper_thread_count", normalizeWhisperThreadCount(value)).apply()
+        _state.value = read()
+    }
+    override fun setWhisperAccurateMode(enabled: Boolean) {
+        prefs.edit().putBoolean("whisper_accurate_mode", enabled).apply()
+        _state.value = read()
+    }
+    override fun setNotePunctuationModel(value: String) {
+        prefs.edit().putString("note_punctuation_model", normalizeNotePunctuationModel(value)).apply()
         _state.value = read()
     }
     override fun setAudioPreprocessing(enabled: Boolean) {
@@ -307,6 +323,7 @@ class SettingsStore(context: Context) : SettingsPort {
         setCustomTheme(value.customTheme)
         setTheme(value.theme)
         setPopupDurationSeconds(value.popupDurationSeconds)
+        setShowAssistantWelcomeCard(value.showAssistantWelcomeCard)
         setLocalOnly(value.localOnly)
         setClassicNluEnabled(value.classicNluEnabled)
         setTimeOfDaySettings(value.timeOfDaySettings)
@@ -317,6 +334,8 @@ class SettingsStore(context: Context) : SettingsPort {
         )
         setKeepWhisperModelLoaded(value.keepWhisperModelLoaded)
         setWhisperThreadCount(value.whisperThreadCount)
+        setWhisperAccurateMode(value.whisperAccurateMode)
+        setNotePunctuationModel(value.notePunctuationModel)
         setAudioPreprocessing(value.audioPreprocessingEnabled)
         setShowPlaybackButton(value.showPlaybackButton)
         setShowTechnicalLog(value.showTechnicalLog)
@@ -352,9 +371,12 @@ class SettingsStore(context: Context) : SettingsPort {
         sttEngine = sttEngine,
         keepWhisperModelLoaded = prefs.getBoolean("keep_whisper_model_loaded", false),
         whisperThreadCount = normalizeWhisperThreadCount(prefs.getInt("whisper_thread_count", 0)),
+        whisperAccurateMode = prefs.getBoolean("whisper_accurate_mode", false),
+        notePunctuationModel = normalizeNotePunctuationModel(prefs.getString("note_punctuation_model", "whisper").orEmpty()),
         audioPreprocessingEnabled = prefs.getBoolean("audio_preprocessing", true),
         showPlaybackButton = prefs.getBoolean("show_playback", false),
         showTechnicalLog = prefs.getBoolean("show_technical_log", false),
+        showAssistantWelcomeCard = prefs.getBoolean("show_assistant_welcome_card", true),
         trustStt = trustStt,
         reminderSort = normalizeReminderSort(prefs.getString("reminder_sort", "my_order").orEmpty()),
         noteSort = normalizeNoteSort(prefs.getString("note_sort", "updated").orEmpty()),

@@ -1,0 +1,215 @@
+{
+  "setSha256": "c0efd0dc2ab97f808eae80ab47edc9b626b7f193aac04473633bb309ec4440aa",
+  "trainingAndValidationRows": 26816,
+  "previousEvaluationRows": 1183,
+  "cases": [
+    {
+      "id": 1,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_folder:мне требуется папка для заметок с именем entityfolder",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 2,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_folder:оформи папку entityfolder для моих записей",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 3,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_folder:назови новую папку entityfolder",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 4,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_note:в папку entityfolder добавь строку entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 5,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_note:сохрани для папки entityfolder эту заметку entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 6,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_note:моя новая заметка entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 7,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_note:пополнить заметки такой записью entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 8,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_note:добавь заметку в entityfolder entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 9,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:сделай напоминание на entitydate entitytime entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 10,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:попроси меня entitydate entitytime entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 11,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:entitydate мне нужно напоминание entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 12,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:установи напоминание entitydate entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 13,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:хочу чтобы ты напоминал entityrecurrence начиная entitydate entitytime entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 14,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:поставь регулярное напоминание entityrecurrence entitydate entitytime entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 15,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:начиная entitydate напоминай entityrecurrence entitytime entitytext",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 16,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "create_reminder:добавь повторяющееся напоминание entityrecurrence entitydate entitytime entitytext всего пять раз",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 17,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "list_reminders:отобрази список напоминаний на entitydate",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 18,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "list_reminders:мне нужен перечень задач на entitydate",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 19,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "list_reminders:что запланировано entitydate из напоминаний",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 20,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "delete_reminder:убери задачу с названием entitytarget",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 21,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "delete_folder:папку entityfolder удали пожалуйста",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 22,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "unknown:не добавляй заметку про расход клея",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 23,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "unknown:переименуй напоминание закрыть клапан компрессора",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 24,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "unknown:вчера я добавил заметку о ремонте козырька",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 25,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "unknown:расскажи какие бывают повторы напоминаний",
+      "exactTestSourceMatch": false
+    },
+    {
+      "id": 26,
+      "exactTrainingMatch": false,
+      "templateTrainingMatch": false,
+      "previousEvaluationMatch": false,
+      "group": "unknown:отменять удаление папки сборка планера не нужно",
+      "exactTestSourceMatch": false
+    }
+  ]
+}

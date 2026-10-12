@@ -19,6 +19,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 class ModelDownloadWorker(
@@ -31,12 +32,15 @@ class ModelDownloadWorker(
         .build()
 
     override suspend fun doWork(): Result {
-        val kind = inputData.getString(KEY_KIND)?.takeIf { it == KIND_WHISPER || it == KIND_NLU }
+        val kind = inputData.getString(KEY_KIND)?.takeIf { it in setOf(KIND_WHISPER, KIND_NLU, KIND_PUNCTUATION) }
             ?: return Result.failure(errorData("Неизвестный тип модели"))
         val modelId = inputData.getString(KEY_MODEL_ID) ?: return Result.failure(errorData("Не указана модель"))
         val title = inputData.getString(KEY_TITLE) ?: modelId
         val fileName = inputData.getString(KEY_FILE_NAME) ?: return Result.failure(errorData("Не указан файл модели"))
         val url = inputData.getString(KEY_URL) ?: return Result.failure(errorData("Не указан адрес модели"))
+        if (kind == KIND_PUNCTUATION && (fileName != RupunctModel.FILE_NAME || url != RupunctModel.URL)) {
+            return Result.failure(errorData("Неизвестная модель пунктуации"))
+        }
         val partial = File(applicationContext.cacheDir, "model-downloads/$kind/$fileName.part").apply {
             parentFile?.mkdirs()
         }
@@ -47,7 +51,8 @@ class ModelDownloadWorker(
         return try {
             setForeground(foregroundInfo(title, 0, indeterminate = true))
             download(url, partial, modelId, title)
-            validate(partial)
+            if (kind == KIND_PUNCTUATION) RupunctModel.validate(partial) else validate(partial)
+            if (kind == KIND_NLU && fileName == NLU_V7_FILE_NAME) validateNluV7(partial)
             UserModelsStorage(applicationContext).store(kind, fileName, partial)
             applicationContext.getSharedPreferences("${kind}_models", Context.MODE_PRIVATE)
                 .edit().putString(KEY_SELECTED_MODEL, fileName).commit()
@@ -109,6 +114,21 @@ class ModelDownloadWorker(
         require(file.length() > 1_000_000) { "Файл слишком мал и не похож на модель" }
     }
 
+    private fun validateNluV7(file: File) {
+        require(file.length() == NLU_V7_BYTES) { "Размер NLU v7 не совпадает с опубликованной моделью" }
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().buffered().use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE * 8)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        val actual = digest.digest().joinToString("") { "%02x".format(it) }
+        require(actual == NLU_V7_SHA256) { "Контрольная сумма NLU v7 не совпадает" }
+    }
+
     private fun foregroundInfo(title: String, progress: Int, indeterminate: Boolean): ForegroundInfo {
         val manager = applicationContext.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
@@ -137,6 +157,7 @@ class ModelDownloadWorker(
     companion object {
         const val KIND_WHISPER = "whisper"
         const val KIND_NLU = "nlu"
+        const val KIND_PUNCTUATION = "punctuation"
         const val KEY_KIND = "kind"
         const val KEY_MODEL_ID = "model_id"
         const val KEY_TITLE = "title"
@@ -148,6 +169,9 @@ class ModelDownloadWorker(
         private const val KEY_SELECTED_MODEL = "selected_model"
         private const val CHANNEL_ID = "model_downloads"
         private const val NOTIFICATION_ID = 4102
+        private const val NLU_V7_FILE_NAME = "classic_nlu_v7_int8.onnx"
+        private const val NLU_V7_BYTES = 29_265_839L
+        private const val NLU_V7_SHA256 = "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a"
 
         fun enqueue(context: Context, kind: String, modelId: String, title: String, fileName: String, url: String) {
             val input = Data.Builder()

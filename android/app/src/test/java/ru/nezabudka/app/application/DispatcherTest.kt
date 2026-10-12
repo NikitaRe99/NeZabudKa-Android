@@ -16,6 +16,9 @@ import ru.nezabudka.app.ports.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.advanceTimeBy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -26,6 +29,136 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class DispatcherTest {
+    @Test fun `notes stay loading until both repository snapshots arrive and preserve state on return`() = kotlinx.coroutines.test.runTest {
+        val note = notesRepo.create("Работа", "Существующая заметка")
+        val folder = notesRepo.findFolder("Работа")!!
+        val folderFlow = kotlinx.coroutines.flow.MutableSharedFlow<List<NoteFolder>>(replay = 1)
+        val noteFlow = kotlinx.coroutines.flow.MutableSharedFlow<List<Note>>(replay = 1)
+        val repository = object : NotesRepository by notesRepo {
+            override fun observeFolders(): Flow<List<NoteFolder>> = folderFlow
+            override fun observeAll(): Flow<List<Note>> = noteFlow
+        }
+        val feature = ru.nezabudka.app.ui.NotesFeature(repository, backgroundScope, { _, _ -> }, { throw it })
+        val collector = backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { feature.state.collect {} }
+        assertTrue(feature.state.value.isLoading)
+        folderFlow.emit(listOf(folder))
+        runCurrent()
+        assertTrue(feature.state.value.isLoading)
+        noteFlow.emit(listOf(note))
+        runCurrent()
+        assertFalse(feature.state.value.isLoading)
+        assertEquals(listOf(note), feature.state.value.allNotes)
+        collector.cancel()
+        advanceTimeBy(6_000)
+        runCurrent()
+        assertEquals(listOf(note), feature.state.value.allNotes)
+        assertFalse(feature.state.value.isLoading)
+    }
+    @Test fun `manual folder setup fires for new folders including implicit save but not reused folders`() = kotlinx.coroutines.test.runTest {
+        val offered = mutableListOf<String>()
+        val feature = ru.nezabudka.app.ui.NotesFeature(notesRepo, backgroundScope, { _, _ -> }, { throw it },
+            onFolderCreated = { offered += it.name }, needsFolderSetup = { true })
+        feature.createFolder("Работа", false) {}.join()
+        feature.createFolder("работа", false) {}.join()
+        assertEquals(listOf("Работа"), offered)
+        feature.save(null, listOf("Личные"), "", "Текст", false, false, null) {}.join()
+        feature.save(null, listOf("Личные"), "", "Другой текст", false, false, null) {}.join()
+        assertEquals(listOf("Работа", "Личные"), offered)
+    }
+
+    @Test fun `first reminder setup is queued before permission callback and never on edit`() = kotlinx.coroutines.test.runTest {
+        val order = mutableListOf<String>()
+        val feature = ru.nezabudka.app.ui.ReminderFeature(reminderRepo, ReminderActions(reminderRepo, scheduler, fixedClock),
+            backgroundScope, { throw it }, onReminderCreated = { order += "setup" })
+        feature.create("Проверка", date(12), null, false) { order += "permission" }.join()
+        assertEquals(listOf("setup", "permission"), order)
+        feature.save(reminderRepo.values.single(), "Изменено", date(13), null, false, false) {}.join()
+        assertEquals(listOf("setup", "permission"), order)
+    }
+
+    @Test fun `preview does not create a reminder and chosen named time applies to same command`() = runBlocking {
+        var morning = java.time.LocalTime.of(9, 0)
+        val temporal = ru.nezabudka.app.domain.RussianTemporalParser { mapOf("утром" to morning) }
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock, temporal)
+        val text = "Напомни каждый день завтра утром проверить почту"
+        assertEquals(CommandIntent.CREATE_REMINDER, useCase.preview(text, CommandContext()).intent)
+        assertTrue(reminderRepo.values.isEmpty())
+        assertEquals("утром", useCase.namedTimePhraseUsed(text))
+        morning = java.time.LocalTime.of(7, 30)
+        useCase(text)
+        val reminder = reminderRepo.values.single()
+        assertEquals(LocalDateTime.now(fixedClock).toLocalDate().plusDays(1).atTime(7, 30), reminder.remindAt)
+        assertEquals("daily", reminder.recurrence)
+    }
+    @Test fun `monthly speech recurrence survives the requested start date`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val request = useCase("Напомни каждый месяц поливать цветы")
+        assertEquals("monthly", request.reminderDateClarification?.recurrence)
+        val saved = useCase("завтра в девять", reminderDateClarification = request.reminderDateClarification)
+        assertEquals("monthly", saved.reminders.single().recurrence)
+        assertEquals("поливать цветы", saved.reminders.single().text)
+        assertTrue(saved.message.contains("Каждый месяц"))
+        assertFalse(dispatcher.dispatch(AssistantCommand(CommandIntent.UNKNOWN)).commandRecognized)
+    }
+    @Test fun `repeat survives the direct command path and clarification`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        useCase("Напомни каждый день завтра в десять двадцать пять полить рассаду")
+        assertEquals("daily", reminderRepo.values.single().recurrence)
+        assertEquals("полить рассаду", reminderRepo.values.single().text)
+        assertEquals(LocalDateTime.now(fixedClock).toLocalDate().plusDays(1).atTime(10, 25), reminderRepo.values.single().remindAt)
+        val request = useCase("Напомни каждый вторник проверить крепления двери")
+        assertTrue(reminderRepo.values.size == 1)
+        assertTrue(request.reminderDateClarification?.recurrence?.startsWith("custom:v1") == true)
+        val retry = useCase("без даты", reminderDateClarification = request.reminderDateClarification)
+        assertEquals(request.reminderDateClarification, retry.reminderDateClarification)
+        useCase("завтра в девять", reminderDateClarification = retry.reminderDateClarification)
+        val created = reminderRepo.values.last()
+        val rule = ru.nezabudka.app.domain.CustomReminderRecurrence.fromStored(created.recurrence)!!
+        assertEquals(created.remindAt, rule.start)
+        assertEquals(java.time.DayOfWeek.TUESDAY, rule.start.dayOfWeek)
+    }
+
+    @Test fun `negated and unsupported changes never execute even if NLU predicts creation`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.CREATE_NOTE, noteText = "не должна создаться") }, dispatcher, fixedClock)
+        listOf("Перекинь заметку с чертежом из одной папки в другую", "Отмени удаление папки Тестовый блокнот", "Не создавай напоминание про очистку принтера").forEach { useCase(it) }
+        assertTrue(notesRepo.notes.isEmpty())
+        assertTrue(reminderRepo.values.isEmpty())
+    }
+    @Test fun `folder insertion without note noun uses the existing folder and keeps the whole text`() = runBlocking {
+        dispatcher.dispatch(AssistantCommand(CommandIntent.CREATE_FOLDER, noteFolder = "Работа"))
+        var modelCalls = 0
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> modelCalls++; AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher)
+        listOf("В папку работа добавь заметку сходить к врачу и купить бумаги",
+            "В папку работа добавь, заметку сходить к врачу и купить бумаги",
+            "В папку работа добавь сходить к врачу и купить бумаги").forEach { useCase(it) }
+        assertEquals(1, notesRepo.folderNames.size)
+        assertEquals(listOf("Работа"), notesRepo.folderNames.values.map { it.second })
+        assertEquals(List(3) { "сходить к врачу и купить бумаги" }, notesRepo.notes.map { it.text })
+        assertEquals(0, modelCalls)
+    }
+    @Test fun `folder before note action preserves a multiword name`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher)
+        useCase("В папку Домашние рецепты добавь заметку испечь яблочный пирог")
+        assertEquals(listOf("Домашние рецепты"), notesRepo.folderNames.values.map { it.second })
+        assertEquals(listOf("испечь яблочный пирог"), notesRepo.notes.map { it.text })
+    }
+    @Test fun `unsupported media recording and completed statements never create notes`() = runBlocking {
+        var calls = 0
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ ->
+            calls++; AssistantCommand(CommandIntent.CREATE_NOTE, noteText = "не должна создаться")
+        }, dispatcher)
+        listOf("Запиши видео с камеры", "Сохрани мне голосовое сообщение", "Я уже записал номер договора").forEach { useCase(it) }
+        assertTrue(notesRepo.notes.isEmpty())
+        assertTrue(reminderRepo.values.isEmpty())
+        assertEquals(0, calls)
+    }
+
+    @Test fun `a note may quote a media command or a completed statement`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher)
+        useCase("Создай заметку: Запиши видео с камеры")
+        useCase("Создай заметку: Я уже записал номер договора")
+        assertEquals(listOf("Запиши видео с камеры", "Я уже записал номер договора"), notesRepo.notes.map { it.text })
+    }
     private val reminderRepo = FakeReminderRepository()
     private val notesRepo = FakeNotesRepository()
     private val scheduler = FakeScheduler()
@@ -568,7 +701,7 @@ internal class FakeReminderRepository : ReminderRepository {
 private class FakeNotesRepository : NotesRepository {
     val notes = mutableListOf<Note>()
     val folderNames = linkedMapOf<String, Pair<Long, String>>()
-    override fun observeFolders(): Flow<List<NoteFolder>> = MutableStateFlow(emptyList())
+    override fun observeFolders(): Flow<List<NoteFolder>> = MutableStateFlow(folderNames.values.map { NoteFolder(it.first, it.second, LocalDateTime.now()) })
     override fun observeNotes(folderId: Long): Flow<List<Note>> = MutableStateFlow(notes.filter { it.folderId == folderId })
     override fun observeAll(): Flow<List<Note>> = MutableStateFlow(notes)
     override suspend fun createFolder(folderName: String): NoteFolder {

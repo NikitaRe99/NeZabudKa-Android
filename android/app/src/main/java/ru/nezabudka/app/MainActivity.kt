@@ -22,8 +22,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,10 +41,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Mic
@@ -58,22 +54,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,12 +84,18 @@ import ru.nezabudka.app.ui.screens.ReminderSnoozeDialog
 import ru.nezabudka.app.ui.screens.AppAlertDialog
 import ru.nezabudka.app.ui.screens.RemindersScreen
 import ru.nezabudka.app.ui.screens.SettingsScreen
+import ru.nezabudka.app.ui.screens.WhisperModelsMenu
+import ru.nezabudka.app.ui.screens.FirstUseSetupDialogs
+import ru.nezabudka.app.domain.FirstUseSetupKind
+import androidx.activity.compose.rememberLauncherForActivityResult
 import ru.nezabudka.app.notifications.EXTRA_OPEN_REMINDER_ID
 import ru.nezabudka.app.notifications.EXTRA_SNOOZE_REMINDER_ID
 import ru.nezabudka.app.notifications.DeviceAutoStartSettings
 import ru.nezabudka.app.notifications.NotificationChannels
 import ru.nezabudka.app.notifications.dismissReminderNotification
-import ru.nezabudka.app.widget.ACTION_QUICK_VOICE_NOTE
+import ru.nezabudka.app.widget.WidgetLaunch
+import ru.nezabudka.app.widget.WidgetLaunchIntent
+import ru.nezabudka.app.widget.WidgetDestination
 
 class MainActivity : ComponentActivity() {
     private var pendingMicrophoneAction: (() -> Unit)? = null
@@ -113,13 +105,8 @@ class MainActivity : ComponentActivity() {
     private val exactAlarmEducationVisible = mutableStateOf(false)
     private val fullScreenEducationVisible = mutableStateOf(false)
     private val overlayEducationVisible = mutableStateOf(false)
-    private val onboardingStep = mutableIntStateOf(-1)
-    private var lastOnboardingAdvanceAt = 0L
     private val permissionPreferences by lazy {
         getSharedPreferences("permission_prompts", MODE_PRIVATE)
-    }
-    private val onboardingPreferences by lazy {
-        getSharedPreferences("onboarding", MODE_PRIVATE)
     }
     private val microphonePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         val action = pendingMicrophoneAction
@@ -134,7 +121,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: AssistantViewModel by viewModels { AssistantViewModel.Factory((application as AssistantApplication).container) }
     private val requestedReminderId = mutableStateOf<Long?>(null)
     private val requestedSnoozeId = mutableStateOf<Long?>(null)
-    private val requestedVoiceNote = mutableStateOf<Long?>(null)
+    private val requestedWidgetLaunch = mutableStateOf<WidgetLaunch?>(null)
     private val notificationsEnabled = mutableStateOf(true)
     private val exactAlarmsAllowed = mutableStateOf(true)
     private val fullScreenAlarmsAllowed = mutableStateOf(true)
@@ -144,13 +131,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         acceptReminderIntent(intent)
-        acceptVoiceNoteIntent(intent)
-        if (!onboardingPreferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)) {
-            onboardingStep.intValue = 0
-        }
+        requestedWidgetLaunch.value = WidgetLaunchIntent.consume(intent)
         setContent {
             val appSettings by viewModel.settings.collectAsStateWithLifecycle()
-            val onboardingTargets = remember { mutableStateMapOf<OnboardingTarget, Rect>() }
             val alarmVendorSettingsTitle = remember {
                 DeviceAutoStartSettings.alarmPermissionDestination(this)?.title
             }
@@ -182,7 +165,7 @@ class MainActivity : ComponentActivity() {
                 viewModel,
                 requestedReminderId.value,
                 requestedSnoozeId.value,
-                requestedVoiceNote.value,
+                requestedWidgetLaunch.value,
                 notificationsEnabled.value,
                 exactAlarmsAllowed.value,
                 fullScreenAlarmsAllowed.value,
@@ -194,7 +177,8 @@ class MainActivity : ComponentActivity() {
                 autoStartSettingsTitle,
                 consumeReminderIntent = { requestedReminderId.value = null },
                 consumeSnoozeIntent = { requestedSnoozeId.value = null },
-                consumeVoiceNoteIntent = { requestedVoiceNote.value = null },
+                consumeWidgetIntent = { requestedWidgetLaunch.value = null },
+                returnToWidget = { finish() },
                 openNotificationSettings = ::openNotificationSettings,
                 openExactAlarmSettings = ::openExactAlarmSettings,
                 openFullScreenAlarmSettings = ::openFullScreenAlarmSettings,
@@ -206,9 +190,9 @@ class MainActivity : ComponentActivity() {
                 withMicrophonePermission = ::withMicrophonePermission,
                 requestReminderAccess = ::requestReminderAccess,
                 requestFullScreenAccess = ::requestAlarmWindowAccessIfNeeded,
-                showOnboarding = { onboardingStep.intValue = 0 },
-                onboardingStep = onboardingStep.intValue,
-                onOnboardingTargetBounds = { target, bounds -> onboardingTargets[target] = bounds },
+                resetFirstUseSetup = ::resetFirstUseSetup,
+                requestNotificationFromSetup = ::requestNotificationFromSetup,
+                reminderSetupExplained = ::reminderSetupExplained,
             )
             PermissionEducationDialogs(
                 microphoneVisible = microphoneEducationVisible.value,
@@ -227,12 +211,6 @@ class MainActivity : ComponentActivity() {
                 dismissOverlay = { overlayEducationVisible.value = false },
                 continueOverlay = ::continueOverlayPermission,
             )
-            FirstLaunchOnboarding(
-                step = onboardingStep.intValue,
-                targetBounds = firstLaunchGuidePages().getOrNull(onboardingStep.intValue)?.target?.let(onboardingTargets::get),
-                targetClick = ::advanceOnboarding,
-                finish = ::finishOnboarding,
-            )
             }
         }
         (application as AssistantApplication).startUiServices()
@@ -242,11 +220,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         acceptReminderIntent(intent)
-        acceptVoiceNoteIntent(intent)
+        WidgetLaunchIntent.consume(intent)?.let { requestedWidgetLaunch.value = it }
     }
 
     override fun onResume() {
         super.onResume()
+        viewModel.refreshAppIcon()
         notificationsEnabled.value = NotificationManagerCompat.from(this).areNotificationsEnabled()
         exactAlarmsAllowed.value = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
@@ -342,11 +321,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestReminderAccess(requiresExactTime: Boolean) {
+        // The first reminder has a single contextual setup window, not stacked
+        // notification/exact-alarm education dialogs.
+        if (viewModel.hasPendingReminderSetup()) return
         val notificationsAllowed = NotificationManagerCompat.from(this).areNotificationsEnabled() &&
             (Build.VERSION.SDK_INT < 33 ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
         if (!notificationsAllowed) {
-            if (!permissionPreferences.getBoolean(KEY_NOTIFICATION_REQUESTED, false)) {
+            if (!permissionPreferences.getBoolean(KEY_NOTIFICATION_REQUESTED, false) &&
+                !permissionPreferences.getBoolean(KEY_NOTIFICATION_EXPLAINED, false)) {
                 requestExactAfterNotifications = requiresExactTime
                 notificationEducationVisible.value = true
             }
@@ -431,21 +414,28 @@ class MainActivity : ComponentActivity() {
         Uri.parse("package:$packageName"),
     )
 
-    private fun advanceOnboarding() {
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastOnboardingAdvanceAt < ONBOARDING_GESTURE_GUARD_MS) return
-        lastOnboardingAdvanceAt = now
-        if (onboardingStep.intValue >= firstLaunchGuidePages().lastIndex) {
-            finishOnboarding()
-        } else {
-            onboardingStep.intValue += 1
-        }
+    private fun resetFirstUseSetup() {
+        viewModel.resetFirstUseSetup()
+        permissionPreferences.edit()
+            .remove(KEY_NOTIFICATION_EXPLAINED)
+            .remove(KEY_EXACT_ALARM_EXPLAINED)
+            .remove(KEY_FULL_SCREEN_EXPLAINED)
+            .remove(KEY_OVERLAY_EXPLAINED).apply()
     }
 
-    private fun finishOnboarding() {
-        if (SystemClock.elapsedRealtime() - lastOnboardingAdvanceAt < ONBOARDING_GESTURE_GUARD_MS) return
-        onboardingPreferences.edit().putBoolean(KEY_ONBOARDING_COMPLETED, true).apply()
-        onboardingStep.intValue = -1
+    private fun reminderSetupExplained(requiresExactTime: Boolean) {
+        permissionPreferences.edit().putBoolean(KEY_NOTIFICATION_EXPLAINED, true)
+            .apply { if (requiresExactTime) putBoolean(KEY_EXACT_ALARM_EXPLAINED, true) }.apply()
+    }
+
+    private fun requestNotificationFromSetup() {
+        val requested = permissionPreferences.getBoolean(KEY_NOTIFICATION_REQUESTED, false)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            (!requested || shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS))) {
+            permissionPreferences.edit().putBoolean(KEY_NOTIFICATION_REQUESTED, true).apply()
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else openNotificationSettings()
     }
 
     private fun acceptReminderIntent(intent: Intent?) {
@@ -461,21 +451,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun acceptVoiceNoteIntent(intent: Intent?) {
-        if (intent?.action == ACTION_QUICK_VOICE_NOTE) {
-            requestedVoiceNote.value = SystemClock.elapsedRealtime()
-            intent.action = null
-        }
-    }
-
     private companion object {
         const val KEY_MICROPHONE_REQUESTED = "microphone_requested"
         const val KEY_NOTIFICATION_REQUESTED = "notification_requested"
+        const val KEY_NOTIFICATION_EXPLAINED = "notification_explained"
         const val KEY_EXACT_ALARM_EXPLAINED = "exact_alarm_explained"
         const val KEY_FULL_SCREEN_EXPLAINED = "full_screen_explained"
         const val KEY_OVERLAY_EXPLAINED = "overlay_explained"
-        const val KEY_ONBOARDING_COMPLETED = "completed_v1"
-        const val ONBOARDING_GESTURE_GUARD_MS = 400L
     }
 }
 
@@ -484,7 +466,7 @@ private fun AssistantApp(
     vm: AssistantViewModel,
     requestedReminderId: Long?,
     requestedSnoozeId: Long?,
-    requestedVoiceNote: Long?,
+    requestedWidgetLaunch: WidgetLaunch?,
     notificationsEnabled: Boolean,
     exactAlarmsAllowed: Boolean,
     fullScreenAlarmsAllowed: Boolean,
@@ -496,7 +478,8 @@ private fun AssistantApp(
     autoStartSettingsTitle: String?,
     consumeReminderIntent: () -> Unit,
     consumeSnoozeIntent: () -> Unit,
-    consumeVoiceNoteIntent: () -> Unit,
+    consumeWidgetIntent: () -> Unit,
+    returnToWidget: () -> Unit,
     openNotificationSettings: () -> Unit,
     openExactAlarmSettings: () -> Unit,
     openFullScreenAlarmSettings: () -> Unit,
@@ -508,9 +491,9 @@ private fun AssistantApp(
     withMicrophonePermission: (() -> Unit) -> Unit,
     requestReminderAccess: (Boolean) -> Unit,
     requestFullScreenAccess: () -> Unit,
-    showOnboarding: () -> Unit,
-    onboardingStep: Int,
-    onOnboardingTargetBounds: (OnboardingTarget, Rect) -> Unit,
+    resetFirstUseSetup: () -> Unit,
+    requestNotificationFromSetup: () -> Unit,
+    reminderSetupExplained: (Boolean) -> Unit,
 ) {
     val nav = rememberNavController()
     val appSettings by vm.settings.collectAsStateWithLifecycle()
@@ -522,15 +505,21 @@ private fun AssistantApp(
     var editingNote by remember { mutableStateOf<Note?>(null) }
     var editorFolderId by remember { mutableStateOf<Long?>(null) }
     var editorSessionId by remember { mutableLongStateOf(0L) }
-    var voiceWidgetSessionId by remember { mutableStateOf<Long?>(null) }
+    var settingsSearchRequest by remember { mutableStateOf<String?>(null) }
+    var returnToWidgetOnExit by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var widgetReminderCreator by remember { mutableStateOf(false) }
+    val widgetContext = androidx.compose.ui.platform.LocalContext.current
     val destinations = remember { listOf(
         Triple("assistant", "Помощник", Icons.Default.Mic),
         Triple("reminders", "Напоминания", Icons.Default.Notifications),
         Triple("notes", "Заметки", Icons.Default.Description),
         Triple("settings", "Настройки", Icons.Default.Settings),
     ) }
-    BackHandler(enabled = destinations.any { it.first == currentRoute }) { }
+    BackHandler(enabled = destinations.any { it.first == currentRoute }) {
+        if (returnToWidgetOnExit) returnToWidget()
+    }
     val openTopLevelDestination: (String) -> Unit = { route ->
+        returnToWidgetOnExit = false
         if (currentRoute != route) {
             nav.navigate(route) {
                 popUpTo(nav.graph.id)
@@ -538,24 +527,44 @@ private fun AssistantApp(
             }
         }
     }
-    LaunchedEffect(onboardingStep) {
-        onboardingRouteAfterStep(onboardingStep)?.let(openTopLevelDestination)
-    }
     LaunchedEffect(requestedReminderId) {
         requestedReminderId?.let { id ->
+            returnToWidgetOnExit = false
             nav.navigate("reminderEditor/$id/false") { launchSingleTop = true }
             consumeReminderIntent()
         }
     }
-    LaunchedEffect(requestedVoiceNote) {
-        requestedVoiceNote?.let { requestId ->
-            editingNote = null
-            editorFolderId = null
-            editorSessionId = requestId
-            voiceWidgetSessionId = requestId
-            nav.navigate("noteEditor") { launchSingleTop = true }
-            consumeVoiceNoteIntent()
-        }
+    LaunchedEffect(requestedWidgetLaunch?.deliveryId) {
+        val launch = requestedWidgetLaunch ?: return@LaunchedEffect
+        returnToWidgetOnExit = true
+        try {
+            val notesDestination = launch.destination in setOf(WidgetDestination.NOTES, WidgetDestination.NOTE, WidgetDestination.NEW_NOTE)
+            val route = if (notesDestination) "notes" else "reminders"
+            val folder = if (notesDestination) vm.folderForWidget(launch.folderId) else null
+            if (notesDestination) vm.selectFolder(folder)
+            nav.navigate(route) { popUpTo(nav.graph.id); launchSingleTop = true }
+            when (launch.destination) {
+                WidgetDestination.NOTE -> {
+                    val note = launch.itemId?.let { vm.noteForWidget(it) }?.takeUnless { it.trashed }
+                    if (note != null) {
+                        editingNote = note; editorFolderId = folder ?: note.folderId
+                        editorSessionId = SystemClock.elapsedRealtime()
+                        nav.navigate("noteEditor")
+                    } else android.widget.Toast.makeText(widgetContext, "Заметка уже удалена", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                WidgetDestination.REMINDER -> {
+                    val reminder = launch.itemId?.let { vm.reminderForWidget(it) }
+                    if (reminder != null) nav.navigate("reminderEditor/${reminder.id}/false")
+                    else android.widget.Toast.makeText(widgetContext, "Напоминание уже выполнено или удалено", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                WidgetDestination.NEW_NOTE -> {
+                    editingNote = null; editorFolderId = folder; editorSessionId = SystemClock.elapsedRealtime()
+                    nav.navigate("noteEditor")
+                }
+                WidgetDestination.NEW_REMINDER -> widgetReminderCreator = true
+                else -> Unit
+            }
+        } finally { consumeWidgetIntent() }
     }
     LaunchedEffect(actionNotice?.id) {
         val created = actionNotice?.effect as? ActionEffect.ReminderCreated
@@ -576,9 +585,6 @@ private fun AssistantApp(
                 ) {
                     destinations.forEach { (route, label, icon) ->
                         NavigationBarItem(
-                            modifier = Modifier.onGloballyPositioned { coordinates ->
-                                onOnboardingTargetBounds(onboardingTargetForRoute(route), coordinates.boundsInRoot())
-                            },
                             selected = currentRoute == route,
                             onClick = { openTopLevelDestination(route) },
                             icon = { Icon(icon, contentDescription = label) },
@@ -608,7 +614,7 @@ private fun AssistantApp(
             popExitTransition = { ExitTransition.None },
         ) {
             composable("assistant") {
-                val ui by vm.ui.collectAsStateWithLifecycle()
+                val ui by vm.assistantUi.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
                 AssistantScreen(
                     ui, actionNotice, settings, vm::editText,
@@ -618,37 +624,38 @@ private fun AssistantApp(
                     editCreatedNote = { note -> editingNote = note; editorFolderId = note.folderId; vm.dismissNoteNotice(); nav.navigate("noteEditor") },
                     changeCreatedFolder = { note -> editingNote = note; editorFolderId = note.folderId; vm.dismissNoteNotice(); nav.navigate("noteEditor") },
                     openReminder = { reminder -> nav.navigate("reminderEditor/${reminder.id}/false") },
-                    changeReminderTime = { reminder, remindAt ->
-                        vm.changeReminderTime(reminder, remindAt)
+                    changeReminderTime = { reminder, remindAt, recurrence ->
+                        vm.changeReminderTime(reminder, remindAt, recurrence)
                         if (remindAt != null) requestReminderAccess(true)
                     },
                     undoLastAction = vm::undoLastAction,
                     dismissNotice = vm::dismissActionNotice,
                     answerReminderDateClarification = vm::answerReminderDateClarification,
-                    onVoiceControlBounds = { bounds ->
-                        onOnboardingTargetBounds(OnboardingTarget.VOICE, bounds)
-                    },
+                    openWhisperModels = vm::openWhisperModelsMenu,
+                    hideWelcomeCard = { vm.setShowAssistantWelcomeCard(false) },
                 )
             }
             composable("settings") {
                 LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
-                val ui by vm.ui.collectAsStateWithLifecycle()
+                val appIcon by vm.appIcon.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
                 val whisperModels by vm.whisperModels.collectAsStateWithLifecycle()
                 val whisperRuntime by vm.whisperRuntime.collectAsStateWithLifecycle()
                 val modelStorage by vm.modelStorage.collectAsStateWithLifecycle()
                 val classicNluModel by vm.classicNluModel.collectAsStateWithLifecycle()
                 val cloudSttCredentials by vm.cloudSttCredentials.collectAsStateWithLifecycle()
+                val threadBenchmark by vm.whisperThreadBenchmark.collectAsStateWithLifecycle()
+                val punctuationModel by vm.punctuationModel.collectAsStateWithLifecycle()
                 SettingsScreen(
-                    ui, settings, vm.engines, modelStorage, whisperModels, whisperRuntime, vm.whisperDownloads,
+                    settings, vm.engines, modelStorage, whisperModels, whisperRuntime, vm.whisperDownloads,
                     classicNluModel, vm.classicNluDownloadAvailable, cloudSttCredentials, vm.deviceCapabilities,
                     vm::selectSttEngine, vm::setKeepWhisperModelLoaded, vm::setWhisperThreadCount,
-                    vm::setAudioPreprocessing, vm::setShowPlaybackButton, vm::setShowTechnicalLog,
+                    vm::setAudioPreprocessing, vm::setShowPlaybackButton, vm::setShowTechnicalLog, vm::setShowAssistantWelcomeCard,
                     vm::setTrustStt, vm::setTheme, vm::setCustomTheme,
                     vm::setPopupDurationSeconds,
                     vm::setLocalOnly, vm::setClassicNluEnabled,
                     vm::setExternalDataBackupEnabled, vm::setTimeOfDaySettings,
-                    vm::setNoteTrashRetentionDays,
+                    vm::setNoteTrashRetentionDays, vm::setNoteFolderInterface,
                     vm::setShowNavigationLabels, vm::setUiPerformanceMode,
                     vm::setNotificationSound, vm::setNotificationVibrationEnabled,
                     { enabled ->
@@ -670,13 +677,21 @@ private fun AssistantApp(
                     vm::setReminderAlarmPauseMinutes,
                     vm::setReminderAlarmRepeatCount,
                     vm::selectWhisperModel, vm::downloadWhisperModel, vm::importWhisperModel,
-                    vm::downloadClassicNluModel, vm::importClassicNluModel,
+                    vm::downloadClassicNluModel, vm::importClassicNluModel, vm::selectClassicNluModel,
                     vm::selectModelsDirectory, vm::clearModelCache,
                     vm::saveYandexCredentials, vm::saveGoogleCredentials, vm::saveVkCredentials,
                     notificationsEnabled, exactAlarmsAllowed, fullScreenAlarmsAllowed, overlayWindowsAllowed, backgroundRunAllowed, backgroundSettingsTitle, alarmVendorSettingsTitle, autoStartSettingsTitle,
                     openNotificationSettings, openExactAlarmSettings, openFullScreenAlarmSettings, openOverlaySettings, openAlarmNotificationSettings, openBackgroundRunSettings,
                     openAlarmVendorSettings, openAutoStartSettings,
-                    showOnboarding,
+                    resetFirstUseSetup,
+                    threadBenchmark, vm::startWhisperThreadBenchmark, vm::cancelWhisperThreadBenchmark, vm::applyBestWhisperThreadCount,
+                    vm::setWhisperAccurateMode,
+                    vm::setNotePunctuationModel,
+                    punctuationModel, vm::downloadPunctuationModel, vm::cancelPunctuationDownload,
+                    requestedSearch = settingsSearchRequest,
+                    consumeRequestedSearch = { settingsSearchRequest = null },
+                    appIcon = appIcon,
+                    selectAppIcon = vm::setAppIcon,
                 )
             }
             composable("reminders") {
@@ -684,6 +699,8 @@ private fun AssistantApp(
                 val ui by vm.voiceActionUi.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
                 RemindersScreen(
+                    requestCreate = widgetReminderCreator,
+                    consumeCreateRequest = { widgetReminderCreator = false },
                     reminders = reminders,
                     ui = ui,
                     actionNotice = actionNotice,
@@ -710,8 +727,8 @@ private fun AssistantApp(
                     primaryAction = { vm.primaryAction(CommandScope.REMINDERS) },
                     editRecognizedText = vm::editText,
                     openReminder = { reminder -> nav.navigate("reminderEditor/${reminder.id}/false") },
-                    changeReminderTime = { reminder, remindAt ->
-                        vm.changeReminderTime(reminder, remindAt)
+                    changeReminderTime = { reminder, remindAt, recurrence ->
+                        vm.changeReminderTime(reminder, remindAt, recurrence)
                         if (remindAt != null) requestReminderAccess(true)
                     },
                     undoLastAction = vm::undoLastAction,
@@ -751,22 +768,24 @@ private fun AssistantApp(
                     editingNote = null
                     editorFolderId = folderId
                     editorSessionId = SystemClock.elapsedRealtime()
-                    voiceWidgetSessionId = null
                     nav.navigate("noteEditor")
                 },
                 reducedUiEffects = reducedUiEffects,
+                isLoading = notesUi.isLoading,
                 )
             }
             composable("reminderEditor/{id}/{changeTime}") { entry ->
                 val id = entry.arguments?.getString("id")?.toLongOrNull()
                 val reminderFlow = remember(id) { id?.let(vm::observeReminder) }
                 val reminder = reminderFlow?.collectAsStateWithLifecycle(initialValue = null)?.value
+                BackHandler(enabled = reminder == null && returnToWidgetOnExit) { returnToWidget() }
                 if (reminder == null) Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                     CircularProgressIndicator()
                 } else ReminderEditorScreen(
                     reminder = reminder,
                     back = {
-                        if (!nav.popBackStack("reminders", inclusive = false)) {
+                        if (returnToWidgetOnExit) returnToWidget()
+                        else if (!nav.popBackStack("reminders", inclusive = false)) {
                             nav.navigate("reminders") {
                                 popUpTo(nav.graph.id)
                                 launchSingleTop = true
@@ -792,15 +811,12 @@ private fun AssistantApp(
                 NoteEditorScreen(
                 note = editingNote, folders = folders, initialFolderId = editorFolderId,
                 editorSessionId = editorSessionId,
-                openedFromVoiceWidget = voiceWidgetSessionId == editorSessionId,
                 back = {
-                    voiceWidgetSessionId = null
-                    nav.popBackStack()
+                    if (returnToWidgetOnExit) returnToWidget() else nav.popBackStack()
                 },
                 save = { id, selectedFolders, title, text, pinned, archived, color ->
                     vm.saveNote(id, selectedFolders, title, text, pinned, archived, color) {
-                        voiceWidgetSessionId = null
-                        nav.popBackStack()
+                        if (returnToWidgetOnExit) returnToWidget() else nav.popBackStack()
                     }
                 },
                 createFolder = { name, done -> vm.createNoteFolder(name, done) },
@@ -811,9 +827,8 @@ private fun AssistantApp(
                     }
                 },
                 trash = { note ->
-                    voiceWidgetSessionId = null
                     vm.trashNote(note)
-                    nav.popBackStack()
+                    if (returnToWidgetOnExit) returnToWidget() else nav.popBackStack()
                 },
                 dictatedText = dictationUi.result
                     ?.takeIf { it.sessionId == dictationSessionId }
@@ -829,6 +844,55 @@ private fun AssistantApp(
         }
         }
     }
+    val whisperModelsMenu by vm.whisperModelsMenu.collectAsStateWithLifecycle()
+    val setupPrompts by vm.setupPrompts.collectAsStateWithLifecycle()
+    val nluSetupModel by vm.classicNluModel.collectAsStateWithLifecycle()
+    if (!whisperModelsMenu) {
+        FirstUseSetupDialogs(
+            prompt = setupPrompts.firstOrNull(),
+            settings = appSettings,
+            notificationsEnabled = notificationsEnabled,
+            exactAlarmsAllowed = exactAlarmsAllowed,
+            backgroundRunAllowed = backgroundRunAllowed,
+            overlayWindowsAllowed = overlayWindowsAllowed,
+            alarmVendorSettingsTitle = alarmVendorSettingsTitle,
+            autoStartSettingsTitle = autoStartSettingsTitle,
+            confirmTimes = vm::confirmTimeOfDaySetup,
+            confirmFolderInterface = vm::confirmFolderInterfaceSetup,
+            finish = { id, proceed ->
+                if (setupPrompts.firstOrNull()?.let { it.id == id && it.kind == FirstUseSetupKind.REMINDER_DELIVERY } == true) {
+                    reminderSetupExplained(setupPrompts.first().requiresExactTime)
+                }
+                vm.finishSetupPrompt(id, proceed)
+            },
+            openNotifications = requestNotificationFromSetup,
+            openExactAlarms = openExactAlarmSettings,
+            openAutoStart = openAutoStartSettings,
+            openBackground = openBackgroundRunSettings,
+            openOverlay = openOverlaySettings,
+            openAlarmVendor = openAlarmVendorSettings,
+            nluModelInstalled = nluSetupModel.installed,
+            enableNlu = vm::confirmNluSetup,
+            openNluSettings = { settingsSearchRequest = "NLU"; nav.navigate("settings") { launchSingleTop = true } },
+        )
+    }
+    if (whisperModelsMenu) {
+        LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
+        val models by vm.whisperModels.collectAsStateWithLifecycle()
+        val storage by vm.modelStorage.collectAsStateWithLifecycle()
+        val chooseStorage = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            uri?.let(vm::selectModelsDirectory)
+        }
+        WhisperModelsMenu(
+            models = models,
+            downloads = vm.whisperDownloads,
+            storageConfigured = storage.configured,
+            chooseStorage = { chooseStorage.launch(null) },
+            select = vm::selectWhisperModel,
+            download = vm::downloadWhisperModel,
+            dismiss = vm::dismissWhisperModelsMenu,
+        )
+    }
     if (requestedSnoozeId != null) {
         val snoozeReminders by vm.reminders.collectAsStateWithLifecycle()
         snoozeReminders.firstOrNull { it.id == requestedSnoozeId }?.let { reminder ->
@@ -837,158 +901,6 @@ private fun AssistantApp(
                 dismiss = consumeSnoozeIntent,
                 snooze = { date -> vm.snoozeReminder(reminder, date, consumeSnoozeIntent) },
             )
-        }
-    }
-}
-
-internal data class FirstLaunchGuidePage(
-    val title: String,
-    val text: String,
-    val target: OnboardingTarget?,
-    val instruction: String,
-)
-
-internal enum class OnboardingTarget { NOTES, REMINDERS, ASSISTANT, VOICE, SETTINGS }
-
-internal fun firstLaunchGuidePages(): List<FirstLaunchGuidePage> = listOf(
-    FirstLaunchGuidePage(
-        title = "Заметки",
-        text = "Здесь создаются записи и папки. Порядок карточек можно менять длительным нажатием.",
-        target = OnboardingTarget.NOTES,
-        instruction = "Нажмите подсвеченную вкладку «Заметки».",
-    ),
-    FirstLaunchGuidePage(
-        title = "Напоминания",
-        text = "Во вкладке видны предстоящие, просроченные и выполненные дела. Нажмите карточку, чтобы открыть редактор.",
-        target = OnboardingTarget.REMINDERS,
-        instruction = "Нажмите подсвеченную вкладку «Напоминания».",
-    ),
-    FirstLaunchGuidePage(
-        title = "Помощник",
-        text = "Помощник создаёт заметки, папки и напоминания по текстовой или голосовой команде.",
-        target = OnboardingTarget.ASSISTANT,
-        instruction = "Нажмите подсвеченную вкладку «Помощник».",
-    ),
-    FirstLaunchGuidePage(
-        title = "Голосовой ввод",
-        text = "В работе удерживайте кнопку, говорите и отпустите её для распознавания. Микрофон будет запрошен только при первом использовании.",
-        target = OnboardingTarget.VOICE,
-        instruction = "Сейчас просто коснитесь подсвеченной кнопки — запись не начнётся.",
-    ),
-    FirstLaunchGuidePage(
-        title = "Настройки",
-        text = "Здесь выбираются внешний вид, распознавание речи, уведомления, модели и резервное копирование.",
-        target = OnboardingTarget.SETTINGS,
-        instruction = "Нажмите подсвеченную вкладку «Настройки».",
-    ),
-    FirstLaunchGuidePage(
-        title = "Можно начинать",
-        text = "По умолчанию используются обычные уведомления, а режим будильника выключен. При желании включите будильник в настройках. " +
-            "Для речи доступны системное распознавание, офлайн Whisper и облачные STT — облачные сервисы включаются вручную.",
-        target = null,
-        instruction = "Разрешения запрашиваются только перед использованием соответствующей функции.",
-    ),
-)
-
-internal fun onboardingRouteAfterStep(step: Int): String? = when (step) {
-    1 -> "notes"
-    2 -> "reminders"
-    3, 4 -> "assistant"
-    5 -> "settings"
-    else -> null
-}
-
-private fun onboardingTargetForRoute(route: String): OnboardingTarget = when (route) {
-    "notes" -> OnboardingTarget.NOTES
-    "reminders" -> OnboardingTarget.REMINDERS
-    "settings" -> OnboardingTarget.SETTINGS
-    else -> OnboardingTarget.ASSISTANT
-}
-
-@Composable
-private fun FirstLaunchOnboarding(
-    step: Int,
-    targetBounds: Rect?,
-    targetClick: () -> Unit,
-    finish: () -> Unit,
-) {
-    val pages = remember { firstLaunchGuidePages() }
-    val page = pages.getOrNull(step) ?: return
-    val density = LocalDensity.current
-    val highlightPadding = with(density) { 8.dp.toPx() }
-    val cornerRadius = with(density) { 18.dp.toPx() }
-    val borderWidth = with(density) { 2.dp.toPx() }
-    val scrim = MaterialTheme.colorScheme.scrim.copy(alpha = 0.78f)
-    val accent = MaterialTheme.colorScheme.primary
-    val highlighted = targetBounds?.let {
-        Rect(
-            left = it.left - highlightPadding,
-            top = it.top - highlightPadding,
-            right = it.right + highlightPadding,
-            bottom = it.bottom + highlightPadding,
-        )
-    }
-    Box(Modifier.fillMaxSize()) {
-        Canvas(
-            Modifier
-                .fillMaxSize()
-                .pointerInput(step, highlighted) {
-                    detectTapGestures { tap ->
-                        if (page.target != null && highlighted?.contains(tap) == true) targetClick()
-                    }
-                },
-        ) {
-            val hole = highlighted?.let {
-                Rect(
-                    left = it.left.coerceIn(0f, size.width),
-                    top = it.top.coerceIn(0f, size.height),
-                    right = it.right.coerceIn(0f, size.width),
-                    bottom = it.bottom.coerceIn(0f, size.height),
-                )
-            }
-            if (hole == null || hole.width <= 0f || hole.height <= 0f) {
-                drawRect(scrim)
-            } else {
-                drawRect(scrim, size = Size(size.width, hole.top))
-                drawRect(scrim, topLeft = Offset(0f, hole.bottom), size = Size(size.width, size.height - hole.bottom))
-                drawRect(scrim, topLeft = Offset(0f, hole.top), size = Size(hole.left, hole.height))
-                drawRect(scrim, topLeft = Offset(hole.right, hole.top), size = Size(size.width - hole.right, hole.height))
-                drawRoundRect(
-                    color = accent,
-                    topLeft = Offset(hole.left, hole.top),
-                    size = Size(hole.width, hole.height),
-                    cornerRadius = CornerRadius(cornerRadius),
-                    style = Stroke(borderWidth),
-                )
-            }
-        }
-        Surface(
-            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 24.dp, vertical = 64.dp),
-            shape = RoundedCornerShape(24.dp),
-            tonalElevation = 8.dp,
-        ) {
-            Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                Text(page.title, style = MaterialTheme.typography.titleLarge)
-                Text(page.text, modifier = Modifier.padding(top = 8.dp))
-                Text(
-                    page.instruction,
-                    modifier = Modifier.padding(top = 12.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "${step + 1} из ${pages.size}",
-                    modifier = Modifier.padding(top = 12.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                if (page.target == null) {
-                    Box(Modifier.fillMaxWidth()) {
-                        TextButton(onClick = finish, modifier = Modifier.align(Alignment.CenterEnd)) {
-                            Text("Начать")
-                        }
-                    }
-                }
-            }
         }
     }
 }

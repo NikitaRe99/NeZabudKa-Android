@@ -10,6 +10,7 @@
 #include <cstring>
 #include <fstream>
 #include <malloc.h>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -23,6 +24,7 @@ std::string g_model_path;
 whisper_vad_context *g_vad_context = nullptr;
 std::string g_vad_model_path;
 float g_last_confidence = 0.0f;
+double g_last_metrics[9] = {};
 
 void throw_runtime(JNIEnv *env, const std::string &message) {
     jclass cls = env->FindClass("java/lang/IllegalStateException");
@@ -108,7 +110,9 @@ bool load_context(const std::string &model_path) {
     context_params.use_gpu = false;
     context_params.flash_attn = true;
     const auto started = std::chrono::steady_clock::now();
-    g_context = whisper_init_from_file_with_params(model_path.c_str(), context_params);
+    // Retain only the model weights. Decoder/encoder state belongs to one call,
+    // including retries, so an aborted or failed utterance cannot poison the next.
+    g_context = whisper_init_from_file_with_params_no_state(model_path.c_str(), context_params);
     if (g_context == nullptr) return false;
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - started).count();
@@ -139,8 +143,20 @@ bool ensure_vad_context(const std::string &model_path, int thread_count) {
     return true;
 }
 
-bool abort_requested(void *) {
-    return g_abort_requested.load(std::memory_order_relaxed);
+struct AbortControl {
+    std::chrono::steady_clock::time_point deadline;
+    bool enabled;
+    std::atomic_bool timed_out { false };
+};
+
+bool abort_requested(void *user_data) {
+    if (g_abort_requested.load(std::memory_order_relaxed)) return true;
+    auto *control = static_cast<AbortControl *>(user_data);
+    if (control != nullptr && control->enabled && std::chrono::steady_clock::now() >= control->deadline) {
+        control->timed_out.store(true, std::memory_order_relaxed);
+        return true;
+    }
+    return false;
 }
 
 uint16_t le16(const unsigned char * value) {
@@ -214,7 +230,10 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
         jint thread_count,
         jint audio_context,
         jint max_tokens,
-        jboolean single_segment) {
+        jboolean single_segment,
+        jint beam_size,
+        jint time_limit_ms,
+        jfloat temperature_increment) {
     const std::string model_path = to_string(env, model_path_value);
     const std::string wav_path = to_string(env, wav_path_value);
     const std::string vad_model_path = to_string(env, vad_model_path_value);
@@ -234,19 +253,33 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
     std::lock_guard<std::mutex> lock(g_mutex);
     g_abort_requested.store(false, std::memory_order_relaxed);
     g_last_confidence = 0.0f;
+    std::fill(std::begin(g_last_metrics), std::end(g_last_metrics), 0.0);
+    const auto load_started = std::chrono::steady_clock::now();
     if (!ensure_context(model_path)) {
         throw_runtime(env, "whisper.cpp не смог загрузить GGML-модель: " + model_path);
+        return nullptr;
+    }
+    g_last_metrics[7] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - load_started).count();
+
+    std::unique_ptr<whisper_state, decltype(&whisper_free_state)> state(
+            whisper_init_state(g_context), whisper_free_state);
+    if (!state) {
+        throw_runtime(env, "Не удалось создать чистое состояние распознавания Whisper");
         return nullptr;
     }
 
     const int sample_count = static_cast<int>(samples.size());
 
-    whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    const bool accurate = beam_size > 1;
+    whisper_full_params params = whisper_full_default_params(
+            accurate ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY);
+    params.beam_search.beam_size = accurate ? std::min(5, static_cast<int>(beam_size)) : 1;
     params.n_threads = std::max(1, static_cast<int>(thread_count));
     params.language = language.empty() ? "ru" : language.c_str();
     params.initial_prompt = prompt.empty() ? nullptr : prompt.c_str();
     params.translate = false;
     params.no_context = true;
+    params.carry_initial_prompt = false;
     params.no_timestamps = true;
     // A note can span many sentences. Single-segment mode is intended for short
     // streaming commands and truncates long dictation once the decoder reaches
@@ -259,7 +292,11 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
     params.suppress_blank = true;
     params.suppress_nst = true;
     params.abort_callback = abort_requested;
-    params.abort_callback_user_data = nullptr;
+    AbortControl abort_control {
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(0, static_cast<int>(time_limit_ms))),
+        time_limit_ms > 0,
+    };
+    params.abort_callback_user_data = &abort_control;
     params.vad = !vad_model_path.empty();
     params.vad_model_path = params.vad ? vad_model_path.c_str() : nullptr;
     params.vad_params.threshold = 0.5f;
@@ -270,9 +307,9 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
     // Keep greedy decoding lightweight on a phone, but do not cap the transcript:
     // whisper.cpp will split long audio into as many segments as necessary.
     params.greedy.best_of = audio_context > 0 && audio_context <= 256 ? 2 : 1;
-    // Keep whisper.cpp's fallback decoding enabled. It retries a degenerate
-    // greedy result at a higher temperature when the decoder starts looping.
-    params.temperature_inc = 0.2f;
+    // Production uses one deterministic pass and bounded Kotlin refinement.
+    // Diagnostics can explicitly enable the original temperature fallback.
+    params.temperature_inc = accurate ? 0.0f : std::max(0.0f, static_cast<float>(temperature_increment));
     params.n_max_text_ctx = 256;
     params.max_tokens = std::max(0, static_cast<int>(max_tokens));
     const int requested_audio_context = std::max(0, static_cast<int>(audio_context));
@@ -281,38 +318,70 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
         : std::min(requested_audio_context, whisper_n_audio_ctx(g_context));
 
     const auto started = std::chrono::steady_clock::now();
-    int status = whisper_full(g_context, params, samples.data(), sample_count);
+    int status = whisper_full_with_state(g_context, state.get(), params, samples.data(), sample_count);
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - started).count();
     __android_log_print(ANDROID_LOG_INFO, "LocalAssistantWhisper",
-                        "INFERENCE_DONE %lldms audio=%.2fs threads=%d ctx=%d tokens=%d single=%d vad=%d status=%d",
+                        "INFERENCE_DONE %lldms audio=%.2fs threads=%d ctx=%d tokens=%d single=%d vad=%d beam=%d status=%d",
                         static_cast<long long>(elapsed), sample_count / 16000.0,
                         params.n_threads, params.audio_ctx, params.max_tokens,
-                        params.single_segment ? 1 : 0, params.vad ? 1 : 0, status);
+                        params.single_segment ? 1 : 0, params.vad ? 1 : 0, accurate ? params.beam_search.beam_size : 1, status);
+    if (abort_control.timed_out.load(std::memory_order_relaxed) &&
+            !g_abort_requested.load(std::memory_order_relaxed)) {
+        jclass cls = env->FindClass("java/util/concurrent/TimeoutException");
+        if (cls != nullptr) env->ThrowNew(cls, "Точный поиск превысил лимит времени");
+        return nullptr;
+    }
     if (status != 0) {
+        __android_log_print(ANDROID_LOG_WARN, "LocalAssistantWhisper", "INFERENCE_ERROR status=%d cancelled=%d timedOut=%d",
+                            status, g_abort_requested.load() ? 1 : 0, abort_control.timed_out.load() ? 1 : 0);
         throw_runtime(env, "whisper.cpp завершил распознавание с ошибкой " + std::to_string(status));
         return nullptr;
     }
 
     std::string text;
-    const int segments = whisper_full_n_segments(g_context);
+    const int segments = whisper_full_n_segments_from_state(state.get());
     double probability_sum = 0.0;
     int probability_count = 0;
+    double text_sum = 0.0, text_log_sum = 0.0, text_min = 1.0;
+    int text_count = 0, weak_count = 0;
     for (int index = 0; index < segments; ++index) {
-        const char *segment = whisper_full_get_segment_text(g_context, index);
+        g_last_metrics[6] = std::max(g_last_metrics[6], static_cast<double>(whisper_full_get_segment_no_speech_prob_from_state(state.get(), index)));
+        const char *segment = whisper_full_get_segment_text_from_state(state.get(), index);
         if (segment != nullptr) text += segment;
-        const int tokens = whisper_full_n_tokens(g_context, index);
+        const int tokens = whisper_full_n_tokens_from_state(state.get(), index);
         for (int token = 0; token < tokens; ++token) {
-            const float probability = whisper_full_get_token_p(g_context, index, token);
+            const float probability = whisper_full_get_token_p_from_state(state.get(), index, token);
             if (std::isfinite(probability) && probability >= 0.0f && probability <= 1.0f) {
                 probability_sum += probability;
                 probability_count++;
+                const auto token_id = whisper_full_get_token_id_from_state(state.get(), index, token);
+                const char *piece = whisper_token_to_str(g_context, token_id);
+                const bool lexical = piece != nullptr && std::any_of(piece, piece + std::strlen(piece), [](unsigned char ch) {
+                    return ch >= 0x80 || std::isalnum(ch);
+                });
+                if (token_id < whisper_token_eot(g_context) && lexical) {
+                    text_sum += probability;
+                    text_log_sum += std::log(std::max(1e-9f, probability));
+                    text_min = std::min(text_min, static_cast<double>(probability));
+                    weak_count += probability < 0.35f ? 1 : 0;
+                    text_count++;
+                }
             }
         }
     }
     if (probability_count > 0) {
         g_last_confidence = static_cast<float>(probability_sum / probability_count);
     }
+    g_last_metrics[0] = g_last_confidence;
+    if (text_count > 0) {
+        g_last_metrics[1] = text_sum / text_count;
+        g_last_metrics[2] = text_log_sum / text_count;
+        g_last_metrics[3] = text_min;
+        g_last_metrics[4] = static_cast<double>(weak_count) / text_count;
+        g_last_metrics[5] = text_count;
+    }
+    g_last_metrics[8] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
     text.erase(text.begin(), std::find_if(text.begin(), text.end(), [](unsigned char ch) { return !std::isspace(ch); }));
     text.erase(std::find_if(text.rbegin(), text.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), text.end());
     return new_string_utf8(env, text);
@@ -405,6 +474,14 @@ extern "C" JNIEXPORT jfloat JNICALL
 Java_ru_nezabudka_app_speech_WhisperNative_lastConfidence(JNIEnv *, jobject) {
     std::lock_guard<std::mutex> lock(g_mutex);
     return g_last_confidence;
+}
+
+extern "C" JNIEXPORT jdoubleArray JNICALL
+Java_ru_nezabudka_app_speech_WhisperNative_lastMetrics(JNIEnv *env, jobject) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    auto result = env->NewDoubleArray(9);
+    if (result != nullptr) env->SetDoubleArrayRegion(result, 0, 9, g_last_metrics);
+    return result;
 }
 
 extern "C" JNIEXPORT void JNICALL

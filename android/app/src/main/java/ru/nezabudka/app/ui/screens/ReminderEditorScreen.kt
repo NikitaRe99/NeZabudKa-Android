@@ -85,7 +85,7 @@ internal fun ReminderEditorScreen(
             recurrence != reminder.recurrence || favorite != reminder.favorite
         when {
             text.isBlank() -> delete(reminder.id, back)
-            changed -> save(reminder, text, remindAt, recurrence, favorite, false) {
+            changed -> save(reminder, text, remindAt, recurrence, favorite, reminder.status == "completed") {
                 if (remindAt != null) onTimedReminderSaved()
                 back()
             }
@@ -102,7 +102,7 @@ internal fun ReminderEditorScreen(
         if (textEdited && text.isNotBlank()) {
             delay(800)
             textEdited = false
-            save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, false) { }
+            save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, reminder.status == "completed") { }
         }
     }
 
@@ -114,7 +114,7 @@ internal fun ReminderEditorScreen(
             IconButton(onClick = {
                 val newFavorite = !favorite
                 favorite = newFavorite
-                save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, newFavorite, false) { }
+                save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, newFavorite, reminder.status == "completed") { }
             }) {
                 Icon(
                     if (favorite) Icons.Default.Star else Icons.Default.StarBorder,
@@ -225,7 +225,7 @@ internal fun ReminderEditorScreen(
             date = newDate
             time = newTime
             dateDialog = false
-            save(reminder, text, newDate.atTime(newTime ?: LocalTime.of(9, 0)), recurrence, favorite, false) { }
+            save(reminder, text, newDate.atTime(newTime ?: LocalTime.of(9, 0)), recurrence, favorite, reminder.status == "completed") { }
         },
         confirmWithRecurrence = { newDate, newTime, newRecurrence ->
             val requestedStart = newDate.atTime(newTime ?: LocalTime.of(9, 0))

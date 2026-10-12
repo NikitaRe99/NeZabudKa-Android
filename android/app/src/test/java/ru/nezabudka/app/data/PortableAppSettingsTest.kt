@@ -26,6 +26,8 @@ class PortableAppSettingsTest {
             classicNluEnabled = false,
             keepWhisperModelLoaded = true,
             whisperThreadCount = 6,
+            whisperAccurateMode = true,
+            notePunctuationModel = "rupunct_small",
             externalDataBackupEnabled = true,
             timeOfDaySettings = listOf(TimeOfDaySetting("после работы", "18:30")),
             sttEngine = "whisper",
@@ -63,6 +65,8 @@ class PortableAppSettingsTest {
         assertFalse(portable.classicNluEnabled)
         assertTrue(portable.keepWhisperModelLoaded)
         assertEquals(6, portable.whisperThreadCount)
+        assertTrue(portable.whisperAccurateMode)
+        assertEquals("rupunct_small", portable.notePunctuationModel)
         assertEquals("folder-id", portable.yandexFolderId)
         assertEquals("https://voice.example.test", portable.vkEndpoint)
         assertEquals("18:30", portable.timeOfDaySettings.single().time)

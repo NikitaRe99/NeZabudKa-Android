@@ -11,6 +11,52 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class ReminderActionsTest {
+    @Test fun `completing a future monthly occurrence keeps the reminder active`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-10-11T10:00:00Z"), ZoneOffset.UTC)
+        val actions = ReminderActions(repository, scheduler, clock)
+        val date = LocalDateTime.of(2026, 10, 12, 9, 0)
+        val reminder = repository.create("поливать цветы", date, "monthly")
+        val updated = actions.setCompleted(reminder.id, true)
+        assertEquals("active", updated.status)
+        assertEquals(date.plusMonths(1), updated.remindAt)
+        assertEquals("monthly", updated.recurrence)
+        assertEquals(listOf(reminder.id), scheduler.scheduled)
+    }
+
+    @Test fun `notification completion does not advance an already advanced occurrence twice`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-10-12T09:00:00Z"), ZoneOffset.UTC)
+        val actions = ReminderActions(repository, scheduler, clock)
+        val date = LocalDateTime.of(2026, 10, 12, 9, 0)
+        val reminder = repository.create("поливать цветы", date, "monthly")
+        val first = actions.completeFromNotification(reminder.id)!!
+        assertEquals(date.plusMonths(1), first.remindAt)
+        assertEquals(first, actions.completeFromNotification(reminder.id))
+        assertEquals("active", repository.values.single().status)
+        assertEquals(1, scheduler.scheduled.size)
+    }
+
+    @Test fun `last finite occurrence completes instead of disappearing without a schedule`() = runBlocking {
+        val date = LocalDateTime.of(2026, 10, 12, 9, 0)
+        val clock = Clock.fixed(Instant.parse("2026-10-12T09:00:00Z"), ZoneOffset.UTC)
+        val actions = ReminderActions(repository, scheduler, clock)
+        val rule = ru.nezabudka.app.domain.CustomReminderRecurrence(1, ru.nezabudka.app.domain.ReminderRecurrenceUnit.DAY, emptySet(), date, repeatCount = 1).storedValue()
+        val reminder = repository.create("проверить фильтр", date, rule)
+        assertEquals(date.plusDays(1), actions.setCompleted(reminder.id, true).remindAt)
+        assertEquals("completed", actions.setCompleted(reminder.id, true).status)
+    }
+
+    @Test fun `editor completion and changed schedule preserve the repeat rule`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-10-11T10:00:00Z"), ZoneOffset.UTC)
+        val actions = ReminderActions(repository, scheduler, clock)
+        val date = LocalDateTime.of(2026, 10, 12, 9, 0)
+        val reminder = repository.create("поливать цветы", date, "monthly")
+        val updated = actions.saveEditor(reminder, reminder.text, date, "monthly", false, true)
+        assertEquals("active", updated.status)
+        assertEquals(date.plusMonths(1), updated.remindAt)
+        val changed = actions.rescheduleWithRecurrence(updated, date.plusDays(1), "weekly")
+        assertEquals("weekly", changed.recurrence)
+        assertEquals(date.plusDays(1), changed.remindAt)
+    }
     private val repository = FakeReminderRepository()
     private val scheduler = FakeScheduler()
     private val actions = ReminderActions(repository, scheduler)

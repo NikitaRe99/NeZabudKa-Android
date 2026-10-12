@@ -31,6 +31,7 @@ internal class ReminderFeature(
     private val actions: ReminderActions,
     private val scope: CoroutineScope,
     private val onError: (Throwable) -> Unit,
+    private val onReminderCreated: (Reminder) -> Unit = {},
 ) {
     val reminders: StateFlow<List<Reminder>> = repository.observeAll()
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -69,7 +70,7 @@ internal class ReminderFeature(
         onCreated: () -> Unit,
     ): Job = scope.launch {
         runCatching { actions.create(text, remindAt, recurrence, favorite) }
-            .onSuccess { onCreated() }
+            .onSuccess { reminder -> onReminderCreated(reminder); onCreated() }
             .onFailure(onError)
     }
 
@@ -99,6 +100,9 @@ internal class ReminderFeature(
 
     fun reschedule(reminder: Reminder, remindAt: LocalDateTime?, onSaved: () -> Unit): Job =
         mutate(reminder.id, onSuccess = onSaved) { actions.reschedule(reminder, remindAt) }
+
+    fun rescheduleWithRecurrence(reminder: Reminder, remindAt: LocalDateTime?, recurrence: String?, onSaved: () -> Unit): Job =
+        mutate(reminder.id, onSuccess = onSaved) { actions.rescheduleWithRecurrence(reminder, remindAt, recurrence) }
 
     fun move(id: Long, beforeId: Long?): Job =
         mutate(id) { reminderRepository.move(id, beforeId) }

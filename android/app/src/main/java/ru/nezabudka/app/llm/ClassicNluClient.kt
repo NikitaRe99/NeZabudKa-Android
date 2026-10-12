@@ -11,6 +11,9 @@ import ru.nezabudka.app.domain.AssistantCommand
 import ru.nezabudka.app.domain.CommandContext
 import ru.nezabudka.app.domain.CommandIntent
 import ru.nezabudka.app.domain.CommandScope
+import ru.nezabudka.app.domain.isUnsupportedMediaCommand
+import ru.nezabudka.app.domain.isCompletedActionStatement
+import ru.nezabudka.app.domain.extractStopTrackingReminderTarget
 import ru.nezabudka.app.ports.CommandUnderstandingPort
 import ru.nezabudka.app.data.AndroidModelLibrary
 import ru.nezabudka.app.data.ModelDownloadWorker
@@ -30,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 data class ClassicNluModelState(
     val installed: Boolean = false,
+    val installedModels: List<String> = emptyList(),
+    val selectedName: String? = null,
     val downloading: Boolean = false,
     val progress: Float? = null,
     val error: String? = null,
@@ -205,6 +210,9 @@ class ClassicNluClient(
             slots = slots,
             decision = decision,
         )
+        mapper.explicitCommand(text, now, context.scope)?.let {
+            return result(it, "Принято: явная команда ${it.intent.wireName}")
+        }
         if (intent == CommandIntent.UNKNOWN) return result(unknown(), "Отклонено: модель выбрала unknown")
         if (intent !in allowedIntents(context.scope)) {
             return result(unknown(), "Отклонено: intent недоступен на вкладке ${context.scope.name.lowercase()}")
@@ -307,7 +315,8 @@ class ClassicNluClient(
         intent: CommandIntent,
         text: String,
         slots: Map<String, String>,
-    ): Boolean = when (intent) {
+    ): Boolean = !ru.nezabudka.app.domain.isUnsupportedCommandMutation(text) &&
+        !ru.nezabudka.app.domain.isNonCommandSpeechStatement(text) && when (intent) {
         CommandIntent.CREATE_REMINDER ->
             !REMINDER_MUTATION_MARKER.containsMatchIn(text) &&
                 !NON_COMMAND_QUESTION.containsMatchIn(text) &&
@@ -320,7 +329,7 @@ class ClassicNluClient(
                 (FOLDER_NOUN.containsMatchIn(text) || hasConfirmedSlot(slots, "FOLDER", text))
         CommandIntent.DELETE_REMINDER ->
             EXPLICIT_DELETION.containsMatchIn(text) &&
-                (LAST_TARGET.containsMatchIn(text) ||
+                (extractStopTrackingReminderTarget(text) != null || LAST_TARGET.containsMatchIn(text) ||
                     ((REMINDER_CONTEXT.containsMatchIn(text) || REMINDER_ONLY_ACTION.containsMatchIn(text) ||
                         (SHORT_DELETE_ACTION.containsMatchIn(text) && !NON_REMINDER_DELETE_OBJECT.containsMatchIn(text))) &&
                         (hasConfirmedSlot(slots, "TARGET", text) || hasMeaningfulArgument(text))))
@@ -328,6 +337,7 @@ class ClassicNluClient(
             EXPLICIT_DELETION.containsMatchIn(text) && FOLDER_NOUN.containsMatchIn(text) &&
                 (hasConfirmedSlot(slots, "FOLDER", text) || DELETE_FOLDER_ARGUMENT.containsMatchIn(text) ||
                     hasMeaningfulArgument(text))
+        CommandIntent.CREATE_NOTE -> !isUnsupportedMediaCommand(text) && !isCompletedActionStatement(text)
         else -> true
     }
 
@@ -380,7 +390,7 @@ class ClassicNluClient(
         ModelDownloadWorker.enqueue(
             applicationContext,
             ModelDownloadWorker.KIND_NLU,
-            "classic-nlu",
+            "classic-nlu-v7",
             "Расширенное распознавание команд",
             MODEL_FILE,
             url,
@@ -388,14 +398,30 @@ class ClassicNluClient(
     }
 
     suspend fun importModel(uri: Uri) = withContext(Dispatchers.IO) {
-        release()
-        modelLibrary.import(uri)
-        refreshModel()
+        mutex.withLock {
+            session?.close()
+            session = null
+            tokenizer = null
+            modelLibrary.import(uri)
+            refreshModel()
+        }
     }
 
-    private fun scanModel(): ClassicNluModelState = ClassicNluModelState(
-        installed = modelLibrary.snapshot().selectedName != null,
-    )
+    suspend fun selectModel(fileName: String) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            if (modelLibrary.select(fileName)) {
+                session?.close()
+                session = null
+                tokenizer = null
+            }
+            refreshModel()
+        }
+    }
+
+    private fun scanModel(): ClassicNluModelState {
+        val snapshot = modelLibrary.snapshot()
+        return ClassicNluModelState(installed = snapshot.selectedName != null, installedModels = snapshot.installed, selectedName = snapshot.selectedName)
+    }
 
     private fun applyModelWorkState(values: List<WorkInfo>) {
         val work = values.firstOrNull {
@@ -429,7 +455,7 @@ class ClassicNluClient(
 
     private companion object {
         const val MAX_LENGTH = 64
-        const val MODEL_FILE = "classic_nlu_int8.onnx"
+        const val MODEL_FILE = "classic_nlu_v7_int8.onnx"
         const val VOCAB_ASSET = "nlu/vocab.txt"
         const val INTENT_THRESHOLD = 0.72
         const val EXPLICIT_DESTRUCTIVE_THRESHOLD = 0.50

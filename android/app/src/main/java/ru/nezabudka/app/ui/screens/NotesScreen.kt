@@ -47,6 +47,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items as staggeredItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -87,6 +88,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.LaunchedEffect
@@ -94,6 +96,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
@@ -134,7 +137,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private enum class NoteSort(val key: String) {
+internal enum class NoteSort(val key: String) {
     MANUAL("manual"), CREATED("created"), UPDATED("updated");
     companion object { fun fromKey(value: String) = entries.firstOrNull { it.key == value } ?: UPDATED }
 }
@@ -142,7 +145,8 @@ private enum class NoteFolderInterface(val key: String) {
     CAROUSEL("carousel"), DRAWER("drawer");
     companion object { fun fromKey(value: String) = entries.firstOrNull { it.key == value } ?: CAROUSEL }
 }
-private enum class NoteSection { ACTIVE, ARCHIVE, TRASH }
+internal enum class NoteSection { ACTIVE, ARCHIVE, TRASH }
+private data class NotesDisplayInput(val notes: List<Note>, val sort: NoteSort, val folderId: Long?, val section: NoteSection, val query: String)
 
 @Composable
 private fun NoteSelectionTopBar(
@@ -220,6 +224,7 @@ internal fun NotesScreen(
     moveNote: (Long, Long?) -> Unit,
     openNote: (Note) -> Unit, newNote: (Long?) -> Unit,
     reducedUiEffects: Boolean = false,
+    isLoading: Boolean = false,
 ) {
     val selectedFolder = selectedFolderId
     val columns = noteColumns.coerceIn(1, 2)
@@ -270,7 +275,7 @@ internal fun NotesScreen(
     val drawerFolderListState = rememberLazyListState()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val shake = if (editFolders) {
+    val shake = if (editFolders && !reducedUiEffects) {
         rememberInfiniteTransition(label = "folder-shake").animateFloat(
             initialValue = -1.4f,
             targetValue = 1.4f,
@@ -323,31 +328,23 @@ internal fun NotesScreen(
         }
         carouselSwipeDirection = 0
     }
-    val visible = remember(notes, selectedFolder, section, query, sort) {
-        notes.asSequence().filter { note ->
-            (section != NoteSection.ACTIVE || selectedFolder == null || selectedFolder in note.folderIds) && when (section) {
-                NoteSection.ACTIVE -> !note.archived && !note.trashed
-                NoteSection.ARCHIVE -> note.archived && !note.trashed
-                NoteSection.TRASH -> note.trashed
-            } && (
-                query.isBlank() ||
-                    note.title.contains(query, true) ||
-                    note.text.contains(query, true) ||
-                    note.folderNames.any { it.contains(query, true) }
-                )
-        }.sortedWith(
-            when (sort) {
-                NoteSort.MANUAL -> compareBy<Note> { it.manualOrder }.thenBy { it.id }
-                NoteSort.CREATED -> compareByDescending<Note> { it.createdAt }
-                NoteSort.UPDATED -> compareByDescending<Note> { it.updatedAt }
-            },
-        ).toList()
+    val displayInput = remember(notes, sort, selectedFolder, section, query) {
+        NotesDisplayInput(notes, sort, selectedFolder, section, query)
     }
+    val projection by produceState<Pair<NotesDisplayInput, List<Note>>?>(null, displayInput) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            displayInput to filterNotesForDisplay(sortNotesForDisplay(notes, sort), selectedFolder, section, query)
+        }
+    }
+    val displayReady = !isLoading && projection?.first == displayInput
+    val visible = if (displayReady) projection!!.second else emptyList()
     val pinned = remember(visible) { visible.filter { it.pinned } }
     val others = remember(visible) { visible.filterNot { it.pinned } }
     val manualSortingEnabled = sort == NoteSort.MANUAL
-    val displayedPinned = if (manualSortingEnabled && sameNoteIds(manualPinned, pinned)) manualPinned else pinned
-    val displayedOthers = if (manualSortingEnabled && sameNoteIds(manualOthers, others)) manualOthers else others
+    val manualPinnedMatches by remember(pinned) { derivedStateOf { sameNoteIds(manualPinned, pinned) } }
+    val manualOthersMatch by remember(others) { derivedStateOf { sameNoteIds(manualOthers, others) } }
+    val displayedPinned = if (manualSortingEnabled && manualPinnedMatches) manualPinned else pinned
+    val displayedOthers = if (manualSortingEnabled && manualOthersMatch) manualOthers else others
     val trashHasNotes = remember(notes) { notes.any { it.trashed } }
     val selectedNotes = remember(visible, selectedNoteIds) { visible.filter { it.id in selectedNoteIds } }
     val selectionMode = selectedNoteIds.isNotEmpty()
@@ -571,6 +568,7 @@ internal fun NotesScreen(
                 val startedOnFolderStrip = folderStripBounds?.contains(down.position + notesGridRootOffset) == true
                 var dragX = 0f
                 var dragY = 0f
+                var verticalScroll = false
                 do {
                     val event = awaitPointerEvent(PointerEventPass.Initial)
                     event.changes.firstOrNull { it.id == down.id }?.let { change ->
@@ -578,8 +576,12 @@ internal fun NotesScreen(
                         dragX += delta.x
                         dragY += delta.y
                     }
+                    if (abs(dragY) > viewConfiguration.touchSlop && abs(dragY) > abs(dragX)) {
+                        verticalScroll = true
+                        break
+                    }
                 } while (event.changes.any { it.pressed })
-                if (!startedOnFolderStrip && abs(dragX) >= swipeThreshold && abs(dragX) > abs(dragY)) {
+                if (!verticalScroll && !startedOnFolderStrip && abs(dragX) >= swipeThreshold && abs(dragX) > abs(dragY)) {
                     val index = folderIds.indexOf(selectedFolder)
                     val next = if (dragX < 0f) {
                         (index + 1).coerceAtMost(folderIds.lastIndex)
@@ -665,44 +667,19 @@ internal fun NotesScreen(
                 AppNoticeCard(notice.message, dismissNotice) {
                     val effect = notice.effect
                     if (effect is ActionEffect.NoteCreated) {
-                        TextButton(onClick = { dismissNotice(); openNote(effect.note) }) { Text("Редактировать") }
+                        AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); openNote(effect.note) })
                     }
                     if (effect is ActionEffect.NoteCreated || effect is ActionEffect.FolderCreated || effect is ActionEffect.FolderDeleted) {
-                        TextButton(onClick = undoLastAction) { Text("Отменить") }
+                        AppNoticeAction(Icons.AutoMirrored.Filled.Undo, "Отменить", undoLastAction)
                     }
                 }
             }
             if (ui.awaitingSttConfirmation && ui.recognizedText.isNotBlank()) {
                 SttConfirmationCard(ui.recognizedText, editRecognizedText)
             }
-            if (draggingNoteId == null) Row(
-                Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(AppLayout.sectionSpacing),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-            Surface(
-                shape = RoundedCornerShape(theme.shapes.action),
-                color = theme.colors.talkButton,
-                contentColor = theme.colors.onTalkButton,
-                modifier = Modifier.weight(1f).height(58.dp).pushToTalkGesture(
-                    enabled = !ui.isProcessing,
-                    hasRecognizedText = ui.recognizedText.isNotBlank(),
-                    beginPushToTalk = beginPushToTalk,
-                    endPushToTalk = endPushToTalk,
-                    primaryAction = primaryAction,
-                ),
-            ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(when {
-                    ui.isRecording -> "Отпустите для распознавания"
-                    ui.isProcessing -> "Выполняю…"
-                    ui.recognizedText.isNotBlank() -> "Выполнить"
-                    else -> "Удерживайте, чтобы говорить"
-                })
-            } }
-            Surface(shape = CircleShape, color = theme.colors.selected, modifier = Modifier.size(58.dp).clickable { addMenu = true }) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, "Добавить") }
-            }
-            }
+            if (draggingNoteId == null) AppVoiceActionBar(
+                ui, beginPushToTalk, endPushToTalk, primaryAction, { addMenu = true }, "Добавить заметку или папку",
+            )
         } },
     ) { inner ->
         Box(
@@ -839,6 +816,7 @@ internal fun NotesScreen(
                     Text(
                         folders.firstOrNull { it.id == selectedFolder }?.name ?: "Все заметки",
                         style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -877,7 +855,33 @@ internal fun NotesScreen(
                 } else Modifier,
                 longClickEnabled = !manualSortingEnabled,
             ) }
-            if (visible.isEmpty()) item(key = "notes-empty", contentType = "empty-state", span = StaggeredGridItemSpan.FullLine) { Text(if (query.isBlank()) "Заметок пока нет" else "Ничего не найдено", Modifier.padding(20.dp)) }
+            if (!displayReady) item(key = "notes-loading", span = StaggeredGridItemSpan.FullLine) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    androidx.compose.material3.CircularProgressIndicator()
+                }
+            }
+            if (displayReady && visible.isEmpty()) item(key = "notes-empty", contentType = "empty-state", span = StaggeredGridItemSpan.FullLine) {
+                AppEmptyState(
+                    icon = when {
+                        section == NoteSection.ARCHIVE -> Icons.Default.Archive
+                        section == NoteSection.TRASH -> Icons.Default.DeleteSweep
+                        else -> Icons.AutoMirrored.Filled.Notes
+                    },
+                    title = when {
+                        query.isNotBlank() -> "Ничего не найдено"
+                        section == NoteSection.ARCHIVE -> "Архив пока пуст"
+                        section == NoteSection.TRASH -> "Корзина пуста"
+                        selectedFolder != null -> "В этой папке пока нет заметок"
+                        else -> "Сохраните первую мысль"
+                    },
+                    description = when {
+                        query.isNotBlank() -> "Попробуйте другое слово или измените запрос."
+                        section == NoteSection.ARCHIVE -> "Здесь появятся заметки, которые вы отправите в архив."
+                        section == NoteSection.TRASH -> "Здесь появятся удалённые заметки. Их можно восстановить."
+                        else -> "Нажмите «+», чтобы создать заметку, или удерживайте микрофон и продиктуйте её."
+                    },
+                )
+            }
             }
         }
         val draggedNote = draggingNoteId?.let { id ->

@@ -33,7 +33,7 @@ class CustomThemeSettingsTest {
     fun `dark base gets a readable placeholder`() {
         val theme = defaultCustomTheme("dark").withAutomaticDependentColors()
 
-        assertEquals("#171717", theme.onAccent)
+        assertEquals("#F7F7F7", theme.onAccent)
         assertEquals("#7D7D82", theme.placeholder)
     }
 }

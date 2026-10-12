@@ -16,6 +16,23 @@ class PcmWavSegmenterTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
 
+    @Test fun benchmark_sample_is_bounded_without_changing_the_recording() {
+        val input = wav("benchmark-source.wav", seconds = 12)
+        val size = input.length()
+        val output = File(temporaryFolder.root, "benchmark.wav")
+        PcmWavSegmenter.copyFirstSeconds(input, output, 5)
+        assertEquals(44L + 5L * 32_000L, output.length())
+        assertEquals(size, input.length())
+        assertEquals(sampleAt(input, 79_999), sampleAt(output, 79_999))
+    }
+
+    @Test fun short_benchmark_recording_is_copied_without_padding() {
+        val input = wav("benchmark-short.wav", seconds = 1)
+        val output = File(temporaryFolder.root, "benchmark-copy.wav")
+        PcmWavSegmenter.copyFirstSeconds(input, output, 5)
+        assertTrue(input.readBytes().contentEquals(output.readBytes()))
+    }
+
     @Test
     fun shortRecordingIsNotCopied() {
         val input = wav("short.wav", seconds = 3)
@@ -119,6 +136,55 @@ class PcmWavSegmenterTest {
         assertEquals(2, result.size)
         assertEquals(listOf(10_000L, 10_000L), result.map { (it.length() - 44L) / 32L })
         assertEquals(sampleAt(input, 10_000L * 16L), sampleAt(result[1], 0L))
+    }
+
+    @Test fun bothWhisperModesPreserveAllQuietAndUndetectedSamplesInShortRecordings() {
+        val input = wav("short-weak-words.wav", seconds = 12)
+        val result = PcmWavSegmenter.splitForWhisper(
+            input, File(temporaryFolder.root, "precise-short"),
+            longArrayOf(16000, 48000, 80000, 144000), 19,
+        )
+        assertSame(input, result.single())
+        assertEquals(sampleAt(input, 64000), sampleAt(result.single(), 64000))
+        assertEquals(sampleAt(input, 191999), sampleAt(result.single(), 191999))
+    }
+
+    @Test fun bothWhisperModesCopyQuietPrepositionsAndFinalSyllablesInLongRecordings() {
+        val input = wav("long-weak-preposition.wav", seconds = 24)
+        val result = PcmWavSegmenter.splitForWhisper(
+            input, File(temporaryFolder.root, "precise-long"),
+            longArrayOf(32000, 80000, 88000, 144000), 19,
+        )
+        val output = result.single()
+        // Start moves from 2.0 to 1.9 s and the final syllables extend to 9.3 s.
+        assertEquals(7400L, (output.length() - 44L) / 32L)
+        assertEquals(sampleAt(input, 30400), sampleAt(output, 0))
+        // Original audio in the 500 ms gap survives sample-for-sample.
+        assertEquals(sampleAt(input, 84000), sampleAt(output, 84000 - 30400))
+        assertEquals(sampleAt(input, 148799), sampleAt(output, 118399))
+    }
+
+    @Test fun extraSpeechPaddingIsClampedToFileEdges() {
+        val input = wav("bounded-padding.wav", seconds = 16)
+        val result = PcmWavSegmenter.splitAtSpeechRanges(
+            input, File(temporaryFolder.root, "bounded-precise"), longArrayOf(0, 256000), 19,
+            speechPaddingBeforeMillis = 100, speechPaddingAfterMillis = 300,
+            preserveShortGapsMillis = 1000,
+        )
+        assertSame(input, result.single())
+    }
+
+    @Test fun protectedWhisperAudioStillRemovesLongPauses() {
+        val input = wav("long-pause.wav", seconds = 20)
+        val result = PcmWavSegmenter.splitForWhisper(
+            input, File(temporaryFolder.root, "protected-long-pause"),
+            longArrayOf(0, 4L * 16_000L, 12L * 16_000L, 16L * 16_000L), 19,
+        )
+        val output = result.single()
+        assertEquals(8_800L, (output.length() - 44L) / 32L)
+        assertEquals(sampleAt(input, 4_299L * 16L), sampleAt(output, 4_299L * 16L))
+        assertEquals(0, sampleAt(output, 4_350L * 16L).toInt())
+        assertEquals(sampleAt(input, 11_900L * 16L), sampleAt(output, 4_400L * 16L))
     }
 
     private fun wav(name: String, seconds: Int): File = temporaryFolder.newFile(name).apply {

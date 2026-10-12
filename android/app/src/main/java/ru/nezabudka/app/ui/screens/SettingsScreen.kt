@@ -6,6 +6,16 @@ import android.media.RingtoneManager
 import android.media.AudioAttributes
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Info
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -69,6 +79,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -81,6 +92,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
+import ru.nezabudka.app.data.AppIconOption
 import ru.nezabudka.app.R
 import ru.nezabudka.app.data.DeviceCapabilities
 import ru.nezabudka.app.domain.AppSettings
@@ -105,6 +118,7 @@ import ru.nezabudka.app.ui.AppLayout
 import ru.nezabudka.app.ui.AppTheme
 import ru.nezabudka.app.ui.appShadowElevation
 import ru.nezabudka.app.ui.AssistantUiState
+import ru.nezabudka.app.ui.WhisperThreadBenchmarkUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalTime
@@ -118,7 +132,6 @@ private val SettingsTrailingSlotOffset = 12.dp
 
 @Composable
 internal fun SettingsScreen(
-    uiState: AssistantUiState,
     settings: AppSettings,
     engines: List<SpeechToTextEngine>,
     modelStorage: UserModelsStorageState,
@@ -135,6 +148,7 @@ internal fun SettingsScreen(
     setAudioPreprocessing: (Boolean) -> Unit,
     setShowPlaybackButton: (Boolean) -> Unit,
     setShowTechnicalLog: (Boolean) -> Unit,
+    setShowAssistantWelcomeCard: (Boolean) -> Unit,
     setTrustStt: (Boolean) -> Unit,
     setTheme: (String) -> Unit,
     setCustomTheme: (CustomThemeSettings) -> Unit,
@@ -144,6 +158,7 @@ internal fun SettingsScreen(
     setExternalDataBackupEnabled: (Boolean) -> Unit,
     setTimeOfDaySettings: (List<TimeOfDaySetting>) -> Unit,
     setNoteTrashRetentionDays: (Int) -> Unit,
+    setNoteFolderInterface: (String) -> Unit,
     setShowNavigationLabels: (Boolean) -> Unit,
     setUiPerformanceMode: (String) -> Unit,
     setNotificationSound: (String) -> Unit,
@@ -160,6 +175,7 @@ internal fun SettingsScreen(
     importWhisper: (Uri) -> Unit,
     downloadClassicNlu: () -> Unit,
     importClassicNlu: (Uri) -> Unit,
+    selectClassicNlu: (String) -> Unit,
     selectModelsDirectory: (Uri) -> Unit,
     clearModelCache: ((Long?) -> Unit) -> Unit,
     saveYandex: (String, String) -> Unit,
@@ -181,16 +197,50 @@ internal fun SettingsScreen(
     openBackgroundRunSettings: () -> Unit,
     openAlarmVendorSettings: () -> Unit,
     openAutoStartSettings: () -> Unit,
-    showOnboarding: () -> Unit,
+    resetFirstUseSetup: () -> Unit,
+    threadBenchmark: WhisperThreadBenchmarkUiState,
+    startThreadBenchmark: () -> Unit,
+    cancelThreadBenchmark: () -> Unit,
+    applyThreadBenchmark: () -> Unit,
+    setWhisperAccurateMode: (Boolean) -> Unit,
+    setNotePunctuationModel: (String) -> Unit,
+    punctuationModel: ru.nezabudka.app.speech.RupunctModelState,
+    downloadPunctuationModel: () -> Unit,
+    cancelPunctuationDownload: () -> Unit,
+    requestedSearch: String? = null,
+    consumeRequestedSearch: () -> Unit = {},
+    appIcon: AppIconOption = AppIconOption.CHECK,
+    selectAppIcon: (AppIconOption) -> Unit = {},
 ) {
+    var selectedCategory by rememberSaveable { mutableStateOf<SettingsCategory?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(requestedSearch) {
+        requestedSearch?.let { selectedCategory = SettingsCategory.SPEECH; searchQuery = it; consumeRequestedSearch() }
+    }
+    val entries = remember(settings.sttEngine, settings.localOnly, settings.reminderAlarmMode) {
+        availableSettingsEntries(settings.sttEngine, settings.localOnly, settings.reminderAlarmMode)
+    }
+    val matchingEntries = remember(entries, selectedCategory, searchQuery) {
+        entries.filter { if (searchQuery.isNotBlank()) it.matches(searchQuery) else it.category == selectedCategory }
+    }
+    val matchingKeys = remember(matchingEntries) { matchingEntries.map { it.key }.toSet() }
+    val showSection: (String) -> Boolean = { it in matchingKeys }
+    BackHandler(selectedCategory != null || searchQuery.isNotBlank()) {
+        if (searchQuery.isNotBlank()) searchQuery = "" else selectedCategory = null
+    }
+    var resetFirstUseDialog by remember { mutableStateOf(false) }
+    var firstUseResetDone by remember { mutableStateOf(false) }
+    var punctuationExpanded by remember { mutableStateOf(false) }
     var sttExpanded by remember { mutableStateOf(false) }
     var alarmPresentationExpanded by remember { mutableStateOf(false) }
     var alarmRingDurationExpanded by remember { mutableStateOf(false) }
     var alarmPauseExpanded by remember { mutableStateOf(false) }
     var alarmRepeatExpanded by remember { mutableStateOf(false) }
     var trashRetentionExpanded by remember { mutableStateOf(false) }
+    var folderInterfaceExpanded by remember { mutableStateOf(false) }
     var whisperExpanded by remember { mutableStateOf(false) }
     var whisperThreadsExpanded by remember { mutableStateOf(false) }
+    var threadBenchmarkDialog by remember { mutableStateOf(false) }
     var yandexKey by remember { mutableStateOf("") }
     var yandexFolder by remember(cloudCredentials.yandexFolderId) { mutableStateOf(cloudCredentials.yandexFolderId) }
     var googleToken by remember { mutableStateOf("") }
@@ -203,6 +253,7 @@ internal fun SettingsScreen(
     var newTimeValue by remember { mutableStateOf("18:00") }
     var cloudHelp by remember { mutableStateOf<CloudSttHelp?>(null) }
     var themePickerOpen by remember { mutableStateOf(false) }
+    var iconPickerOpen by remember { mutableStateOf(false) }
     var uiPerformanceExpanded by remember { mutableStateOf(false) }
     var popupDurationExpanded by remember { mutableStateOf(false) }
     var customThemeEditor by remember { mutableStateOf(false) }
@@ -248,6 +299,10 @@ internal fun SettingsScreen(
     )
     val maximumWhisperThreads = maximumWhisperThreadCount(
         cpuCores = deviceCapabilities.cpuCores,
+    )
+    val automaticWhisperThreads = effectiveWhisperThreadCount(
+        configured = AUTOMATIC_WHISPER_THREAD_COUNT,
+        cpuCores = deviceCapabilities.cpuCores,
         lowRamDevice = deviceCapabilities.lowRamDevice,
         memoryClassMb = deviceCapabilities.memoryClassMb,
     )
@@ -270,21 +325,67 @@ internal fun SettingsScreen(
         "custom" -> "Своя тема"
         else -> "Светлая"
     }
-    val soundTitle = remember(settings.notificationSound) {
-        if (settings.notificationSound.isBlank()) "Без звука"
-        else runCatching { RingtoneManager.getRingtone(context, Uri.parse(settings.notificationSound))?.getTitle(context) }.getOrNull() ?: "Выбранный звук"
+    val soundTitle by produceState("Выбранный звук", context, settings.notificationSound) {
+        value = withContext(Dispatchers.IO) {
+            if (settings.notificationSound.isBlank()) "Без звука"
+            else runCatching { RingtoneManager.getRingtone(context, Uri.parse(settings.notificationSound))?.getTitle(context) }.getOrNull() ?: "Выбранный звук"
+        }
     }
-    val alarmSoundTitle = remember(settings.reminderAlarmSound) {
-        if (settings.reminderAlarmSound.isBlank()) "Без звука"
-        else runCatching { RingtoneManager.getRingtone(context, Uri.parse(settings.reminderAlarmSound))?.getTitle(context) }.getOrNull() ?: "Выбранная мелодия"
+    val alarmSoundTitle by produceState("Выбранная мелодия", context, settings.reminderAlarmSound) {
+        value = withContext(Dispatchers.IO) {
+            if (settings.reminderAlarmSound.isBlank()) "Без звука"
+            else runCatching { RingtoneManager.getRingtone(context, Uri.parse(settings.reminderAlarmSound))?.getTitle(context) }.getOrNull() ?: "Выбранная мелодия"
+        }
     }
+    LaunchedEffect(selectedCategory, searchQuery) { settingsListState.scrollToItem(0) }
+    Column(Modifier.fillMaxSize().padding(horizontal = AppLayout.horizontalPadding)) {
+        Row(Modifier.fillMaxWidth().padding(top = AppLayout.contentTopPadding, bottom = AppLayout.sectionSpacing), verticalAlignment = Alignment.CenterVertically) {
+            if (selectedCategory != null || searchQuery.isNotBlank()) IconButton(onClick = {
+                searchQuery = ""; selectedCategory = null
+            }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Все настройки") }
+        AppSearchField(
+            value = searchQuery, onValueChange = { searchQuery = it },
+            placeholder = "Найти настройку",
+            reducedEffects = settings.uiPerformanceMode == ru.nezabudka.app.domain.UI_PERFORMANCE_REDUCED,
+            trailingContent = { if (searchQuery.isNotEmpty()) IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Default.Close, "Очистить поиск") } },
+            modifier = Modifier.weight(1f),
+        )
+        }
     LazyColumn(
-        Modifier.fillMaxSize().padding(horizontal = AppLayout.horizontalPadding),
+        Modifier.weight(1f).fillMaxWidth(),
         state = settingsListState,
         contentPadding = PaddingValues(bottom = AppLayout.sectionSpacing),
-        verticalArrangement = Arrangement.spacedBy(AppLayout.sectionSpacing),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item {
+        if (selectedCategory == null && searchQuery.isBlank()) {
+            items(SettingsCategory.entries, key = { it.name }, contentType = { "category" }) { category ->
+                Card(onClick = { selectedCategory = category }, modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(theme.shapes.card),
+                    colors = CardDefaults.cardColors(containerColor = theme.colors.card)) {
+                    Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Surface(shape = RoundedCornerShape(theme.shapes.tag), color = theme.colors.selected, contentColor = theme.colors.accent) {
+                            Icon(when(category) {
+                                SettingsCategory.SPEECH -> Icons.Default.Mic
+                                SettingsCategory.REMINDERS -> Icons.Default.NotificationsNone
+                                SettingsCategory.NOTES -> Icons.Default.FolderOpen
+                                SettingsCategory.APPEARANCE -> Icons.Default.Palette
+                                SettingsCategory.STORAGE -> Icons.Default.Storage
+                                SettingsCategory.ABOUT -> Icons.Default.Info
+                            }, null, Modifier.padding(12.dp).size(24.dp))
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(category.title, style = MaterialTheme.typography.titleMedium)
+                            Text(category.description, color = theme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Icon(Icons.Default.ChevronRight, null, tint = theme.colors.textSecondary)
+                    }
+                }
+            }
+        }
+        if (searchQuery.isNotBlank() && matchingEntries.isEmpty()) item(key = "search-empty") {
+            AppEmptyState(Icons.Default.Search, "Настройка не найдена", "Попробуйте другое слово: например, «потоки», «звук» или «автозапуск».")
+        }
+        if (showSection("Данные и хранилище")) item(key = "Данные и хранилище", contentType = "settings-section") {
             SettingsSection("Данные и хранилище") {
                 Text(
                     if (modelStorage.configured) "Каталог: ${modelStorage.location}" else modelStorage.location,
@@ -348,8 +449,14 @@ internal fun SettingsScreen(
                 )
             }
         }
-        item {
+        if (showSection("Интерфейс")) item(key = "Интерфейс", contentType = "settings-section") {
             SettingsSection("Интерфейс") {
+                SettingsActionRow(
+                    title = "Значок приложения",
+                    value = appIcon.title,
+                    onClick = { iconPickerOpen = true },
+                    trailingDescription = "Выбрать значок приложения",
+                )
                 SettingsActionRow(
                     title = "Тема",
                     value = themeLabel,
@@ -372,6 +479,10 @@ internal fun SettingsScreen(
                             setCustomTheme(settings.customTheme.copy(shadowsEnabled = enabled))
                         },
                     )
+            }
+        }
+        if (showSection("interface-behavior")) item(key = "interface-behavior", contentType = "settings-section") {
+            SettingsSection("Поведение интерфейса") {
                     Box(Modifier.fillMaxWidth()) {
                         SettingsActionRow(
                             title = "Время показа всплывающих уведомлений",
@@ -443,6 +554,12 @@ internal fun SettingsScreen(
                         "Автоматический режим включает облегчённый интерфейс на слабых устройствах. Облегчённый режим уменьшает тени и постепенно выводит длинные списки.",
                     )
                     SettingsToggleRow(
+                        title = "Начальные подсказки",
+                        description = "Примеры команд на экране помощника",
+                        checked = settings.showAssistantWelcomeCard,
+                        onCheckedChange = setShowAssistantWelcomeCard,
+                    )
+                    SettingsToggleRow(
                         title = "Показывать технический лог",
                         description = "Расширенный журнал текущего сеанса будет показан на вкладке «Помощник»",
                         checked = settings.showTechnicalLog,
@@ -456,7 +573,25 @@ internal fun SettingsScreen(
                     )
             }
         }
-        item {
+        if (showSection("folder-interface")) item(key = "folder-interface", contentType = "settings-section") {
+            SettingsSection("Интерфейс папок") {
+                Box(Modifier.fillMaxWidth()) {
+                    SettingsActionRow(
+                        title = "Показывать папки",
+                        value = if (settings.noteFolderInterface == "drawer") "Боковая панель" else "Карусель",
+                        description = "Способ переключения папок на вкладке «Заметки»",
+                        onClick = { folderInterfaceExpanded = true },
+                        trailingDescription = "Выбрать интерфейс папок",
+                    )
+                    AppDropdownMenu(folderInterfaceExpanded, { folderInterfaceExpanded = false }) {
+                        listOf("carousel" to "Карусель", "drawer" to "Боковая панель").forEach { (key, title) ->
+                            AppMenuItem(title, onClick = { setNoteFolderInterface(key); folderInterfaceExpanded = false }, selected = settings.noteFolderInterface == key)
+                        }
+                    }
+                }
+            }
+        }
+        if (showSection("Уведомления")) item(key = "Уведомления", contentType = "settings-section") {
             SettingsSection("Уведомления") {
                     SettingsToggleRow(
                         title = "Пробуждать экран для напоминаний",
@@ -486,6 +621,10 @@ internal fun SettingsScreen(
                         trailingDescription = "Выбрать звук обычного напоминания",
                     )
                     SettingsSupportingText("Громкость берётся из системного уровня «Уведомления».")
+            }
+        }
+        if (showSection("alarm-mode")) item(key = "alarm-mode") {
+            SettingsSection("Будильник") {
                     SettingsToggleRow(
                         title = "Режим будильника",
                         description = "Использовать мелодию будильника и повторять сигнал с заданными перерывами",
@@ -570,6 +709,12 @@ internal fun SettingsScreen(
                                 )
                             }
                         }
+                    }
+            }
+        }
+        if (showSection("alarm-sound")) item(key = "alarm-sound") {
+            SettingsSection("Мелодия будильника") {
+                    if (settings.reminderAlarmMode) {
                         SettingsActionRow(
                             title = "Мелодия будильника",
                             value = alarmSoundTitle,
@@ -586,6 +731,12 @@ internal fun SettingsScreen(
                             trailingDescription = "Выбрать мелодию будильника",
                         )
                         SettingsSupportingText("Громкость берётся из системного уровня «Будильник».")
+                    }
+            }
+        }
+        if (showSection("alarm-timing")) item(key = "alarm-timing") {
+            SettingsSection("Повторы будильника") {
+                    if (settings.reminderAlarmMode) {
                         Box(Modifier.fillMaxWidth()) {
                             SettingsActionRow(
                                 title = "Время показа и сигнала",
@@ -656,6 +807,26 @@ internal fun SettingsScreen(
                             }
                         }
                     }
+            }
+        }
+        if (showSection("notification-permissions")) item(key = "notification-permissions") {
+            SettingsSection("Разрешения и фоновая работа") {
+                    SettingsActionRow(
+                        title = "Плавающие окна",
+                        description = if (overlayWindowsAllowed) "Разрешено показывать окно будильника поверх приложений" else "Разрешить окно будильника поверх других приложений",
+                        onClick = openOverlaySettings,
+                        trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
+                        trailingDescription = "Открыть разрешение плавающих окон",
+                    )
+                    alarmVendorSettingsTitle?.let {
+                        SettingsActionRow(
+                            title = "Всплывающие окна в фоновом режиме",
+                            description = "Проверьте также показ на заблокированном экране в разрешениях телефона",
+                            onClick = openAlarmVendorSettings,
+                            trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
+                            trailingDescription = "Открыть разрешения телефона",
+                        )
+                    }
                     SettingsToggleRow(
                         title = "Вибрация",
                         description = "Использовать вибрацию для напоминаний и будильников",
@@ -706,7 +877,7 @@ internal fun SettingsScreen(
                     }
             }
         }
-        item {
+        if (showSection("Время суток")) item(key = "Время суток", contentType = "settings-section") {
             SettingsSection("Время суток") {
                 SettingsSupportingText(
                     "Эти значения используются при создании напоминаний, например «Позвонить вечером».",
@@ -741,7 +912,7 @@ internal fun SettingsScreen(
                 )
             }
         }
-        item {
+        if (showSection("Корзина заметок")) item(key = "Корзина заметок", contentType = "settings-section") {
             SettingsSection("Корзина заметок") {
                 SettingsSupportingText(
                     "Заметки старше выбранного срока будут окончательно удаляться автоматически.",
@@ -770,7 +941,7 @@ internal fun SettingsScreen(
                 }
             }
         }
-        item {
+        if (showSection("Распознавание речи")) item(key = "Распознавание речи", contentType = "settings-section") {
             SettingsSection("Распознавание речи") {
                     SttCatalogSelector(
                         expanded = sttExpanded,
@@ -814,7 +985,7 @@ internal fun SettingsScreen(
                     )
             }
         }
-        if (!settings.localOnly && settings.sttEngine == "yandex") item {
+        if (showSection("yandex")) item(key = "yandex") {
             SettingsSection(
                 title = "Yandex SpeechKit",
                 titleAction = { CloudSttHelpButton { cloudHelp = CloudSttHelp.YANDEX } },
@@ -836,7 +1007,7 @@ internal fun SettingsScreen(
                     SettingsSupportingText("Облачное распознавание требует интернет и может тарифицироваться.")
             }
         }
-        if (!settings.localOnly && settings.sttEngine == "google_cloud") item {
+        if (showSection("google_cloud")) item(key = "google_cloud") {
             SettingsSection(
                 title = "Google Cloud Speech-to-Text",
                 titleAction = { CloudSttHelpButton { cloudHelp = CloudSttHelp.GOOGLE } },
@@ -857,7 +1028,7 @@ internal fun SettingsScreen(
                     SettingsSupportingText("Access token имеет ограниченный срок действия; приложение сообщит HTTP 401, когда его нужно обновить.")
             }
         }
-        if (!settings.localOnly && settings.sttEngine == "vk_cloud") item {
+        if (showSection("vk_cloud")) item(key = "vk_cloud") {
             SettingsSection(
                 title = "VK Cloud Speech",
                 titleAction = { CloudSttHelpButton { cloudHelp = CloudSttHelp.VK } },
@@ -879,8 +1050,52 @@ internal fun SettingsScreen(
                     ) { Text("Сохранить настройки VK") }
             }
         }
-        if (settings.sttEngine == "whisper") item {
+        if (showSection("Пунктуация голосовых заметок")) item(key = "Пунктуация голосовых заметок", contentType = "settings-section") {
+            SettingsSection("Пунктуация голосовых заметок") {
+                Box(Modifier.fillMaxWidth()) {
+                    SettingsActionRow(
+                        title = "Модель расстановки запятых",
+                        value = if (settings.notePunctuationModel == "rupunct_small") "RUPunct Small" else "Как распознал Whisper / STT",
+                        onClick = { punctuationExpanded = true },
+                        trailingDescription = "Выбрать модель пунктуации",
+                    )
+                    AppDropdownMenu(expanded = punctuationExpanded, onDismissRequest = { punctuationExpanded = false }) {
+                        AppMenuItem(text = "Как распознал Whisper / STT", onClick = {
+                            setNotePunctuationModel("whisper"); punctuationExpanded = false
+                        })
+                        AppMenuItem(text = "RUPunct Small · " + if (punctuationModel.installed) "скачана" else "29 МБ", onClick = {
+                            setNotePunctuationModel("rupunct_small"); punctuationExpanded = false
+                        })
+                    }
+                }
+                SettingsSupportingText(if (settings.notePunctuationModel == "rupunct_small")
+                    "Модель исправляет запятые в готовом тексте. После скачивания работает офлайн. Слова и остальные знаки сохраняются."
+                    else "Сохраняется пунктуация распознавания. Дополнительная обработка отключена.")
+                SettingsSupportingText("Применяется к новой диктовке в редакторе заметки.")
+                SettingsSupportingText(if (punctuationModel.installed) "RUPunct Small скачана" else "RUPunct Small не скачана · около 29 МБ")
+                if (punctuationModel.downloading) {
+                    SettingsSupportingText(punctuationModel.progress?.let { "Загрузка RUPunct Small: ${(it * 100).toInt()}%" }
+                        ?: "RUPunct Small: ожидание сети или начала загрузки…")
+                    SettingsActionRow(title = "Отменить загрузку", onClick = cancelPunctuationDownload)
+                } else if (!punctuationModel.installed || punctuationModel.error != null) {
+                    SettingsActionRow(title = if (punctuationModel.error == null) "Скачать RUPunct Small" else "Повторить скачивание RUPunct Small",
+                        description = "Около 29 МБ · работает без Интернета после скачивания", onClick = downloadPunctuationModel)
+                }
+                punctuationModel.error?.let { SettingsSupportingText("Ошибка загрузки: $it") }
+            }
+        }
+        if (showSection("Модель Whisper.cpp")) item(key = "Модель Whisper.cpp", contentType = "settings-section") {
             SettingsSection("Модель Whisper.cpp") {
+                    SettingsToggleRow(
+                        title = "Режим распознавания: " + if (settings.whisperAccurateMode) "Точно" else "Быстро",
+                        description = if (settings.whisperAccurateMode) {
+                            "Поиск по 3 вариантам. При низкой уверенности — полное окно и 5 вариантов; при превышении времени — быстрый режим"
+                        } else {
+                            "Быстрое распознавание. Включите для выбора режима «Точно»"
+                        },
+                        checked = settings.whisperAccurateMode,
+                        onCheckedChange = setWhisperAccurateMode,
+                    )
                     SettingsToggleRow(
                         title = "Хранить модель в памяти",
                         description = if (settings.keepWhisperModelLoaded) {
@@ -909,7 +1124,7 @@ internal fun SettingsScreen(
                                 (listOf(AUTOMATIC_WHISPER_THREAD_COUNT) + manualWhisperThreadOptions).forEach { count ->
                                     AppMenuItem(
                                         text = if (count == AUTOMATIC_WHISPER_THREAD_COUNT) {
-                                            "Автоматически ($effectiveWhisperThreads)"
+                                            "Автоматически ($automaticWhisperThreads)"
                                         } else {
                                             "$count ${threadCountSuffix(count)}"
                                         },
@@ -924,6 +1139,12 @@ internal fun SettingsScreen(
                     SettingsSupportingText(
                         "Предел для этого устройства: $maximumWhisperThreads ${threadCountSuffix(maximumWhisperThreads)}.",
                     )
+                    SettingsActionRow(
+                        title = if (threadBenchmark.running) "Проверка потоков выполняется…" else "Проверить оптимальное количество потоков",
+                        description = "Сравнить скорость на последней голосовой записи",
+                        onClick = { threadBenchmarkDialog = true },
+                        enabled = whisperModels.selectedName != null,
+                    )
                     SettingsSupportingText("Каталог: models/whisper")
                     SettingsSupportingText("Состояние: ${whisperRuntime.stage}")
                     if (whisperRuntime.lastDurationMs != null) {
@@ -933,6 +1154,9 @@ internal fun SettingsScreen(
                                 "RTF ${"%.2f".format(Locale.ROOT, whisperRuntime.realtimeFactor)} · " +
                                 "потоков ${whisperRuntime.threads}",
                         )
+                        SettingsSupportingText("Проверка речи: ${whisperRuntime.vadDurationMs} мс · " +
+                            "подготовка: ${whisperRuntime.preparationDurationMs} мс · " +
+                            "Whisper: ${whisperRuntime.nativeDurationMs} мс · проходов: ${whisperRuntime.nativePasses}")
                     }
                     ModelCatalogSelector(
                         expanded = whisperExpanded,
@@ -969,8 +1193,9 @@ internal fun SettingsScreen(
                     }
             }
         }
-        item {
+        if (showSection("Распознавание команд")) item(key = "Распознавание команд", contentType = "settings-section") {
             SettingsSection("Распознавание команд") {
+                var modelExpanded by remember { mutableStateOf(false) }
                 SettingsToggleRow(
                     title = "Расширенное распознавание команд",
                     description = if (settings.classicNluEnabled) {
@@ -987,6 +1212,24 @@ internal fun SettingsScreen(
                     enabled = classicNluModel.installed,
                 )
                 SettingsSupportingText("Каталог: models/nlu")
+                Box(Modifier.fillMaxWidth()) {
+                    SettingsActionRow(
+                        title = "Активная NLU-модель",
+                        value = classicNluModel.selectedName ?: "Не установлена",
+                        description = "Установлено моделей: ${classicNluModel.installedModels.size}",
+                        onClick = { modelExpanded = true },
+                        enabled = classicNluModel.installedModels.isNotEmpty() && !classicNluModel.downloading,
+                        trailingDescription = "Выбрать модель",
+                    )
+                    AppDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) {
+                        classicNluModel.installedModels.forEach { name ->
+                            AppMenuItem(text = name, selected = name == classicNluModel.selectedName, onClick = {
+                                selectClassicNlu(name)
+                                modelExpanded = false
+                            })
+                        }
+                    }
+                }
                 SettingsSupportingText(
                     when {
                         classicNluModel.downloading -> "Загрузка: ${classicNluModel.progress?.let { "${(it * 100).roundToInt()}%" } ?: "подготовка"}"
@@ -995,15 +1238,15 @@ internal fun SettingsScreen(
                     },
                 )
                 SettingsActionRow(
-                    title = "Скачать NLU-модель",
-                    description = if (classicNluDownloadAvailable) "Около 29 МБ" else "Станет доступно после публикации модели",
+                    title = "Скачать NLU v7",
+                    description = if (classicNluDownloadAvailable) "Новая модель команд · 29 МБ" else "Станет доступно после публикации модели",
                     onClick = downloadClassicNlu,
                     enabled = classicNluDownloadAvailable && modelStorage.configured && !classicNluModel.downloading,
                     trailingDescription = "Скачать",
                 )
                 SettingsActionRow(
                     title = "Импортировать NLU-модель",
-                    description = "Файл classic_nlu_int8.onnx",
+                    description = "Файл classic_nlu_v7_int8.onnx или другая ONNX-модель",
                     onClick = { importClassicNluModel.launch("*/*") },
                     enabled = modelStorage.configured && !classicNluModel.downloading,
                     trailingIcon = Icons.Default.FileOpen,
@@ -1012,7 +1255,7 @@ internal fun SettingsScreen(
                 classicNluModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         }
-        item {
+        if (showSection("О приложении")) item(key = "О приложении", contentType = "settings-section") {
             SettingsSection("О приложении") {
                 Text(
                     stringResource(R.string.app_name),
@@ -1026,11 +1269,12 @@ internal fun SettingsScreen(
                 )
                 SettingsInfoRow(title = "Версия", value = appVersion, valueColor = theme.colors.textPrimary)
                 SettingsActionRow(
-                    title = "Краткое обучение",
-                    description = "Основные экраны, голосовой ввод и режим будильника",
-                    onClick = showOnboarding,
-                    trailingDescription = "Показать обучение",
+                    title = "Сбросить первый запуск",
+                    description = "Повторить предложения настройки при следующих событиях",
+                    onClick = { resetFirstUseDialog = true },
+                    trailingDescription = "Сбросить предложения настройки",
                 )
+                if (firstUseResetDone) SettingsSupportingText("Готово. При следующем использовании функций предложения появятся снова.")
                 SettingsActionRow(
                     title = "Автор",
                     value = "Revenko Nikita",
@@ -1040,6 +1284,34 @@ internal fun SettingsScreen(
             }
         }
     }
+    }
+    if (iconPickerOpen) AppAlertDialog(
+        onDismissRequest = { iconPickerOpen = false },
+        title = { Text("Значок приложения") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AppIconOption.entries.forEach { option ->
+                    Row(Modifier.fillMaxWidth().clickable { selectAppIcon(option); iconPickerOpen = false }.padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF1782F2), modifier = Modifier.size(56.dp)) {
+                            Icon(painterResource(option.foreground), null, tint = Color.Unspecified, modifier = Modifier.fillMaxSize())
+                        }
+                        Text(option.title, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                        RadioButton(selected = option == appIcon, onClick = { selectAppIcon(option); iconPickerOpen = false })
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { iconPickerOpen = false }) { Text("Закрыть") } },
+    )
+    if (threadBenchmarkDialog) WhisperThreadBenchmarkDialog(
+        state = threadBenchmark,
+        canApply = threadBenchmark.modelName == whisperModels.selectedName,
+        start = startThreadBenchmark,
+        cancel = cancelThreadBenchmark,
+        apply = { applyThreadBenchmark(); threadBenchmarkDialog = false },
+        dismiss = { cancelThreadBenchmark(); threadBenchmarkDialog = false },
+    )
     if (themePickerOpen) {
         AppAlertDialog(
             onDismissRequest = { themePickerOpen = false },
@@ -1196,6 +1468,17 @@ internal fun SettingsScreen(
             )
         }
     }
+    if (resetFirstUseDialog) AppAlertDialog(
+        onDismissRequest = { resetFirstUseDialog = false },
+        title = { Text("Повторить первые настройки?") },
+        text = { Text("Предложения настройки снова появятся при упоминании времени суток, создании папки и напоминания, а также при нераспознанной команде с выключенным NLU. Данные, модели, выбранные настройки и разрешения Android сохранятся.") },
+        confirmButton = { TextButton(onClick = {
+            resetFirstUseSetup()
+            firstUseResetDone = true
+            resetFirstUseDialog = false
+        }) { Text("Сбросить") } },
+        dismissButton = { TextButton(onClick = { resetFirstUseDialog = false }) { Text("Отмена") } },
+    )
     if (addTimeOfDayDialog) {
         val parsedTime = runCatching { LocalTime.parse(newTimeValue) }.getOrNull()
         val normalizedPhrase = newTimePhrase.trim().lowercase().replace('ё', 'е')
@@ -1352,7 +1635,6 @@ private fun SettingsActionRow(
         modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(theme.shapes.noteCard))
             .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1366,8 +1648,6 @@ private fun SettingsActionRow(
             (value ?: description)?.let {
                 Text(
                     it,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                     color = theme.colors.textSecondary,
                 )
@@ -1475,7 +1755,7 @@ private fun noteTrashRetentionLabel(days: Int): String = when (days) {
     else -> "Через $days дней"
 }
 
-private fun threadCountSuffix(count: Int): String = when (count) {
+internal fun threadCountSuffix(count: Int): String = when (count) {
     1 -> "поток"
     in 2..4 -> "потока"
     else -> "потоков"
@@ -1676,6 +1956,49 @@ private fun sttEngineDescription(
 }
 
 @Composable
+internal fun WhisperModelsMenu(
+    models: WhisperModelsState,
+    downloads: List<WhisperDownload>,
+    storageConfigured: Boolean,
+    chooseStorage: () -> Unit,
+    select: (String) -> Unit,
+    download: (WhisperDownload) -> Unit,
+    dismiss: () -> Unit,
+) {
+    ModelCatalogSelector(
+        expanded = true,
+        setExpanded = { if (!it) dismiss() },
+        dialogTitle = "Скачать модель Whisper",
+        selectedName = models.selectedName,
+        installed = models.installed,
+        downloads = downloads,
+        modelId = WhisperDownload::id,
+        fileName = WhisperDownload::fileName,
+        title = WhisperDownload::title,
+        description = WhisperDownload::description,
+        approximateSize = WhisperDownload::approximateSize,
+        downloadingId = models.downloadingId,
+        progress = models.progress,
+        storageConfigured = storageConfigured,
+        select = select,
+        download = download,
+        downloadAvailable = { it.url.isNotBlank() },
+        importedDescription = "Импортированная GGML-модель Whisper",
+        showSelectorRow = false,
+        introduction = {
+            Column(Modifier.padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Для голосового ввода нужна модель. Выберите вариант ниже, чтобы скачать его.")
+                if (!storageConfigured) {
+                    Text("Сначала выберите папку для хранения моделей.")
+                    Button(onClick = chooseStorage) { Text("Выбрать папку") }
+                }
+                models.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+    )
+}
+
+@Composable
 private fun <T> ModelCatalogSelector(
     expanded: Boolean,
     setExpanded: (Boolean) -> Unit,
@@ -1695,10 +2018,12 @@ private fun <T> ModelCatalogSelector(
     download: (T) -> Unit,
     downloadAvailable: (T) -> Boolean = { true },
     importedDescription: String,
+    showSelectorRow: Boolean = true,
+    introduction: @Composable () -> Unit = {},
 ) {
     val knownNames = downloads.map(fileName).toSet()
     val unknownInstalled = installed.filterNot(knownNames::contains)
-    SettingsActionRow(
+    if (showSelectorRow) SettingsActionRow(
         title = "Модель",
         value = selectedName ?: "не выбрана",
         onClick = { setExpanded(true) },
@@ -1712,6 +2037,7 @@ private fun <T> ModelCatalogSelector(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp),
                 ) {
+                    if (!showSelectorRow) item(key = "model-introduction") { introduction() }
                     itemsIndexed(downloads, key = { _, model -> modelId(model) }) { index, model ->
                     val id = modelId(model)
                     val name = fileName(model)

@@ -7,6 +7,14 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
+data class WidgetNoteRow(
+    val id: Long,
+    val title: String,
+    val text: String,
+    @ColumnInfo(name = "updated_at") val updatedAt: LocalDateTime,
+    val pinned: Boolean,
+)
+
 @Entity(tableName = "reminders", indices = [Index("remind_at")])
 data class ReminderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

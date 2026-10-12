@@ -7,7 +7,17 @@ import ru.nezabudka.app.domain.CommandIntent
 import ru.nezabudka.app.domain.CommandScope
 import ru.nezabudka.app.domain.CommandValidationException
 import ru.nezabudka.app.domain.RussianTemporalParser
+import ru.nezabudka.app.domain.parseRecurringReminder
+import ru.nezabudka.app.domain.reanchorSpokenRecurrence
+import ru.nezabudka.app.domain.isUnsupportedCommandMutation
+import ru.nezabudka.app.domain.isNonCommandSpeechStatement
+import ru.nezabudka.app.domain.extractExplicitReminderCancellation
+import ru.nezabudka.app.domain.extractExplicitFutureReminder
+import ru.nezabudka.app.domain.extractExplicitFolderRetirement
 import ru.nezabudka.app.domain.extractNoteParts
+import ru.nezabudka.app.domain.extractFolderNoteInsertion
+import ru.nezabudka.app.domain.isUnsupportedMediaCommand
+import ru.nezabudka.app.domain.isCompletedActionStatement
 import java.time.Clock
 import java.time.LocalDateTime
 /** Optional local classifier; all state-changing work remains in Kotlin [Dispatcher]. */
@@ -32,6 +42,18 @@ class ExecuteTextCommand(
     private val clock: Clock = Clock.systemDefaultZone(),
     private val temporal: RussianTemporalParser = RussianTemporalParser(),
 ) {
+    fun namedTimePhraseUsed(text: String): String? = temporal.namedTimePhraseUsed(text)
+
+    /** Read-only preparation for contextual setup. No dispatch or repository mutation. */
+    suspend fun preview(text: String, context: CommandContext, alternatives: List<String> = emptyList()): AssistantCommand {
+        val now = LocalDateTime.now(clock)
+        for (candidate in (listOf(text) + alternatives).map(String::trim).filter(String::isNotBlank).distinct().take(MAX_TEXT_CANDIDATES)) {
+            val command = understandCandidate(candidate, now, context)
+            if (command.intent != CommandIntent.UNKNOWN) return command
+        }
+        return AssistantCommand(CommandIntent.UNKNOWN)
+    }
+
     suspend operator fun invoke(
         userText: String,
         defaultNoteFolder: String? = null,
@@ -96,12 +118,17 @@ class ExecuteTextCommand(
         now: LocalDateTime,
         context: CommandContext,
     ): AssistantCommand {
+        if (isUnsupportedMediaCommand(text) || isCompletedActionStatement(text) || isUnsupportedCommandMutation(text) || isNonCommandSpeechStatement(text)) return AssistantCommand(CommandIntent.UNKNOWN)
+        if (context.scope != CommandScope.NOTES) extractExplicitReminderCancellation(text)?.let { return it }
+        if (context.scope != CommandScope.NOTES) extractExplicitFutureReminder(text, now, temporal)?.let { return it }
+        if (context.scope != CommandScope.REMINDERS) extractExplicitFolderRetirement(text)?.let { return it }
         val createFolder = Regex("(?iu)^\\s*(?:создай|создать|добавь|добавить)\\s+папк(?:у|а)\\s+[«\"]?(.+?)[»\"]?[.!]?\\s*$")
             .find(text)?.groupValues?.get(1)?.trim()?.trim('«', '»', '"')
         val deleteFolder = Regex("(?iu)^\\s*(?:удали|удалить)\\s+папк(?:у|а)\\s+[«\"]?(.+?)[»\"]?[.!]?\\s*$")
             .find(text)?.groupValues?.get(1)?.trim()?.trim('«', '»', '"')
+        val folderInsertion = extractFolderNoteInsertion(text)
         val explicitNote = NOTE_COMMAND.containsMatchIn(text)
-        val (noteFolder, noteText) = if (explicitNote) extractNoteParts(text) else null to null
+        val (noteFolder, noteText) = folderInsertion ?: if (explicitNote) extractNoteParts(text) else null to null
         val reminderDeletion = if (context.scope != CommandScope.NOTES) {
             extractDirectReminderDeletion(text)
         } else null
@@ -112,12 +139,14 @@ class ExecuteTextCommand(
             context.scope != CommandScope.NOTES &&
             temporal.isReminderCreationCommand(text)
         ) {
-            val parsed = temporal.parse(text, now)
+            val recurring = parseRecurringReminder(text, now, temporal)
+            val parsed = recurring.temporal
             val delay = temporal.extractDelay(text)
             AssistantCommand(
                 intent = CommandIntent.CREATE_REMINDER,
                 text = parsed.cleanText,
                 remindAt = parsed.remindAt,
+                recurrence = recurring.recurrence,
                 timeExpression = parsed.expression,
                 delayValue = delay?.value,
                 delayUnit = delay?.unit,
@@ -176,6 +205,11 @@ class ExecuteTextCommand(
             return ActionResult("Создание напоминания отменено.")
         }
         if (WITHOUT_DATE.matches(answer)) {
+            if (clarification.recurrence != null) return ActionResult(
+                message = "Для повторов нужна дата первого напоминания. Назовите дату и время либо ответьте «отмена».",
+                effect = ActionEffect.ReminderDateRequested(clarification),
+                reminderDateClarification = clarification,
+            )
             return dispatcher.dispatch(
                 AssistantCommand(
                     intent = CommandIntent.CREATE_REMINDER,
@@ -193,12 +227,13 @@ class ExecuteTextCommand(
             )
         }
         val delay = temporal.extractDelay(answer)
+        val (start, recurrence) = reanchorSpokenRecurrence(clarification.recurrence, parsed.remindAt)
         return dispatcher.dispatch(
             AssistantCommand(
                 intent = CommandIntent.CREATE_REMINDER,
                 text = clarification.text,
-                remindAt = parsed.remindAt,
-                recurrence = clarification.recurrence,
+                remindAt = start,
+                recurrence = recurrence,
                 timeExpression = parsed.expression,
                 delayValue = delay?.value,
                 delayUnit = delay?.unit,

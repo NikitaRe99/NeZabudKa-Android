@@ -1,0 +1,729 @@
+{
+  "referenceNow": "2026-10-12T12:00",
+  "model": "classic_nlu_v7_int8.onnx",
+  "modelSha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+  "method": "Local ONNX predictions and production Kotlin command parsing with list-period completion; no dispatch",
+  "phoneRun": false,
+  "whisperRun": false,
+  "fullyCorrect": 11,
+  "total": 26,
+  "results": [
+    {
+      "id": 1,
+      "expected": {
+        "id": 1,
+        "utterance": "Мне требуется папка для заметок с именем Оптика маяка",
+        "intent": "create_folder",
+        "folder": "Оптика маяка",
+        "entities": {
+          "FOLDER": "Оптика маяка"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "маяка",
+      "folder": "Оптика",
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.7768889665603638,
+      "differences": [
+        "intent: create_folder -> create_note",
+        "folder: Оптика маяка -> Оптика"
+      ],
+      "passed": false
+    },
+    {
+      "id": 2,
+      "expected": {
+        "id": 2,
+        "utterance": "Оформи папку Сборка планера для моих записей",
+        "intent": "create_folder",
+        "folder": "Сборка планера",
+        "entities": {
+          "FOLDER": "Сборка планера"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "unknown",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_folder",
+      "confidence": 0.9997491240501404,
+      "differences": [
+        "intent: create_folder -> unknown",
+        "folder: Сборка планера -> null"
+      ],
+      "passed": false
+    },
+    {
+      "id": 3,
+      "expected": {
+        "id": 3,
+        "utterance": "Назови новую папку Паспорта механизмов",
+        "intent": "create_folder",
+        "folder": "Паспорта механизмов",
+        "entities": {
+          "FOLDER": "Паспорта механизмов"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_folder",
+      "text": null,
+      "folder": "Паспорта механизмов",
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_folder",
+      "confidence": 0.9997953772544861,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 4,
+      "expected": {
+        "id": 4,
+        "utterance": "В папку Оптика маяка добавь строку запасная линза хранится в мягком футляре",
+        "intent": "create_note",
+        "folder": "Оптика маяка",
+        "text": "запасная линза хранится в мягком футляре",
+        "entities": {
+          "FOLDER": "Оптика маяка",
+          "TEXT": "запасная линза хранится в мягком футляре"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "строку запасная линза хранится в мягком футляре",
+      "folder": "Оптика маяка",
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.9988381266593933,
+      "differences": [
+        "text: запасная линза хранится в мягком футляре -> строку запасная линза хранится в мягком футляре"
+      ],
+      "passed": false
+    },
+    {
+      "id": 5,
+      "expected": {
+        "id": 5,
+        "utterance": "Сохрани для папки Сборка планера эту заметку клей схватывается за сорок минут",
+        "intent": "create_note",
+        "folder": "Сборка планера",
+        "text": "клей схватывается за сорок минут",
+        "entities": {
+          "FOLDER": "Сборка планера",
+          "TEXT": "клей схватывается за сорок минут"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "клей схватывается за сорок минут",
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.999868631362915,
+      "differences": [
+        "folder: Сборка планера -> null"
+      ],
+      "passed": false
+    },
+    {
+      "id": 6,
+      "expected": {
+        "id": 6,
+        "utterance": "Моя новая заметка прокладка под крышкой имеет толщину три миллиметра",
+        "intent": "create_note",
+        "text": "прокладка под крышкой имеет толщину три миллиметра",
+        "entities": {
+          "TEXT": "прокладка под крышкой имеет толщину три миллиметра"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "толщину три миллиметра",
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.999640703201294,
+      "differences": [
+        "text: прокладка под крышкой имеет толщину три миллиметра -> толщину три миллиметра"
+      ],
+      "passed": false
+    },
+    {
+      "id": 7,
+      "expected": {
+        "id": 7,
+        "utterance": "Пополнить заметки такой записью манометр лежит справа от зарядного устройства",
+        "intent": "create_note",
+        "text": "манометр лежит справа от зарядного устройства",
+        "entities": {
+          "TEXT": "манометр лежит справа от зарядного устройства"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "справа от зарядного устройства",
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.998319685459137,
+      "differences": [
+        "text: манометр лежит справа от зарядного устройства -> справа от зарядного устройства"
+      ],
+      "passed": false
+    },
+    {
+      "id": 8,
+      "expected": {
+        "id": 8,
+        "utterance": "Добавь заметку в Паспорта механизмов на наклейке указан номер семьсот двадцать четыре",
+        "intent": "create_note",
+        "folder": "Паспорта механизмов",
+        "text": "на наклейке указан номер семьсот двадцать четыре",
+        "entities": {
+          "FOLDER": "Паспорта механизмов",
+          "TEXT": "на наклейке указан номер семьсот двадцать четыре"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_note",
+      "text": "в Паспорта механизмов на наклейке указан номер семьсот двадцать четыре",
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_note",
+      "confidence": 0.9996767044067383,
+      "differences": [
+        "text: на наклейке указан номер семьсот двадцать четыре -> в Паспорта механизмов на наклейке указан номер семьсот двадцать четыре",
+        "folder: Паспорта механизмов -> null"
+      ],
+      "passed": false
+    },
+    {
+      "id": 9,
+      "expected": {
+        "id": 9,
+        "utterance": "Сделай напоминание на завтра в одиннадцать пятьдесят семь забрать пробник ткани",
+        "intent": "create_reminder",
+        "text": "забрать пробник ткани",
+        "remind_at": "2026-10-13T11:57",
+        "entities": {
+          "DATE": "завтра",
+          "TIME": "в одиннадцать пятьдесят семь",
+          "TEXT": "забрать пробник ткани"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "на забрать пробник ткани",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-13T11:57",
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9998310804367065,
+      "differences": [
+        "text: забрать пробник ткани -> на забрать пробник ткани"
+      ],
+      "passed": false
+    },
+    {
+      "id": 10,
+      "expected": {
+        "id": 10,
+        "utterance": "Попроси меня послезавтра в шестнадцать ноль восемь проверить крепёж козырька",
+        "intent": "create_reminder",
+        "text": "проверить крепёж козырька",
+        "remind_at": "2026-10-14T16:08",
+        "entities": {
+          "DATE": "послезавтра",
+          "TIME": "в шестнадцать ноль восемь",
+          "TEXT": "проверить крепёж козырька"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "проверить крепёж козырька",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-14T16:08",
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9992400407791138,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 11,
+      "expected": {
+        "id": 11,
+        "utterance": "Через пятьдесят три минуты мне нужно напоминание закрыть клапан компрессора",
+        "intent": "create_reminder",
+        "text": "закрыть клапан компрессора",
+        "remind_at": "2026-10-12T12:53",
+        "entities": {
+          "DATE": "Через пятьдесят три минуты",
+          "TEXT": "закрыть клапан компрессора"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "напоминание закрыть клапан компрессора",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-12T12:53",
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9998288154602051,
+      "differences": [
+        "text: закрыть клапан компрессора -> напоминание закрыть клапан компрессора"
+      ],
+      "passed": false
+    },
+    {
+      "id": 12,
+      "expected": {
+        "id": 12,
+        "utterance": "Установи напоминание через два часа сорок семь минут снять деталь с зарядки",
+        "intent": "create_reminder",
+        "text": "снять деталь с зарядки",
+        "remind_at": "2026-10-12T14:47",
+        "entities": {
+          "DATE": "через два часа сорок семь минут",
+          "TEXT": "снять деталь с зарядки"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "сорок семь минут снять деталь с зарядки",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-12T14:00",
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9997561573982239,
+      "differences": [
+        "text: снять деталь с зарядки -> сорок семь минут снять деталь с зарядки",
+        "remind_at: 2026-10-12T14:47 -> 2026-10-12T14:00"
+      ],
+      "passed": false
+    },
+    {
+      "id": 13,
+      "expected": {
+        "id": 13,
+        "utterance": "Хочу чтобы ты напоминал каждый месяц начиная завтра в семь сорок шесть чистить сетку фильтра",
+        "intent": "create_reminder",
+        "text": "чистить сетку фильтра",
+        "remind_at": "2026-10-13T07:46",
+        "recurrence": "monthly",
+        "entities": {
+          "RECURRENCE": "каждый месяц",
+          "DATE": "завтра",
+          "TIME": "в семь сорок шесть",
+          "TEXT": "чистить сетку фильтра"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "чистить сетку фильтра",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-13T07:46",
+      "recurrence": "monthly",
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9983634352684021,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 14,
+      "expected": {
+        "id": 14,
+        "utterance": "Поставь регулярное напоминание каждые четыре дня завтра в девятнадцать двенадцать осматривать крепления тента",
+        "intent": "create_reminder",
+        "text": "осматривать крепления тента",
+        "remind_at": "2026-10-13T19:12",
+        "repeat_interval": 4,
+        "repeat_unit": "day",
+        "entities": {
+          "RECURRENCE": "каждые четыре дня",
+          "DATE": "завтра",
+          "TIME": "в девятнадцать двенадцать",
+          "TEXT": "осматривать крепления тента"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "осматривать крепления тента",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-13T19:12",
+      "recurrence": "custom:v1;interval=4;unit=day;start=2026-10-13T19:12",
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9997401833534241,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 15,
+      "expected": {
+        "id": 15,
+        "utterance": "Начиная завтра напоминай по вторникам и четвергам в восемь двадцать шесть проверять заряд рации",
+        "intent": "create_reminder",
+        "text": "проверять заряд рации",
+        "remind_at": "2026-10-13T08:26",
+        "repeat_days": [
+          2,
+          4
+        ],
+        "entities": {
+          "DATE": "завтра",
+          "RECURRENCE": "по вторникам и четвергам",
+          "TIME": "в восемь двадцать шесть",
+          "TEXT": "проверять заряд рации"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "проверять заряд рации",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-13T08:26",
+      "recurrence": "custom:v1;interval=1;unit=week;start=2026-10-13T08:26;days=2,4",
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9996083378791809,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 16,
+      "expected": {
+        "id": 16,
+        "utterance": "Добавь повторяющееся напоминание каждые три недели завтра в четырнадцать ноль девять обновлять журнал измерений всего пять раз",
+        "intent": "create_reminder",
+        "text": "обновлять журнал измерений",
+        "remind_at": "2026-10-13T14:09",
+        "repeat_interval": 3,
+        "repeat_unit": "week",
+        "repeat_count": 5,
+        "entities": {
+          "RECURRENCE": "каждые три недели",
+          "DATE": "завтра",
+          "TIME": "в четырнадцать ноль девять",
+          "TEXT": "обновлять журнал измерений"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "create_reminder",
+      "text": "повторяющееся напоминание обновлять журнал измерений",
+      "folder": null,
+      "target": null,
+      "remindAt": "2026-10-13T14:09",
+      "recurrence": "custom:v1;interval=3;unit=week;start=2026-10-13T14:09;count=4",
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "create_reminder",
+      "confidence": 0.9986810088157654,
+      "differences": [
+        "text: обновлять журнал измерений -> повторяющееся напоминание обновлять журнал измерений"
+      ],
+      "passed": false
+    },
+    {
+      "id": 17,
+      "expected": {
+        "id": 17,
+        "utterance": "Отобрази список напоминаний на завтра",
+        "intent": "list_reminders",
+        "period_start": "2026-10-13T00:00",
+        "period_end": "2026-10-14T00:00",
+        "entities": {
+          "DATE": "завтра"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "list_reminders",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": "2026-10-13T00:00",
+      "periodEnd": "2026-10-14T00:00",
+      "rawIntent": "list_reminders",
+      "confidence": 0.996679425239563,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 18,
+      "expected": {
+        "id": 18,
+        "utterance": "Мне нужен перечень задач на ближайшие четыре дня",
+        "intent": "list_reminders",
+        "period_start": "2026-10-12T00:00",
+        "period_end": "2026-10-16T00:00",
+        "entities": {
+          "DATE": "ближайшие четыре дня"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "list_reminders",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": "2026-10-12T00:00",
+      "periodEnd": "2026-10-16T00:00",
+      "rawIntent": "list_reminders",
+      "confidence": 0.9995028972625732,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 19,
+      "expected": {
+        "id": 19,
+        "utterance": "Что запланировано на следующий четверг из напоминаний",
+        "intent": "list_reminders",
+        "period_start": "2026-10-15T00:00",
+        "period_end": "2026-10-16T00:00",
+        "entities": {
+          "DATE": "на следующий четверг"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "list_reminders",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": "2026-10-22T00:00",
+      "periodEnd": "2026-10-23T00:00",
+      "rawIntent": "list_reminders",
+      "confidence": 0.9998824596405029,
+      "differences": [
+        "period_start: 2026-10-15T00:00 -> 2026-10-22T00:00",
+        "period_end: 2026-10-16T00:00 -> 2026-10-23T00:00"
+      ],
+      "passed": false
+    },
+    {
+      "id": 20,
+      "expected": {
+        "id": 20,
+        "utterance": "Убери задачу с названием забрать пробник ткани",
+        "intent": "delete_reminder",
+        "target": "забрать пробник ткани",
+        "entities": {
+          "TARGET": "забрать пробник ткани"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": "delete_reminder",
+      "text": null,
+      "folder": null,
+      "target": "с названием забрать пробник ткани",
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "delete_reminder",
+      "confidence": 0.9997233748435974,
+      "differences": [
+        "target: забрать пробник ткани -> с названием забрать пробник ткани"
+      ],
+      "passed": false
+    },
+    {
+      "id": 21,
+      "expected": {
+        "id": 21,
+        "utterance": "Папку Оптика маяка удали пожалуйста",
+        "intent": "delete_folder",
+        "folder": "Оптика маяка",
+        "entities": {
+          "FOLDER": "Оптика маяка"
+        },
+        "scope": "assistant"
+      },
+      "actualIntent": null,
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "delete_folder",
+      "confidence": 0.999477207660675,
+      "differences": [
+        "intent: delete_folder -> null",
+        "folder: Оптика маяка -> null",
+        "error: Нужно название папки"
+      ],
+      "passed": false
+    },
+    {
+      "id": 22,
+      "expected": {
+        "id": 22,
+        "utterance": "Не добавляй заметку про расход клея",
+        "intent": "unknown",
+        "entities": {},
+        "scope": "assistant"
+      },
+      "actualIntent": "unknown",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "unknown",
+      "confidence": 0.9998602867126465,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 23,
+      "expected": {
+        "id": 23,
+        "utterance": "Переименуй напоминание закрыть клапан компрессора",
+        "intent": "unknown",
+        "entities": {},
+        "scope": "assistant"
+      },
+      "actualIntent": "unknown",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "delete_reminder",
+      "confidence": 0.9969931840896606,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 24,
+      "expected": {
+        "id": 24,
+        "utterance": "Вчера я добавил заметку о ремонте козырька",
+        "intent": "unknown",
+        "entities": {},
+        "scope": "assistant"
+      },
+      "actualIntent": "unknown",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "unknown",
+      "confidence": 0.9819461703300476,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 25,
+      "expected": {
+        "id": 25,
+        "utterance": "Расскажи какие бывают повторы напоминаний",
+        "intent": "unknown",
+        "entities": {},
+        "scope": "assistant"
+      },
+      "actualIntent": "unknown",
+      "text": null,
+      "folder": null,
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "unknown",
+      "confidence": 0.6739428043365479,
+      "differences": [],
+      "passed": true
+    },
+    {
+      "id": 26,
+      "expected": {
+        "id": 26,
+        "utterance": "Отменять удаление папки Сборка планера не нужно",
+        "intent": "unknown",
+        "entities": {},
+        "scope": "assistant"
+      },
+      "actualIntent": "delete_folder",
+      "text": null,
+      "folder": "Сборка планера",
+      "target": null,
+      "remindAt": null,
+      "recurrence": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "rawIntent": "delete_folder",
+      "confidence": 0.9652546048164368,
+      "differences": [
+        "intent: unknown -> delete_folder"
+      ],
+      "passed": false
+    }
+  ]
+}

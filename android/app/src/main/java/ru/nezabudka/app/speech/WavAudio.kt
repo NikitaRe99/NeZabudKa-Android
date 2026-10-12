@@ -33,6 +33,7 @@ import ru.nezabudka.app.ports.LiveSpeechToTextEngine
 import ru.nezabudka.app.ports.SpeechRecognition
 import ru.nezabudka.app.ports.SpeechToTextEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -49,6 +50,10 @@ import kotlin.coroutines.resumeWithException
 class WavAudioRecorder(
     private val context: Context,
     private val sampleRate: Int = 16_000,
+    private val captureSources: IntArray? = null,
+    private val echoCancellationEnabled: Boolean = true,
+    private val recordingTailMs: Long = 0L,
+    private val outputFile: File? = null,
     private val softwarePreprocessingEnabled: () -> Boolean = { true },
 ) : AudioRecorder, CancellableAudioRecorder {
     @Volatile private var recorder: AudioRecord? = null
@@ -59,6 +64,8 @@ class WavAudioRecorder(
     private val recording = AtomicBoolean(false)
     @Volatile private var recordingFailure: Throwable? = null
     private lateinit var output: File
+    @Volatile var lastCaptureInfo: String = ""
+        private set
     override val isRecording: Boolean get() = recording.get()
 
     override fun start() {
@@ -68,7 +75,7 @@ class WavAudioRecorder(
         }
         recordingFailure = null
         val capture = startCapture(findBuiltInMicrophone())
-        output = File(context.filesDir, "recordings/last_raw.wav").apply { parentFile?.mkdirs() }
+        output = (outputFile ?: File(context.filesDir, "recordings/last_raw.wav")).apply { parentFile?.mkdirs() }
         try {
             recording.set(true)
             thread = Thread {
@@ -114,6 +121,8 @@ class WavAudioRecorder(
     }
 
     override suspend fun stop(): File = withContext(Dispatchers.IO) {
+        // Preserve the end of a word when the finger lifts during its last syllable.
+        if (recording.get() && recordingTailMs > 0) delay(recordingTailMs.coerceAtMost(300L))
         val wasRecording = recording.getAndSet(false)
         check(wasRecording || recordingFailure != null) { "Запись не запущена" }
         try {
@@ -151,7 +160,7 @@ class WavAudioRecorder(
 
     private fun configureAudioEffects(audioRecord: AudioRecord) {
         releaseAudioEffects()
-        acousticEchoCanceler = if (AcousticEchoCanceler.isAvailable()) {
+        acousticEchoCanceler = if (echoCancellationEnabled && AcousticEchoCanceler.isAvailable()) {
             enableAudioEffect { AcousticEchoCanceler.create(audioRecord.audioSessionId) }
         } else null
         // Do not process the signal twice. When the deterministic WAV
@@ -175,6 +184,11 @@ class WavAudioRecorder(
         return try {
             configureAudioEffects(capture.recorder)
             capture.recorder.startRecording()
+            lastCaptureInfo = "source=${capture.recorder.audioSource},rate=${capture.sampleRate}," +
+                "preferred=${preferredInput?.type},routed=${capture.recorder.routedDevice?.type}," +
+                "aec=${acousticEchoCanceler?.enabled == true},agc=${automaticGainControl?.enabled == true}," +
+                "ns=${noiseSuppressor?.enabled == true},tailMs=$recordingTailMs"
+            android.util.Log.i("LocalAssistantAudio", "CAPTURE $lastCaptureInfo")
             recorder = capture.recorder
             capture
         } catch (error: Throwable) {
@@ -186,7 +200,7 @@ class WavAudioRecorder(
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun openAudioRecord(preferredInput: AudioDeviceInfo?): Capture {
-        for (source in CAPTURE_SOURCES) {
+        for (source in captureSources ?: CAPTURE_SOURCES) {
             for (captureRate in CAPTURE_SAMPLE_RATES) {
                 val minimum = AudioRecord.getMinBufferSize(
                     captureRate,

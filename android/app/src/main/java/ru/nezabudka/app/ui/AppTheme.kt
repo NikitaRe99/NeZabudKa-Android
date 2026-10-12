@@ -15,14 +15,17 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import ru.nezabudka.app.domain.AppSettings
 import ru.nezabudka.app.domain.CustomThemeSettings
 import ru.nezabudka.app.domain.defaultCustomTheme
 import ru.nezabudka.app.domain.withAutomaticDependentColors
+import ru.nezabudka.app.domain.automaticContentColorHex
 
 /** System bar colors are configurable only before Android 15's enforced edge-to-edge mode. */
 @Suppress("DEPRECATION")
@@ -126,7 +129,7 @@ fun LocalAssistantTheme(
     val shapeTokens = remember(cornerScale) {
         AppShapeTokens(
             tag = 10.dp * cornerScale,
-            noteCard = 18.dp * cornerScale,
+            noteCard = 22.dp * cornerScale,
             card = 22.dp * cornerScale,
             panel = 24.dp * cornerScale,
             action = 26.dp * cornerScale,
@@ -137,8 +140,8 @@ fun LocalAssistantTheme(
         Shapes(
             extraSmall = RoundedCornerShape(4.dp * cornerScale),
             small = RoundedCornerShape(8.dp * cornerScale),
-            medium = RoundedCornerShape(12.dp * cornerScale),
-            large = RoundedCornerShape(16.dp * cornerScale),
+            medium = RoundedCornerShape(22.dp * cornerScale),
+            large = RoundedCornerShape(24.dp * cornerScale),
             extraLarge = RoundedCornerShape(28.dp * cornerScale),
         )
     }
@@ -167,6 +170,12 @@ private fun defaultSemanticColors(dark: Boolean): AppSemanticColors =
     defaultCustomThemeForUi(if (dark) "dark" else "light")
         .withAutomaticDependentColors()
         .toSemanticColors()
+        .let { colors ->
+            if (dark) colors else colors.copy(
+                talkButton = "#3395F7".themeColor(),
+                onTalkButton = automaticContentColorHex("#3395F7").themeColor(),
+            )
+        }
 
 private fun defaultCustomThemeForUi(base: String): CustomThemeSettings =
     defaultCustomTheme(base)
@@ -208,6 +217,7 @@ private fun AppSemanticColors.toColorScheme(base: ColorScheme): ColorScheme = ba
     onSecondary = onAccent,
     secondaryContainer = selected,
     onSecondaryContainer = textPrimary,
+    surfaceTint = accent,
     background = background,
     onBackground = textPrimary,
     surface = modal,
@@ -231,7 +241,13 @@ private fun AppSemanticColors.toColorScheme(base: ColorScheme): ColorScheme = ba
 )
 
 private fun scaledTypography(scale: Float, familyName: String): Typography {
-    val base = Typography()
+    val base = Typography(
+        headlineSmall = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
+        titleLarge = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold),
+        titleMedium = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold),
+        bodyLarge = TextStyle(fontSize = 16.sp, lineHeight = 24.sp),
+        bodyMedium = TextStyle(fontSize = 14.sp, lineHeight = 21.sp),
+    )
     val family = when (familyName) {
         "serif" -> FontFamily.Serif
         "monospace" -> FontFamily.Monospace

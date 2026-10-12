@@ -1,7 +1,19 @@
 package ru.nezabudka.app.speech
 
-internal fun String.normalizeWhisperTranscript(): String =
-    normalizeWhisperCommand().normalizeReminderTimePhrase().normalizeFolderName()
+internal fun String.normalizeWhisperTranscript(commandMode: Boolean = true): String =
+    if (commandMode) normalizeWhisperCommand().normalizeReminderTimePhrase().normalizeFolderName()
+    else trim()
+
+/** A reason to decode the audio again, never a reason to delete a spoken word. */
+internal fun String.hasConsecutiveWhisperWordRepetition(): Boolean {
+    val words = TranscriptWordRegex.findAll(this).map { streamingWordKey(it.value) }
+    var previous: String? = null
+    for (word in words) {
+        if (word == previous) return true
+        previous = word
+    }
+    return false
+}
 
 /**
  * Removes a decoder loop only when the same multi-word span occurs at least
@@ -83,12 +95,91 @@ internal fun speechCommandAlternatives(value: String): List<String> {
     val corrected = normalized
         .replace(SPLIT_DELETE_COMMAND, "$1удали ")
         .replace(SPLIT_SHOW_COMMAND, "$1покажи ")
+        .replace(SPLIT_CANCEL_COMMAND, "$1отмени ")
         .replace(SPLIT_NOTE_WORD, "$1заметку")
         .trim()
     return listOf(corrected, normalized).filter(String::isNotBlank).distinct()
 }
 
-internal fun contextualWhisperPrompt(hints: List<String>): String {
+internal const val WHISPER_COMMAND_VOCABULARY =
+    "Напомни напоминание заметка создай удали покажи отмени сегодня завтра послезавтра утром днём вечером через минут часов дней"
+
+private val SHORT_COMMAND_WHISPER_PROMPT = WHISPER_COMMAND_VOCABULARY.split(" ").joinToString(", ") + "."
+
+/**
+ * The 208-position fast window repeats a single greeting with a flat word list.
+ * On live Small RU recordings a punctuated vocabulary preserves spoken repeats;
+ * appending folder names reintroduces a loop on the counting control recording.
+ * Keep longer windows and beam search on their existing measured prompt.
+ */
+internal fun whisperPromptForInference(commandPrompt: String, commandMode: Boolean, audioContext: Int, beamSize: Int): String = when {
+    !commandMode -> ""
+    audioContext == 208 && beamSize == 1 -> SHORT_COMMAND_WHISPER_PROMPT
+    else -> commandPrompt
+}
+
+/** A short recording cannot contain many repeated multi-word copies of itself. */
+internal fun String.hasWhisperDecoderLoop(audioSeconds: Double): Boolean {
+    if (audioSeconds <= 0.0) return false
+    val originalWords = TranscriptWordRegex.findAll(this).count()
+    if (originalWords < 12 || originalWords <= audioSeconds * 7 + 6) return false
+    val collapsedWords = TranscriptWordRegex.findAll(collapseWhisperRepetition()).count()
+    val removed = originalWords - collapsedWords
+    return removed >= 6 && removed * 3 >= originalWords
+}
+
+internal enum class WhisperRequestContext { COMMAND, NOTE_COMMAND, REMINDER_COMMAND, DATE_REPLY, DICTATION }
+
+/** Only an expected date reply can use this small calendar vocabulary. Never rewrite a note. */
+internal fun normalizeExpectedDateReply(value: String): String {
+    val calendarCorrected = normalizeSplitRelativeDay(value)
+    val match = Regex("(?iu)^\\s*(сегодня|завтра|послезавтра|понедельник|вторник|среда|среду|четверг|пятница|пятницу|суббота|субботу|воскресенье)[,;]?\\s+(.+?)\\s*$")
+        .find(calendarCorrected) ?: return calendarCorrected
+    val remainder = match.groupValues[2]
+    if (Regex("(?iu)^в\\s").containsMatchIn(remainder)) return "${match.groupValues[1]} $remainder"
+    val parser = ru.nezabudka.app.domain.RussianTemporalParser()
+    val timePhrase = "в $remainder"
+    if (parser.extractTime(timePhrase) == null) return calendarCorrected
+    // Add a lost preposition only when the remainder consists entirely of a valid clock expression.
+    val parsed = parser.parse(timePhrase, java.time.LocalDateTime.of(2000, 1, 1, 0, 0))
+    if (parsed.cleanText.isNotBlank()) return calendarCorrected
+    return "${match.groupValues[1]} $timePhrase"
+}
+
+internal fun isCompleteExpectedDateReply(value: String): Boolean {
+    if (value.lowercase().trim().trimEnd('.', '!', '?') in setOf("отмена", "отмени", "отменить", "без даты", "без времени")) return true
+    val parsed = ru.nezabudka.app.domain.RussianTemporalParser().parse(value, java.time.LocalDateTime.of(2000, 1, 1, 0, 0))
+    return parsed.remindAt != null && parsed.cleanText.isBlank()
+}
+
+internal fun whisperRequestPrompt(hints: List<String>, context: WhisperRequestContext, audioContext: Int): String {
+    if (context == WhisperRequestContext.DICTATION) return ""
+    if (context == WhisperRequestContext.DATE_REPLY) return "Сегодня, завтра, послезавтра, утром, днём, вечером, ночью, через, минут, часов, дней, недель, месяцев, в, без времени, отмена."
+    // Keep the measured short vocabulary. A large contextual list previously caused loops.
+    if (audioContext in 1 until 512 && context == WhisperRequestContext.COMMAND) return SHORT_COMMAND_WHISPER_PROMPT
+    val clean = hints.asSequence().map {
+        it.replace(CONTEXT_UNSAFE_CHARACTERS, " ").replace(WhitespaceRegex, " ").trim().take(MAX_CONTEXT_HINT_LENGTH)
+    }.filter { it.length >= 2 }.distinctBy { it.lowercase().replace('ё', 'е') }.take(8).toList()
+    val commands = when (context) {
+        WhisperRequestContext.NOTE_COMMAND -> listOf("создай", "добавь", "запиши", "сохрани", "покажи", "удали", "перенеси",
+            "заметка", "заметку", "заметки", "папка", "папку", "папки", "в", "из", "и", "не", "отмени")
+        WhisperRequestContext.REMINDER_COMMAND -> listOf("напомни", "напоминание", "напоминания", "создай", "добавь", "покажи", "удали", "выполни", "отмени",
+            "сегодня", "завтра", "послезавтра", "утром", "днём", "вечером", "через", "минут", "часов", "дней", "каждый", "ежедневно", "еженедельно", "ежемесячно", "в", "не")
+        else -> WHISPER_COMMAND_VOCABULARY.split(" ") +
+            listOf("добавь", "запиши", "сохрани", "выполни", "перенеси", "каждый", "ежедневно", "еженедельно", "ежемесячно", "папка")
+    }
+    val relevantHints = if (audioContext in 1 until 512 || context == WhisperRequestContext.REMINDER_COMMAND) emptyList() else clean
+    return (commands + relevantHints).joinToString(", ") + "."
+}
+
+internal fun contextualWhisperPrompt(
+    hints: List<String>,
+    includeCommandExamples: Boolean = false,
+    useCommandVocabulary: Boolean = true,
+): String {
+    // Free dictation uses Whisper's natural transcription style. Command examples
+    // can bias both the words and punctuation of an unrelated note.
+    if (!useCommandVocabulary) return ""
     val cleanHints = hints.asSequence()
         .map { hint ->
             hint.replace(CONTEXT_UNSAFE_CHARACTERS, " ")
@@ -99,6 +190,9 @@ internal fun contextualWhisperPrompt(hints: List<String>): String {
         .distinctBy { it.lowercase().replace('ё', 'е') }
         .take(MAX_CONTEXT_HINTS)
         .toList()
+    if (!includeCommandExamples) return (
+        listOf(if (useCommandVocabulary) WHISPER_COMMAND_VOCABULARY else "") + cleanHints
+    ).filter(String::isNotBlank).joinToString(" ")
     return if (cleanHints.isEmpty()) RUSSIAN_WHISPER_PROMPT else {
         "$RUSSIAN_WHISPER_PROMPT Слова пользователя: ${cleanHints.joinToString(", ")}."
     }
@@ -122,6 +216,12 @@ internal fun mergeTranscripts(current: String, incoming: String): String {
     return if (suffix.isEmpty()) existing else "$continuingText $suffix"
 }
 
+internal fun mergeWhisperSegments(current: String, incoming: String, commandMode: Boolean): String =
+    if (commandMode) mergeTranscripts(current, incoming)
+    // VAD segments contain disjoint audio. Keep their punctuation and intentional
+    // repetitions, rather than treating them as overlapping command previews.
+    else listOf(current.trim(), incoming.trim()).filter(String::isNotEmpty).joinToString(" ")
+
 private fun streamingWordKey(value: String): String =
     value.trim { !it.isLetterOrDigit() }.lowercase().replace('ё', 'е')
 
@@ -130,6 +230,7 @@ private val TranscriptWordRegex = Regex("[\\p{L}\\p{N}]+")
 private val CONTEXT_UNSAFE_CHARACTERS = Regex("[^\\p{L}\\p{N} -]+")
 private val SPLIT_DELETE_COMMAND = Regex("(?iu)^(\\s*(?:пожалуйста[\\s,]+)?)(?:у\\s+дали|удали\\s+те)[\\s,.:;!?]*")
 private val SPLIT_SHOW_COMMAND = Regex("(?iu)^(\\s*(?:пожалуйста[\\s,]+)?)по\\s+кажи[\\s,.:;!?]*")
+private val SPLIT_CANCEL_COMMAND = Regex("(?iu)^(\\s*(?:пожалуйста[\\s,]+)?)от\\s+меня\\s+(?=(?:последнее\\s+)?(?:напоминание|задачу|папку)(?=\\s|$))")
 private val SPLIT_NOTE_WORD = Regex("(?iu)^((?:\\s*пожалуйста[\\s,]+)?(?:создай|создать|добавь|добавить|запиши|записать|сохрани|сохранить)\\s+)за\\s+метку(?=\\s|$)")
 private const val MAX_CONTEXT_HINTS = 16
 private const val MAX_CONTEXT_HINT_LENGTH = 32
@@ -150,10 +251,27 @@ internal fun String.normalizeWhisperCommand(): String {
     } else {
         this
     }
-    return commandNormalized
+    val datedCommand = if (REMINDER_DATE_COMMAND.containsMatchIn(commandNormalized) ||
+        LEADING_SPLIT_RELATIVE_DATE.containsMatchIn(commandNormalized)) {
+        normalizeSplitRelativeDay(commandNormalized)
+    } else commandNormalized
+    return datedCommand
         .correctDativeName(Regex("(?iu)^(\\s*(?:пожалуйста[\\s,]+)?напомни\\s+)(катя|ваня)(?=\\s|[,.:;!?]|$)"))
         .correctDativeName(Regex("(?iu)((?<![\\p{L}\\p{N}_])(?:позвонить|написать|сказать|ответить|напомнить|отправить)\\s+)(катя|ваня)(?=\\s|[,.:;!?]|$)"))
 }
+
+/** Orthographic joining for a date context, never an unrestricted dictation correction. */
+private fun normalizeSplitRelativeDay(value: String): String = value.replace(
+    Regex("(?iu)(?<![\\p{L}\\p{N}_])после(?:\\s+|\\s*,\\s*)завтра(?![\\p{L}\\p{N}_])"),
+) { match -> if (match.value.first().isUpperCase()) "Послезавтра" else "послезавтра" }
+
+private val LEADING_SPLIT_RELATIVE_DATE = Regex("(?iu)^\\s*после\\s*,?\\s*завтра(?=\\s|[,;.!?]|$)")
+
+private val REMINDER_DATE_COMMAND = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:напомни(?=\\s|[,.:;!?]|$)|" +
+        "(?:создай|создать|добавь|добавить|поставь|поставить|сделай|сделать|установи|установить|запланируй|запланировать|покажи|показать|удали|удалить|выполни|выполнить)" +
+        "\\s+(?:мне\\s+)?(?:все\\s+)?(?:мои\\s+)?(?:напоминани[а-яё]*|дела|задачи)(?=\\s|[,.:;!?]|$))",
+)
 
 private val REMIND_COMMAND_VARIANT = Regex(
     "(?iu)^(\\s*(?:пожалуйста[\\s,]+)?)" +
@@ -170,9 +288,29 @@ private fun String.normalizeFolderName(): String {
     return replaceRange(group.range, normalizeFolderWords(group.value))
 }
 
-private fun String.normalizeReminderTimePhrase(): String =
-    replace(COMMA_BEFORE_RELATIVE_DATE, " ")
+private fun String.normalizeReminderTimePhrase(): String {
+    if (NOTE_CONTENT_COMMAND.containsMatchIn(this)) return this
+    return normalizeReminderDateSeparator()
+        .replace(COMMA_BEFORE_RELATIVE_DATE, " ")
         .replace(MISSING_PREPOSITION_BEFORE_TIME) { match -> "${match.groupValues[1]} в " }
+}
+
+/** A pause after the command's leading date is not a separator within the saved reminder text. */
+private fun String.normalizeReminderDateSeparator(): String {
+    val commandEnd = REMINDER_DATE_COMMAND.find(this)?.range?.last?.plus(1) ?: return this
+    val separator = LEADING_COMMAND_DATE_COMMA.find(substring(commandEnd))?.groups?.get(1) ?: return this
+    return replaceRange(commandEnd + separator.range.first, commandEnd + separator.range.last + 1, " ")
+}
+
+private val LEADING_COMMAND_DATE_COMMA = Regex(
+    "(?iu)^\\s*(?:мне\\s+)?(?:сегодня|завтра|послезавтра)(\\s*,\\s*)(?=\\S)",
+)
+
+private val NOTE_CONTENT_COMMAND = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
+        "(?:создай|создать|добавь|добавить|запиши|записать|сохрани|сохранить)\\s+(?:мне\\s+)?заметк[а-яё]*(?=\\s|[,.:;!?]|$)|" +
+        "в\\s+папку\\s+)",
+)
 
 private fun normalizeFolderWords(value: String): String {
     val result = StringBuilder(value.length)

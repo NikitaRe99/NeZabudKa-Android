@@ -25,6 +25,7 @@ sealed interface ActionEffect {
 
 data class ActionResult(
     val message: String,
+    val commandRecognized: Boolean = true,
     val reminders: List<Reminder> = emptyList(),
     val notes: List<Note> = emptyList(),
     val effect: ActionEffect? = null,
@@ -54,7 +55,7 @@ class Dispatcher(
         return when (command.intent) {
             CommandIntent.CREATE_REMINDER -> {
                 val value = reminderActions.create(command.text.orEmpty(), command.remindAt, command.recurrence)
-                ActionResult("Напоминание создано: ${describe(value)}", listOf(value), effect = ActionEffect.ReminderCreated(value))
+                ActionResult("Напоминание создано: ${describe(value)}", reminders = listOf(value), effect = ActionEffect.ReminderCreated(value))
             }
             CommandIntent.LIST_REMINDERS -> {
                 val now = LocalDateTime.now(clock)
@@ -63,7 +64,7 @@ class Dispatcher(
                 }
                 ActionResult(
                     if (values.isEmpty()) "Напоминаний не найдено." else values.joinToString("\n") { "• ${describe(it)}" },
-                    values,
+                    reminders = values,
                     effect = ActionEffect.RemindersListed(command.periodStart?.toLocalDate()),
                 )
             }
@@ -93,9 +94,11 @@ class Dispatcher(
                     ?: return ActionResult("Папка «${folder.name}» уже удалена.")
                 ActionResult("Папка «${folder.name}» удалена.", effect = ActionEffect.FolderDeleted(snapshot))
             }
-            CommandIntent.UNKNOWN -> ActionResult("Не удалось распознать команду.")
+            CommandIntent.UNKNOWN -> ActionResult("Не удалось распознать команду.", commandRecognized = false)
         }
     }
 
-    private fun describe(value: Reminder): String = "${value.text} — ${value.remindAt?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) ?: "без даты"}"
+    private fun describe(value: Reminder): String =
+        "${value.text} — ${value.remindAt?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) ?: "без даты"}" +
+            if (value.recurrence != null) " • ${ru.nezabudka.app.domain.reminderRecurrenceDescription(value.recurrence)}" else ""
 }

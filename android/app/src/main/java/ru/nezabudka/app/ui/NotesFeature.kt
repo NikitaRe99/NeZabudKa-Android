@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -17,6 +18,7 @@ data class NotesUiState(
     val folders: List<NoteFolder> = emptyList(),
     val allNotes: List<Note> = emptyList(),
     val selectedFolderId: Long? = null,
+    val isLoading: Boolean = true,
 )
 
 sealed interface NoteUiEvent {
@@ -35,15 +37,17 @@ internal class NotesFeature(
     private val scope: CoroutineScope,
     private val onNotice: (String, ActionEffect?) -> Unit,
     private val onError: (Throwable) -> Unit,
+    private val onFolderCreated: (NoteFolder) -> Unit = {},
+    private val needsFolderSetup: () -> Boolean = { false },
 ) {
     val folders: StateFlow<List<NoteFolder>> = repository.observeFolders()
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val allNotes: StateFlow<List<Note>> = repository.observeAll()
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val selectedFolder = MutableStateFlow<Long?>(null)
-    val state: StateFlow<NotesUiState> = combine(folders, allNotes, selectedFolder) {
+    val state: StateFlow<NotesUiState> = combine(repository.observeFolders(), repository.observeAll(), selectedFolder) {
             folderValues, noteValues, selectedId ->
-        NotesUiState(folderValues, noteValues, selectedId)
+        NotesUiState(folderValues, noteValues, selectedId, isLoading = false)
     }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), NotesUiState())
 
     fun dispatch(event: NoteUiEvent): Job? = when (event) {
@@ -63,7 +67,11 @@ internal class NotesFeature(
         is NoteUiEvent.MoveToTrash -> mutate { repository.setTrashed(event.notes.map(Note::id), true) }
         is NoteUiEvent.SetColor -> mutate { repository.setColor(event.notes.map(Note::id), event.color) }
         is NoteUiEvent.SetFolder -> mutate {
+            val previous = if (event.included && needsFolderSetup()) repository.findFolder(event.folderName) else null
             repository.setFolderMembership(event.notes.map(Note::id), event.folderName, event.included)
+            if (event.included && event.notes.isNotEmpty() && needsFolderSetup() && previous == null) {
+                repository.findFolder(event.folderName)?.let(onFolderCreated)
+            }
         }
         NoteUiEvent.EmptyTrash -> mutate { repository.deleteTrashed() }
     }
@@ -74,6 +82,7 @@ internal class NotesFeature(
             (existing ?: repository.createFolder(name)) to (existing == null)
         }.onSuccess { (folder, created) ->
             onCreated(folder)
+            if (created) onFolderCreated(folder)
             if (publish) {
                 onNotice(
                     if (created) "Папка «${folder.name}» создана." else "Папка «${folder.name}» уже существует.",
@@ -122,8 +131,12 @@ internal class NotesFeature(
         color: String?,
         onSaved: () -> Unit,
     ): Job = scope.launch {
-        runCatching { repository.save(id, folderNames, title, text, pinned, archived, color) }
-            .onSuccess { onSaved() }
+        runCatching {
+            val previousFolders = if (needsFolderSetup()) repository.observeFolders().first().map { it.id }.toSet() else null
+            repository.save(id, folderNames, title, text, pinned, archived, color)
+            if (previousFolders != null) repository.observeFolders().first()
+                .firstOrNull { it.id !in previousFolders }?.let(onFolderCreated)
+        }.onSuccess { onSaved() }
             .onFailure(onError)
     }
 

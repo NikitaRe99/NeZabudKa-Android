@@ -1,0 +1,173 @@
+{
+  "app_version": "0.2.18",
+  "version_code": 41,
+  "selected_model": "classic_nlu_v7_int8.onnx",
+  "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+  "training": {
+    "device": "cuda",
+    "device_name": "NVIDIA GeForce RTX 3060",
+    "examples": 26816,
+    "train_examples": 23577,
+    "validation_examples": 3239,
+    "class_counts": {
+      "create_folder": 2784,
+      "create_note": 4556,
+      "create_reminder": 6856,
+      "delete_folder": 2884,
+      "delete_reminder": 3158,
+      "list_reminders": 2755,
+      "unknown": 3823
+    },
+    "best_validation": {
+      "intent_accuracy": 1.0,
+      "intent_macro_f1": 1.0,
+      "slot_token_accuracy": 0.9988652170729921,
+      "slot_macro_f1": 0.8953318594847163,
+      "entity_exact_match": 0.9950602037665947,
+      "confusion_matrix": [
+        [
+          589,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          370,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          391,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          593,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          345,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          421,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          530
+        ]
+      ]
+    },
+    "best_epoch": 6,
+    "seed": 20260808,
+    "torch_version": "2.13.0+cu126",
+    "split": "intent-stratified normalized slot-template groups; no template/case/punctuation overlap",
+    "recovery_v6": true,
+    "warm_start_sha256": "6f7a6f03a7fe0eb303672641f19926571c564a0feb20239786e561998d5ebd4c",
+    "teacher_retention": true,
+    "learning_rate": 1e-05,
+    "training_sha256": "9be7859a4194feb1898d60260b12b731afc3aabb6491549460cde38eff02d6f0",
+    "validation_sha256": "4d5e3094bbda4851d75080923d9420ac7dc7169d8ac558b27bbd110bea63c25b"
+  },
+  "quantization": {
+    "validation_count": 3239,
+    "quantized_intent_agreement": 0.9987650509416487,
+    "quantized_slot_token_agreement": 0.9821280624926026,
+    "intent_logit_max_abs_error": 2.7532479763031006,
+    "frozen_cases": 32,
+    "frozen_exact_phrase_overlaps": [],
+    "frozen_payload_overlaps": [],
+    "classic_nlu_int8.onnx": {
+      "sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+      "bytes": 29265839
+    },
+    "classic_nlu.onnx": {
+      "sha256": "d34f25758e7f1707a0a86b9b1f92f8ceb92b3e1a0d148e406207fa29c462f09d",
+      "bytes": 116488067
+    },
+    "vocab.txt": {
+      "sha256": "e566a14dabceddf70f58a53fd67bb0027b4c34670d85fd22da686b1c2232e5ea",
+      "bytes": 1164493
+    },
+    "metadata.json": {
+      "sha256": "8d64b9d156c45b539c948725c7bdc736c724bf5557d97cb9e4f055b8573f800b",
+      "bytes": 689
+    },
+    "frozen_sha256": "af67e986a1a22437ffeeccf60c4af150c9c6ca0cdf4e3596222d5212776c433f"
+  },
+  "phone": {
+    "total": 1091,
+    "old_correct": 1080,
+    "new_correct": 1089,
+    "fixed": [
+      "Оставь контрольную точку: записать заводской номер стабилизатора",
+      "Мне потребуется вовремя записать заводской номер стабилизатора",
+      "Подай мне сигнал перед тем, как сверить расход воды по квитанции",
+      "Возьми на заметку как будущее дело — записать заводской номер стабилизатора",
+      "Останови контроль задачи запись номера стабилизатора",
+      "Сними отметку о будущем деле запись номера стабилизатора",
+      "Откажись от тематической полки Квитанции водоснабжения",
+      "Больше не используй блок материалов Квитанции водоснабжения",
+      "Пожалуйста, подай мне сигнал перед тем, как поменять батарейки в датчике"
+    ],
+    "regressions": [],
+    "remaining": [
+      {
+        "utterance": "Сохрани мысль приложение должно работать офлайн",
+        "expected": "мысль приложение должно работать офлайн",
+        "actual": "приложение должно работать офлайн",
+        "differences": [
+          "text"
+        ]
+      },
+      {
+        "utterance": "Сохрани мысль сначала проверить сеть",
+        "expected": "мысль сначала проверить сеть",
+        "actual": "сначала проверить сеть",
+        "differences": [
+          "text"
+        ]
+      }
+    ],
+    "scope": "same 1091 text commands; intent, main payload, folder and specified date; read-only without Dispatcher"
+  },
+  "offline": {
+    "user_commands": 20,
+    "additional_commands": 20,
+    "scope": "actual INT8 outputs mapped by production Kotlin; fields, dates, periods, recurrences checked"
+  },
+  "speech_accuracy_measured": false,
+  "download_url_published": false
+}

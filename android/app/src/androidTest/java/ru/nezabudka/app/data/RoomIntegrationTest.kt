@@ -26,10 +26,10 @@ class RoomIntegrationTest {
         repo.create("без даты", null, null)
         val late = repo.create("позже", LocalDateTime.of(2026, 7, 14, 15, 0), null)
         val early = repo.create("раньше", LocalDateTime.of(2026, 7, 14, 11, 0), null)
-        assertEquals(listOf("раньше", "позже", "без даты"), repo.list().map { it.text })
+        assertEquals(listOf("Раньше", "Позже", "Без даты"), repo.list().map { it.text })
         repo.update(early.id, "самое раннее", LocalDateTime.of(2026, 7, 14, 10, 30))
         repo.delete(late.id)
-        assertEquals(listOf("самое раннее", "без даты"), repo.list().map { it.text })
+        assertEquals(listOf("Самое раннее", "Без даты"), repo.list().map { it.text })
     }
 
     @Test fun note_folder_is_reused_case_insensitively() = runBlocking {
@@ -140,7 +140,7 @@ class RoomIntegrationTest {
         assertEquals("active", updated.status)
         assertEquals(null, updated.completedAt)
         assertEquals(newTime, updated.remindAt)
-        assertEquals("позвонить Кате", updated.text)
+        assertEquals("Позвонить Кате", updated.text)
         assertEquals("weekly", updated.recurrence)
         assertEquals(true, updated.favorite)
     }

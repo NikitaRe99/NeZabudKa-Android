@@ -2,14 +2,27 @@ package ru.nezabudka.app.llm
 
 import ru.nezabudka.app.domain.AssistantCommand
 import ru.nezabudka.app.domain.CommandIntent
+import ru.nezabudka.app.domain.CommandScope
 import ru.nezabudka.app.domain.RussianTemporalParser
+import ru.nezabudka.app.domain.parseRecurringReminder
 import ru.nezabudka.app.domain.extractNoteParts
+import ru.nezabudka.app.domain.extractSpokenNoteCarrier
+import ru.nezabudka.app.domain.extractStopTrackingReminderTarget
 import java.time.LocalDateTime
 
 /** Converts classifier output into a validated domain command without generative JSON. */
 class ClassicNluCommandMapper(
     private val temporal: RussianTemporalParser = RussianTemporalParser(),
 ) {
+    fun explicitCommand(userText: String, now: LocalDateTime, scope: CommandScope): AssistantCommand? {
+        if (scope != CommandScope.NOTES) {
+            ru.nezabudka.app.domain.extractExplicitReminderCancellation(userText)?.let { return it }
+            ru.nezabudka.app.domain.extractExplicitFutureReminder(userText, now, temporal)?.let { return it }
+        }
+        if (scope != CommandScope.REMINDERS) ru.nezabudka.app.domain.extractExplicitFolderRetirement(userText)?.let { return it }
+        return null
+    }
+
     fun map(
         intent: CommandIntent,
         slots: Map<String, String>,
@@ -22,7 +35,7 @@ class ClassicNluCommandMapper(
             CommandIntent.DELETE_REMINDER -> AssistantCommand(
                 intent = intent,
                 targetText = if (LAST_TARGET.containsMatchIn(userText)) null else {
-                    userText.afterCommandDelimiter() ?: extractReminderDeletionTarget(userText) ?:
+                    userText.afterCommandDelimiter() ?: extractStopTrackingReminderTarget(userText) ?: extractReminderDeletionTarget(userText) ?:
                         confirmedSlot(slots, "TARGET", userText)
                 },
                 targetLast = LAST_TARGET.containsMatchIn(userText),
@@ -42,16 +55,19 @@ class ClassicNluCommandMapper(
         userText: String,
         now: LocalDateTime,
     ): AssistantCommand {
-        val parsed = temporal.parse(userText, now)
+        val recurring = parseRecurringReminder(userText, now, temporal)
+        val parsed = recurring.temporal
         val delay = temporal.extractDelay(userText)
         val delimitedText = userText.afterCommandDelimiter()?.let { value ->
             temporal.parse(value, now).cleanText.cleanReminderPayload()
         }
         return AssistantCommand(
             intent = CommandIntent.CREATE_REMINDER,
-            text = delimitedText ?: confirmedSlot(slots, "TEXT", parsed.cleanText) ?:
+            text = delimitedText ?: parsed.cleanText.explicitReminderPayload() ?:
+                confirmedSlot(slots, "TEXT", parsed.cleanText) ?:
                 parsed.cleanText.cleanReminderPayload(),
             remindAt = parsed.remindAt,
+            recurrence = recurring.recurrence,
             timeExpression = parsed.expression,
             delayValue = delay?.value,
             delayUnit = delay?.unit,
@@ -69,7 +85,13 @@ class ClassicNluCommandMapper(
     }
 
     private fun createNote(slots: Map<String, String>, userText: String): AssistantCommand {
+        extractSpokenNoteCarrier(userText)?.let { (folder, body) ->
+            return AssistantCommand(CommandIntent.CREATE_NOTE, noteText = body, noteFolder = folder)
+        }
         val (explicitFolder, extractedText) = extractNoteParts(userText)
+        if (extractedText != null && Regex("(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:создай|добавь|запиши|сохрани)\\s+заметку(?=\\s|[:;]|$)").containsMatchIn(userText)) {
+            return AssistantCommand(CommandIntent.CREATE_NOTE, noteText = extractedText, noteFolder = explicitFolder)
+        }
         val modelText = confirmedSlot(slots, "TEXT", userText)
         val confirmedModelFolder = confirmedSlot(slots, "FOLDER", userText)
         val delimitedText = userText.afterCommandDelimiter()
@@ -91,9 +113,10 @@ class ClassicNluCommandMapper(
     private fun String.clean(): String? = trim().ifBlank { null }
 
     private fun String.afterCommandDelimiter(): String? {
-        val delimiter = DASH_DELIMITER.find(this) ?: COLON_DELIMITER.find(this)?.takeIf { match ->
+        val delimiter = (DASH_DELIMITER.findAll(this) + COLON_DELIMITER.findAll(this)).sortedBy { it.range.first }.firstOrNull { match ->
             val prefix = substring(0, match.range.first)
-            DELIMITER_CARRIER.containsMatchIn(prefix) || TEMPORAL_DELIMITER_END.containsMatchIn(prefix)
+            DELIMITER_CARRIER.containsMatchIn(prefix) || TEMPORAL_DELIMITER_END.containsMatchIn(prefix) ||
+                (DASH_DELIMITER.matches(match.value) && !prefix.contains(":") && !prefix.contains(" — "))
         } ?: return null
         return substring(delimiter.range.last + 1).trimCommandPunctuation().clean()
     }
@@ -103,6 +126,14 @@ class ClassicNluCommandMapper(
             Regex("(?iu)(?<![\\p{L}\\p{N}_])${Regex.escape(value)}(?![\\p{L}\\p{N}_])")
                 .containsMatchIn(userText)
         }
+
+    private fun String.explicitReminderPayload(): String? {
+        val prefix = REMINDER_PREFIX.find(this) ?: return null
+        // Bare "создай/оставь" may introduce an unfamiliar carrier noun. In that
+        // case keep the validated BIO extraction rather than copying the carrier.
+        if (BARE_CREATION_VERB.matches(prefix.value.trim())) return null
+        return cleanReminderPayload()
+    }
 
     private fun String.cleanReminderPayload(): String? {
         var value = trimCommandPunctuation()
@@ -166,6 +197,8 @@ class ClassicNluCommandMapper(
         )
         val REMINDER_PREFIX = Regex(
             "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
+                "мне\\s+потребуется\\s+(?:вовремя\\s+)?|" +
+                "подай\\s+(?:мне\\s+)?сигнал(?:\\s+перед\\s+тем\\s*,?\\s*как)?|" +
                 "(?:хорошо\\s+бы|главное)(?:\\s+мне)?\\s+не\\s+забыть|" +
                 "(?:мне\\s+)?(?:обязательно\\s+)?(?:надо|нужно)\\s+(?:обязательно\\s+)?(?:не\\s+забыть\\s+)?|" +
                 "проследи\\s*,?\\s*чтобы\\s+я\\s+не\\s+забыл(?:а)?|" +
@@ -176,10 +209,13 @@ class ClassicNluCommandMapper(
                 "не\\s+забыть|обязательно" +
                 ")\\s*",
         )
+        val BARE_CREATION_VERB = Regex("(?iu)(?:пожалуйста[\\s,]+)?(?:оставь|поставь|создай|добавь|запланируй)(?:\\s+мне)?")
         val LEADING_CONNECTOR = Regex("(?iu)^\\s*(?:(?:о|об|про|на|чтобы)\\s+)+")
         val TRAILING_CONNECTOR = Regex("(?iu)\\s+(?:на|в|к)\\s*$")
         val NOTE_PREFIX = Regex(
             "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
+                "оформи\\s+карточку\\s+с\\s+содержимым|" +
+                "запиши\\s+в\\s+(?:личную\\s+)?памятку|" +
                 "мне\\s+(?:важно|нужно)\\s+(?:запомнить|сохранить|записать)|" +
                 "зафиксируй|запомни(?:\\s+пожалуйста)?|сохрани(?:\\s+как\\s+заметку)?(?:\\s+без\\s+изменений)?|" +
                 "запиши(?:\\s+себе)?|(?:создай|добавь)\\s+заметку|оставь\\s+заметку|сделай\\s+запись|" +
@@ -207,6 +243,7 @@ class ClassicNluCommandMapper(
             "(?iu)^\\s*(?:напоминани[\\p{L}]*|задач[\\p{L}]*)?\\s*(.+?)\\s+(?:больше\\s+не\\s+нужн[оа]|можно\\s+(?:удалить|убрать))\\s*[.!]?\\s*$",
         )
         val DELETE_STRUCTURED_PATTERNS = listOf(
+            Regex("(?iu)^\\s*(?:сотри|убери|удали)\\s+из\\s+напоминаний\\s+(?:пункт\\s+)?(.+)$"),
             Regex(
                 "(?iu)^\\s*(?:вычерк|удал|убер|исключ|сотр)[\\p{L}]*\\s+из\\s+" +
                     "(?:расписани[\\p{L}]*|план[\\p{L}]*|перечн[\\p{L}]*\\s+(?:дел|задач)[\\p{L}]*|" +
@@ -237,10 +274,13 @@ class ClassicNluCommandMapper(
             "(?iu)\\s+(?:(?:как|в)\\s+(?:отмен[её]нн|неактивн)[\\p{L}]*|из\\s+напоминани[\\p{L}]*)\\s*$",
         )
         val CREATE_FOLDER_PATTERNS = listOf(
+            Regex("(?iu)^\\s*нов(?:ый|ая)\\s+(?:раздел|папка)\\s+пусть\\s+называется\\s+(.+)$"),
+            Regex("(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:заведи|создай|добавь|организуй)\\s+(?:отдельную\\s+|новую\\s+)?папку\\s+(?:под\\s+названием|с\\s+названием|для\\s+заметок)\\s+(.+)$"),
             Regex("(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:создай|добавь|сделай|организуй|заведи)(?:\\s+(?:новую|новый))?\\s+(?:папку|раздел|каталог)\\s+(.+)$"),
             Regex("(?iu)^\\s*(?:мне\\s+нужна|хочу\\s+(?:новую\\s+)?|пусть\\s+будет)\\s*папк[ау]\\s+(.+)$"),
         )
         val DELETE_FOLDER_PATTERNS = listOf(
+            Regex("(?iu)^\\s*давай\\s+убер[её]м\\s+папку\\s+(.+?)(?:\\s*[,;]?\\s+она\\s+.*)?[.!]?\\s*$"),
             Regex("(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:удали|убери|закрой|избавься\\s+от)(?:\\s+(?:папку|раздел|каталог))\\s+(.+)$"),
             Regex("(?iu)^\\s*(?:папка|раздел|каталог)\\s+(.+?)\\s+(?:больше\\s+не\\s+нуж(?:ен|на|но|ны)|можно\\s+(?:удалить|убрать))\\s*[.!]?\\s*$"),
             Regex("(?iu)^\\s*мне\\s+не\\s+нуж(?:на|ен)\\s+(?:папка|раздел|каталог)\\s+(.+)$"),

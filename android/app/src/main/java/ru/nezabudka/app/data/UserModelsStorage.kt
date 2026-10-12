@@ -33,8 +33,10 @@ class UserModelsStorage(private val context: Context) {
         preferences.edit().putString(KEY_ROOT, uri.toString()).commit()
         ensureFolder("whisper")
         ensureFolder("nlu")
+        ensureFolder("punctuation")
         migrateLegacy("whisper", "bin")
         migrateLegacy("nlu", "onnx")
+        migrateLegacy("punctuation", "onnx")
         _state.value = readState().copy(cache = _state.value.cache)
     }
 
@@ -127,7 +129,7 @@ class UserModelsStorage(private val context: Context) {
 
     private fun hasActiveModelDownload(): Boolean = runCatching {
         val workManager = WorkManager.getInstance(context)
-        listOf(ModelDownloadWorker.KIND_WHISPER, ModelDownloadWorker.KIND_NLU).any { kind ->
+        listOf(ModelDownloadWorker.KIND_WHISPER, ModelDownloadWorker.KIND_NLU, ModelDownloadWorker.KIND_PUNCTUATION).any { kind ->
             workManager.getWorkInfosForUniqueWork(ModelDownloadWorker.uniqueWorkName(kind))
                 .get(5, TimeUnit.SECONDS)
                 .any { info ->
@@ -288,7 +290,7 @@ class UserModelsStorage(private val context: Context) {
 
     companion object {
         private const val KEY_ROOT = "root_uri"
-        private val MODEL_KINDS = setOf("whisper", "nlu")
+        private val MODEL_KINDS = setOf("whisper", "nlu", "punctuation")
         private const val DEFAULT_ROOT_FOLDER = "НеЗабудьКа"
         private const val LEGACY_ROOT_FOLDER = "LocalAssistant"
         private const val DATA_FOLDER = "data"

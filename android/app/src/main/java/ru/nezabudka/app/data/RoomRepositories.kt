@@ -6,6 +6,7 @@ import ru.nezabudka.app.domain.NoteFolder
 import ru.nezabudka.app.domain.DeletedNoteFolder
 import ru.nezabudka.app.domain.Reminder
 import ru.nezabudka.app.domain.normalizeReminderRecurrence
+import ru.nezabudka.app.domain.normalizeSavedEntryText
 import ru.nezabudka.app.ports.NotesRepository
 import ru.nezabudka.app.ports.ReminderRepository
 import kotlinx.coroutines.flow.Flow
@@ -26,8 +27,9 @@ class RoomReminderRepository(private val dao: ReminderDao, private val clock: Cl
         .distinctUntilChanged()
         .flowOn(Dispatchers.Default)
     override suspend fun create(text: String, remindAt: LocalDateTime?, recurrence: String?): Reminder {
-        require(text.isNotBlank()) { "Текст напоминания не может быть пустым" }
-        val entity = ReminderEntity(text = text.trim(), remindAt = remindAt, recurrence = normalizeReminderRecurrence(recurrence), createdAt = LocalDateTime.now(clock), manualOrder = Long.MAX_VALUE)
+        val cleanText = normalizeSavedEntryText(text)
+        require(cleanText.isNotBlank()) { "Текст напоминания не может быть пустым" }
+        val entity = ReminderEntity(text = cleanText, remindAt = remindAt, recurrence = normalizeReminderRecurrence(recurrence), createdAt = LocalDateTime.now(clock), manualOrder = Long.MAX_VALUE)
         val id = dao.insert(entity)
         dao.setOrder(id, id)
         return entity.copy(id = id, manualOrder = id).domain()
@@ -38,14 +40,17 @@ class RoomReminderRepository(private val dao: ReminderDao, private val clock: Cl
     }?.domain()
     override suspend fun update(id: Long, text: String?, remindAt: LocalDateTime?): Reminder {
         val current = dao.byId(id) ?: throw NoSuchElementException("Напоминание $id не найдено")
-        val updated = current.copy(text = text?.trim() ?: current.text, remindAt = remindAt ?: current.remindAt)
+        val cleanText = text?.let(::normalizeSavedEntryText) ?: current.text
+        require(cleanText.isNotBlank()) { "Текст напоминания не может быть пустым" }
+        val updated = current.copy(text = cleanText, remindAt = remindAt ?: current.remindAt)
         dao.update(updated)
         return updated.domain()
     }
     override suspend fun replace(id: Long, text: String, remindAt: LocalDateTime?): Reminder {
-        require(text.isNotBlank()) { "Текст напоминания не может быть пустым" }
+        val cleanText = normalizeSavedEntryText(text)
+        require(cleanText.isNotBlank()) { "Текст напоминания не может быть пустым" }
         val current = dao.byId(id) ?: throw NoSuchElementException("Напоминание $id не найдено")
-        val updated = current.copy(text = text.trim(), remindAt = remindAt)
+        val updated = current.copy(text = cleanText, remindAt = remindAt)
         dao.update(updated)
         return updated.domain()
     }
@@ -54,10 +59,11 @@ class RoomReminderRepository(private val dao: ReminderDao, private val clock: Cl
         return (dao.byId(id) ?: throw NoSuchElementException("Напоминание $id не найдено")).domain()
     }
     override suspend fun saveEditor(id: Long, text: String, remindAt: LocalDateTime?, recurrence: String?, favorite: Boolean, completed: Boolean): Reminder {
-        require(text.isNotBlank()) { "Текст напоминания не может быть пустым" }
+        val cleanText = normalizeSavedEntryText(text)
+        require(cleanText.isNotBlank()) { "Текст напоминания не может быть пустым" }
         return dao.saveFromEditor(
             id = id,
-            text = text.trim(),
+            text = cleanText,
             remindAt = remindAt,
             recurrence = normalizeReminderRecurrence(recurrence),
             favorite = favorite,
@@ -101,6 +107,7 @@ class RoomReminderRepository(private val dao: ReminderDao, private val clock: Cl
 }
 
 class RoomNotesRepository(private val database: AppDatabase, private val clock: Clock = Clock.systemDefaultZone()) : NotesRepository {
+    suspend fun byId(id: Long): Note? = database.notesDao().noteById(id)?.domain()
     private val dao = database.notesDao()
     override fun observeFolders(): Flow<List<NoteFolder>> = dao.observeFolders()
         .map { rows -> rows.map { NoteFolder(it.id, it.name, it.createdAt, it.noteCount, it.manualOrder) } }
@@ -169,7 +176,7 @@ class RoomNotesRepository(private val database: AppDatabase, private val clock: 
     override suspend fun deleteTrashed() = dao.deleteTrashed()
     override suspend fun deleteTrashedBefore(cutoff: LocalDateTime) = dao.deleteTrashedBefore(cutoff)
     override suspend fun create(folderName: String?, text: String): Note = database.withTransaction {
-        val cleanText = text.trim()
+        val cleanText = normalizeSavedEntryText(text)
         require(cleanText.isNotEmpty()) { "Текст заметки не может быть пустым" }
         val folder = folderName?.trim()?.takeIf { it.isNotEmpty() }?.let { createFolder(it) }
         val now = LocalDateTime.now(clock)
@@ -179,8 +186,8 @@ class RoomNotesRepository(private val database: AppDatabase, private val clock: 
         checkNotNull(dao.noteById(noteId)).domain()
     }
     override suspend fun save(id: Long?, folderNames: List<String>, title: String, text: String, pinned: Boolean, archived: Boolean, color: String?): Note = database.withTransaction {
-        val cleanTitle = title.trim()
-        val cleanText = text.trim()
+        val cleanTitle = normalizeSavedEntryText(title)
+        val cleanText = normalizeSavedEntryText(text)
         if (id == null) require(cleanTitle.isNotEmpty() || cleanText.isNotEmpty()) { "Заметка не может быть пустой" }
         val cleanNames = folderNames.map { it.trim() }.filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
         val selectedFolders = cleanNames.map { createFolder(it) }

@@ -13,9 +13,17 @@ import ru.nezabudka.app.application.ReminderDateClarification
 import ru.nezabudka.app.domain.AppSettings
 import ru.nezabudka.app.domain.CustomThemeSettings
 import ru.nezabudka.app.domain.TimeOfDaySetting
+import ru.nezabudka.app.domain.CommandIntent
+import ru.nezabudka.app.domain.FirstUseSetupController
+import ru.nezabudka.app.domain.FirstUseSetupKind
+import ru.nezabudka.app.data.FirstUseSetupPreferences
 import ru.nezabudka.app.domain.Note
 import ru.nezabudka.app.domain.NoteFolder
 import ru.nezabudka.app.domain.Reminder
+import ru.nezabudka.app.domain.WhisperThreadTiming
+import ru.nezabudka.app.domain.bestWhisperThreadCount
+import ru.nezabudka.app.domain.maximumWhisperThreadCount
+import ru.nezabudka.app.speech.PcmWavSegmenter
 import ru.nezabudka.app.domain.CommandContext
 import ru.nezabudka.app.domain.CommandScope
 import ru.nezabudka.app.data.detectDeviceCapabilities
@@ -24,6 +32,7 @@ import ru.nezabudka.app.ports.ContextualSpeechToTextEngine
 import ru.nezabudka.app.ports.LiveSpeechToTextEngine
 import ru.nezabudka.app.ports.SpeechRecognition
 import ru.nezabudka.app.speech.WhisperDownload
+import ru.nezabudka.app.speech.WhisperModelMissingException
 import ru.nezabudka.app.BuildConfig
 import ru.nezabudka.app.speech.AndroidSpeechRecognizerEngine
 import ru.nezabudka.app.notifications.NotificationChannels
@@ -31,11 +40,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -50,6 +62,7 @@ data class AssistantUiState(
     val isRecording: Boolean = false,
     val isProcessing: Boolean = false,
     val error: String? = null,
+    val whisperModelMissing: Boolean = false,
     val result: String? = null,
     val log: List<String> = emptyList(),
     val lastAudio: File? = null,
@@ -86,7 +99,21 @@ internal fun AssistantUiState.noteDictationState() = NoteDictationUiState(
     recording = isRecording,
 )
 
+internal fun AssistantUiState.assistantDisplayState(showTechnicalLog: Boolean): AssistantUiState =
+    if (showTechnicalLog) this else copy(log = emptyList())
+
 data class ActionNotice(val id: Long, val message: String, val effect: ActionEffect?)
+data class WhisperThreadBenchmarkUiState(
+    val running: Boolean = false,
+    val stage: String = "",
+    val completed: Int = 0,
+    val total: Int = 0,
+    val modelName: String? = null,
+    val audioSeconds: Double? = null,
+    val timings: List<WhisperThreadTiming> = emptyList(),
+    val bestThreads: Int? = null,
+    val error: String? = null,
+)
 data class NoteDictationResult(val sessionId: Long, val text: String)
 
 sealed interface AssistantUiEvent {
@@ -104,8 +131,68 @@ enum class ReminderSort(val key: String, val title: String) {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AssistantViewModel(private val container: AppContainer) : ViewModel() {
+    val appIcon = container.appIcons.selected
+    fun refreshAppIcon() = container.appIcons.refresh()
+    fun setAppIcon(option: ru.nezabudka.app.data.AppIconOption) {
+        viewModelScope.launch(Dispatchers.IO) { runCatching { container.appIcons.select(option) }.onFailure(::fail) }
+    }
+    private val firstUseSetup = FirstUseSetupController(FirstUseSetupPreferences(container.app))
+    val setupPrompts = firstUseSetup.pending
+    private data class PendingTimeSetup(val text: String, val scope: CommandScope)
+    private var pendingTimeSetup: PendingTimeSetup? = null
+
+    fun hasPendingReminderSetup(): Boolean = setupPrompts.value.any { it.kind == FirstUseSetupKind.REMINDER_DELIVERY }
+
+    fun resetFirstUseSetup() {
+        firstUseSetup.reset()
+        pendingTimeSetup = null
+        update("Предложения настройки первого использования сброшены") {
+            it.copy(awaitingSttConfirmation = it.recognizedText.isNotBlank())
+        }
+    }
+
+    fun finishSetupPrompt(id: Long, proceed: Boolean = false) {
+        val prompt = firstUseSetup.finish(id) ?: return
+        if (prompt.kind == FirstUseSetupKind.TIME_OF_DAY) {
+            val pending = pendingTimeSetup
+            pendingTimeSetup = null
+            if (proceed && pending != null && _ui.value.recognizedText == pending.text) execute(pending.scope)
+        }
+    }
+
+    fun confirmTimeOfDaySetup(id: Long, values: List<TimeOfDaySetting>) {
+        if (setupPrompts.value.firstOrNull()?.let { it.id == id && it.kind == FirstUseSetupKind.TIME_OF_DAY } != true) return
+        setTimeOfDaySettings(values)
+        finishSetupPrompt(id, proceed = true)
+    }
+
+    fun confirmFolderInterfaceSetup(id: Long, value: String) {
+        if (setupPrompts.value.firstOrNull()?.let { it.id == id && it.kind == FirstUseSetupKind.FOLDER_INTERFACE } != true) return
+        setNoteFolderInterface(value)
+        finishSetupPrompt(id)
+    }
+
+    fun confirmNluSetup(id: Long) {
+        if (setupPrompts.value.firstOrNull()?.let { it.id == id && it.kind == FirstUseSetupKind.COMMAND_UNDERSTANDING } != true) return
+        if (!classicNluModel.value.installed) return
+        setClassicNluEnabled(true)
+        finishSetupPrompt(id)
+    }
+
+    private fun offerFolderSetup(folder: NoteFolder) {
+        firstUseSetup.offer(FirstUseSetupKind.FOLDER_INTERFACE, folderName = folder.name)
+    }
+
+    private fun offerReminderSetup(reminder: Reminder) {
+        firstUseSetup.offer(FirstUseSetupKind.REMINDER_DELIVERY, requiresExactTime = reminder.remindAt != null)
+    }
+
     private val _ui = MutableStateFlow(AssistantUiState(lastAudio = container.preprocessor.lastProcessed()))
     val ui: StateFlow<AssistantUiState> = _ui
+    private val _whisperModelsMenu = MutableStateFlow(false)
+    val whisperModelsMenu: StateFlow<Boolean> = _whisperModelsMenu
+    fun openWhisperModelsMenu() { _whisperModelsMenu.value = true }
+    fun dismissWhisperModelsMenu() { _whisperModelsMenu.value = false }
     val voiceActionUi: StateFlow<VoiceActionUiState> = ui
         .map(AssistantUiState::voiceActionState)
         .distinctUntilChanged()
@@ -125,11 +212,22 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     private val _event = MutableStateFlow<AssistantUiEvent?>(null)
     val event: StateFlow<AssistantUiEvent?> = _event
     val settings: StateFlow<AppSettings> = container.settings.state
+    // Hidden diagnostic events should not invalidate the assistant's entire screen.
+    val assistantUi: StateFlow<AssistantUiState> = combine(
+        ui,
+        settings.map { it.showTechnicalLog }.distinctUntilChanged(),
+    ) { state, showLog -> state.assistantDisplayState(showLog) }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000),
+            _ui.value.assistantDisplayState(settings.value.showTechnicalLog))
     private val reminderFeature = ReminderFeature(
         container.reminders, container.reminderActions, viewModelScope, ::fail,
+        onReminderCreated = ::offerReminderSetup,
     )
     private val notesFeature = NotesFeature(
         container.notes, viewModelScope, ::publishNotice, ::fail,
+        onFolderCreated = ::offerFolderSetup,
+        needsFolderSetup = { !firstUseSetup.wasOffered(FirstUseSetupKind.FOLDER_INTERFACE) },
     )
     val reminders: StateFlow<List<Reminder>> = reminderFeature.reminders
     val notesUi: StateFlow<NotesUiState> = notesFeature.state
@@ -137,12 +235,16 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     val engines = container.stt.all()
     val whisperModels = container.whisperModels.state
     val whisperRuntime = container.whisper.runtime
+    val punctuationModel = container.notePunctuation.models.state
     val whisperDownloads: List<WhisperDownload> = container.whisperModels.downloads
     val modelStorage = container.modelStorage.state
     val classicNluModel = container.classicNlu.modelState
     val classicNluDownloadAvailable: Boolean = BuildConfig.CLASSIC_NLU_MODEL_URL.isNotBlank()
     val cloudSttCredentials = container.cloudSttCredentials.state
     val deviceCapabilities = detectDeviceCapabilities(container.app)
+    private val _whisperThreadBenchmark = MutableStateFlow(WhisperThreadBenchmarkUiState())
+    val whisperThreadBenchmark: StateFlow<WhisperThreadBenchmarkUiState> = _whisperThreadBenchmark
+    private var whisperBenchmarkJob: Job? = null
     private var noticeDismissJob: Job? = null
     private var playbackJob: Job? = null
     private val playbackLock = Any()
@@ -164,6 +266,11 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         )
     }
     fun selectFolder(id: Long?) { notesFeature.dispatch(NoteUiEvent.SelectFolder(id)) }
+    suspend fun noteForWidget(id: Long): Note? = withContext(Dispatchers.IO) { container.notes.byId(id) }
+    suspend fun reminderForWidget(id: Long): Reminder? = withContext(Dispatchers.IO) { container.reminders.observe(id).first() }
+    suspend fun folderForWidget(id: Long?): Long? = withContext(Dispatchers.IO) {
+        id?.takeIf { value -> container.database.notesDao().allFolders().any { it.id == value } }
+    }
     fun dismissActionNotice() {
         noticeDismissJob?.cancel()
         _event.value = null
@@ -206,7 +313,75 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             container.whisper.release()
         }
     }
-    fun setWhisperThreadCount(value: Int) = container.settings.setWhisperThreadCount(value)
+    fun setWhisperAccurateMode(enabled: Boolean) = container.settings.setWhisperAccurateMode(enabled)
+    fun setNotePunctuationModel(value: String) = container.settings.setNotePunctuationModel(value)
+    fun downloadPunctuationModel() = viewModelScope.launch(Dispatchers.IO) {
+        runCatching { container.notePunctuation.models.download() }.onFailure(::fail)
+    }
+    fun cancelPunctuationDownload() { container.notePunctuation.models.cancelDownload() }
+
+    fun setWhisperThreadCount(value: Int) = container.settings.setWhisperThreadCount(
+        value.coerceIn(0, maximumWhisperThreadCount(deviceCapabilities.cpuCores)),
+    )
+
+    fun startWhisperThreadBenchmark() {
+        if (_whisperThreadBenchmark.value.running) return
+        if (_ui.value.isProcessing || _ui.value.isRecording) {
+            _whisperThreadBenchmark.value = WhisperThreadBenchmarkUiState(error = "Сначала завершите текущую запись или распознавание.")
+            return
+        }
+        _whisperThreadBenchmark.value = WhisperThreadBenchmarkUiState(running = true, stage = "Подготовка записи…")
+        _ui.value = _ui.value.copy(isProcessing = true)
+        whisperBenchmarkJob = viewModelScope.launch {
+            var sample: File? = null
+            try {
+                sample = withContext(Dispatchers.IO) {
+                    val source = _ui.value.lastAudio?.takeIf(File::isFile)
+                        ?: container.preprocessor.lastProcessed()?.takeIf(File::isFile)
+                        ?: File(container.app.filesDir, "recordings/last_raw.wav").takeIf(File::isFile)
+                        ?: error("Сначала запишите в помощнике фразу длительностью 3–5 секунд, затем повторите проверку.")
+                    File.createTempFile("whisper-threads-", ".wav", container.app.cacheDir).also { output ->
+                        try { PcmWavSegmenter.copyFirstSeconds(source, output, 5) }
+                        catch (error: Throwable) { output.delete(); throw error }
+                    }
+                }
+                _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(audioSeconds = (sample.length() - 44) / 32_000.0)
+                val (modelName, timings) = container.whisper.benchmarkThreads(
+                    sample, maximumWhisperThreadCount(deviceCapabilities.cpuCores),
+                ) { completed, total, threads ->
+                    _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(
+                        completed = completed, total = total,
+                        stage = if (threads == 0) "Прогрев модели…" else "Проверка: $threads потоков · $completed из $total замеров",
+                    )
+                }
+                _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(
+                    modelName = modelName, timings = timings, bestThreads = bestWhisperThreadCount(timings), stage = "Проверка завершена",
+                )
+            } catch (cancelled: CancellationException) {
+                _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(stage = "Проверка отменена")
+            } catch (error: Throwable) {
+                _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(error = error.message ?: "Не удалось выполнить проверку")
+            } finally {
+                withContext(NonCancellable + Dispatchers.IO) { sample?.delete() }
+                _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(running = false)
+                _ui.value = _ui.value.copy(isProcessing = false)
+            }
+        }
+    }
+
+    fun cancelWhisperThreadBenchmark() {
+        if (_whisperThreadBenchmark.value.running) {
+            _whisperThreadBenchmark.value = _whisperThreadBenchmark.value.copy(stage = "Останавливаю проверку…")
+            whisperBenchmarkJob?.cancel()
+        }
+    }
+
+    fun applyBestWhisperThreadCount() {
+        val result = _whisperThreadBenchmark.value
+        if (!result.running && result.modelName == whisperModels.value.selectedName) {
+            result.bestThreads?.let(::setWhisperThreadCount)
+        }
+    }
     fun setLocalOnly(enabled: Boolean) {
         container.settings.setLocalOnly(enabled)
         val android = container.stt.all().filterIsInstance<AndroidSpeechRecognizerEngine>().firstOrNull()
@@ -236,6 +411,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     fun setTimeOfDaySettings(values: List<TimeOfDaySetting>) = container.settings.setTimeOfDaySettings(values)
     fun setAudioPreprocessing(enabled: Boolean) = container.settings.setAudioPreprocessing(enabled)
     fun setShowPlaybackButton(enabled: Boolean) = container.settings.setShowPlaybackButton(enabled)
+    fun setShowAssistantWelcomeCard(enabled: Boolean) = container.settings.setShowAssistantWelcomeCard(enabled)
     fun setShowTechnicalLog(enabled: Boolean) = container.settings.setShowTechnicalLog(enabled)
     fun setTrustStt(enabled: Boolean) = container.settings.setTrustStt(enabled)
     fun setReminderSort(sort: ReminderSort) = container.settings.setReminderSort(sort.key)
@@ -292,6 +468,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             withContext(Dispatchers.IO) {
                 container.whisperModels.refresh()
                 container.classicNlu.refreshModel()
+                container.notePunctuation.models.refresh()
                 if (result.restored) {
                     NotificationChannels.recreate(container.app)
                     container.restoreReminderSchedules()
@@ -358,6 +535,12 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             .onFailure(::fail)
     }
 
+    fun selectClassicNluModel(fileName: String) = viewModelScope.launch {
+        runCatching { container.classicNlu.selectModel(fileName) }
+            .onSuccess { update("Выбрана NLU-модель: $fileName") { it.copy(error = null) } }
+            .onFailure(::fail)
+    }
+
     fun toggleRecording() {
         val engine = container.stt.require(settings.value.sttEngine)
         if (engine is LiveSpeechToTextEngine) {
@@ -407,6 +590,11 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
                     raw
                 }
                 val engine = container.stt.require(settings.value.sttEngine)
+                (engine as? ContextualSpeechToTextEngine)?.setCommandVocabularyEnabled(recognitionTarget == RecognitionTarget.COMMAND)
+                (engine as? ContextualSpeechToTextEngine)?.setCommandScope(pendingCommandScope)
+                (engine as? ContextualSpeechToTextEngine)?.setAwaitingDateResponse(
+                    recognitionTarget == RecognitionTarget.COMMAND && pendingReminderDateClarification != null,
+                )
                 (engine as? ContextualSpeechToTextEngine)?.setContextHints(
                     if (recognitionTarget == RecognitionTarget.COMMAND) speechContextHints() else emptyList(),
                 )
@@ -424,24 +612,38 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun completeRecognition(recognition: SpeechRecognition, log: String) {
+        recognition.notice?.let { publishNotice(it, null) }
         if (recognitionTarget == RecognitionTarget.NOTE_DICTATION) {
             val sessionId = noteDictationSessionId
-            recognitionTarget = RecognitionTarget.COMMAND
-            noteDictationSessionId = null
-            update(log) {
-                it.copy(
-                    noteDictation = sessionId?.let { id ->
-                        recognition.text.takeIf(String::isNotBlank)?.let { text -> NoteDictationResult(id, text) }
-                    },
-                    noteDictationActive = false,
-                    isRecording = false,
-                    isProcessing = false,
-                    awaitingSttConfirmation = false,
-                )
+            val punctuationModel = settings.value.notePunctuationModel
+            update(log) { it.copy(isRecording = false, isProcessing = true) }
+            viewModelScope.launch {
+                val text = try {
+                    container.notePunctuation.restore(recognition.text, punctuationModel)
+                } catch (error: kotlinx.coroutines.CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    publishNotice(if (error is ru.nezabudka.app.speech.RupunctModelMissingException)
+                        "RUPunct Small не скачана. Скачайте её в настройках пунктуации. Сохранён текст распознавания."
+                        else "Не удалось обработать запятые. Сохранён текст распознавания.", null)
+                    recognition.text
+                }
+                if (recognitionTarget != RecognitionTarget.NOTE_DICTATION || noteDictationSessionId != sessionId) return@launch
+                recognitionTarget = RecognitionTarget.COMMAND
+                noteDictationSessionId = null
+                update("Пунктуация заметки: $punctuationModel") {
+                    it.copy(
+                        noteDictation = sessionId?.let { id -> text.takeIf(String::isNotBlank)?.let { NoteDictationResult(id, it) } },
+                        noteDictationActive = false,
+                        isRecording = false,
+                        isProcessing = false,
+                        awaitingSttConfirmation = false,
+                    )
+                }
             }
             return
         }
-        val executeImmediately = settings.value.trustStt &&
+        val executeImmediately = settings.value.trustStt && !recognition.requiresConfirmation &&
             (recognition.confidence == null || recognition.confidence >= STT_AUTO_EXECUTION_CONFIDENCE)
         update(log) {
             it.copy(
@@ -456,6 +658,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun execute(scope: CommandScope = pendingCommandScope) = viewModelScope.launch {
+        if (_ui.value.isProcessing || pendingTimeSetup != null) return@launch
         val text = _ui.value.recognizedText
         val alternatives = _ui.value.recognizedAlternatives
         update("Обработка подтверждённого текста") { it.copy(isProcessing = true, error = null, result = null, awaitingSttConfirmation = false) }
@@ -465,6 +668,26 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         }
         val nluRequestId = container.classicNlu.diagnostic.value.requestId
         val pendingClarification = pendingReminderDateClarification
+        if (!firstUseSetup.wasOffered(FirstUseSetupKind.TIME_OF_DAY)) {
+            val phrase = container.execute.namedTimePhraseUsed(text)
+            if (phrase != null) {
+                val preview = runCatching {
+                    pendingClarification != null || container.execute.preview(text, CommandContext(scope), alternatives).intent == CommandIntent.CREATE_REMINDER
+                }
+                if (preview.isFailure) { fail(preview.exceptionOrNull()!!); return@launch }
+                if (preview.getOrDefault(false)) {
+                    pendingTimeSetup = PendingTimeSetup(text, scope)
+                    firstUseSetup.offer(FirstUseSetupKind.TIME_OF_DAY, phrase = phrase)
+                    update("Настройте время суток перед созданием напоминания") {
+                        it.copy(isProcessing = false, awaitingSttConfirmation = true)
+                    }
+                    return@launch
+                }
+            }
+        }
+        val previousFolders = if (!firstUseSetup.wasOffered(FirstUseSetupKind.FOLDER_INTERFACE)) {
+            runCatching { container.notes.observeFolders().first().map { it.id }.toSet() }.getOrNull()
+        } else null
         val outcome = runCatching {
             container.execute(
                 text,
@@ -477,17 +700,16 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         appendCommandDiagnostics(nluRequestId)
         outcome
             .onSuccess { result ->
+                if (previousFolders != null) runCatching { container.notes.observeFolders().first() }
+                    .getOrNull()?.firstOrNull { it.id !in previousFolders }?.let(::offerFolderSetup)
                 pendingReminderDateClarification = result.reminderDateClarification
                 update("Команда обработана за ${SystemClock.elapsedRealtime() - started} мс") {
-                    it.copy(
-                        isProcessing = false,
-                        result = result.message,
-                        recognizedText = "",
-                        recognizedAlternatives = emptyList(),
-                        awaitingSttConfirmation = false,
-                    )
+                    it.afterCommandResult(result)
                 }
                 publishNotice(result.message, result.effect)
+                if (ru.nezabudka.app.domain.shouldOfferNluSetup(result.commandRecognized, settings.value.classicNluEnabled, classicNluModel.value.installed)) {
+                    firstUseSetup.offer(FirstUseSetupKind.COMMAND_UNDERSTANDING)
+                }
             }
             .onFailure(::fail)
     }
@@ -518,9 +740,11 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     private fun formatPercent(value: Double): String = "${(value * 1_000).toInt() / 10.0}%"
 
     private fun speechContextHints(): List<String> = buildList {
-        folders.value.asSequence().map { it.name }.filter(String::isNotBlank).take(8).forEach(::add)
-        reminders.value.asSequence().map { it.text }.filter(String::isNotBlank).take(8).forEach(::add)
-    }.distinctBy { it.lowercase().replace('ё', 'е') }
+        // Folder names are a vocabulary hint. Previous reminder sentences can
+        // bias decoding of unrelated speech, especially after a bad transcript.
+        notesUi.value.selectedFolderId?.let { id -> folders.value.firstOrNull { it.id == id }?.name }?.let(::add)
+        folders.value.asSequence().map { it.name }.filter(String::isNotBlank).forEach(::add)
+    }.distinctBy { it.lowercase().replace('ё', 'е') }.take(8)
 
     fun primaryAction(scope: CommandScope = CommandScope.ASSISTANT) {
         val state = _ui.value
@@ -611,7 +835,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         (runCatching {
             container.stt.require(settings.value.sttEngine)
         }.getOrNull() as? LiveSpeechToTextEngine)?.cancel()
-        if (container.recorder.isRecording) {
+        if (container.recorder.isRecording && !recordingStopRequested.get()) {
             viewModelScope.launch {
                 runCatching { container.recorder.stop() }
             }
@@ -634,7 +858,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         (runCatching {
             container.stt.require(settings.value.sttEngine)
         }.getOrNull() as? LiveSpeechToTextEngine)?.cancel()
-        if (container.recorder.isRecording) {
+        if (container.recorder.isRecording && !recordingStopRequested.get()) {
             viewModelScope.launch {
                 runCatching { container.recorder.stop() }.onFailure(::fail)
             }
@@ -671,8 +895,8 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         return reminderFeature.save(reminder, text, remindAt, recurrence, favorite, completed, onSaved)
     }
 
-    fun changeReminderTime(reminder: Reminder, remindAt: java.time.LocalDateTime?): Job {
-        return reminderFeature.reschedule(reminder, remindAt, ::dismissActionNotice)
+    fun changeReminderTime(reminder: Reminder, remindAt: java.time.LocalDateTime?, recurrence: String? = reminder.recurrence): Job {
+        return reminderFeature.rescheduleWithRecurrence(reminder, remindAt, recurrence, ::dismissActionNotice)
     }
 
     fun snoozeReminder(reminder: Reminder, remindAt: java.time.LocalDateTime, onSaved: () -> Unit = {}): Job {
@@ -729,6 +953,11 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun publishNotice(message: String, effect: ActionEffect?) {
+        when (effect) {
+            is ActionEffect.FolderCreated -> offerFolderSetup(effect.folder)
+            is ActionEffect.ReminderCreated -> offerReminderSetup(effect.reminder)
+            else -> Unit
+        }
         val notice = ActionNotice(SystemClock.elapsedRealtime(), message, effect)
         _event.value = AssistantUiEvent.Action(notice)
         noticeDismissJob?.cancel()
@@ -796,8 +1025,10 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
                 isRecording = false,
                 noteDictationActive = false,
                 error = error.message ?: "Неизвестная ошибка",
+                whisperModelMissing = error is WhisperModelMissingException,
             )
         }
+        if (error is WhisperModelMissingException) openWhisperModelsMenu()
     }
     private fun update(log: String, change: (AssistantUiState) -> AssistantUiState) {
         _ui.value = change(_ui.value).let { it.copy(log = (it.log + log).takeLast(200)) }

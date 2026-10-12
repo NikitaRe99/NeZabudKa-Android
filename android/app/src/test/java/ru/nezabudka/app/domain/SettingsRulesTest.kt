@@ -67,7 +67,7 @@ class SettingsRulesTest {
     @Test
     fun `manual Whisper threads are sanitized and limited by available cores`() {
         assertEquals(0, normalizeWhisperThreadCount(-2))
-        assertEquals(8, normalizeWhisperThreadCount(20))
+        assertEquals(20, normalizeWhisperThreadCount(20))
         assertEquals(
             4,
             effectiveWhisperThreadCount(
@@ -78,7 +78,7 @@ class SettingsRulesTest {
             ),
         )
         assertEquals(
-            2,
+            8,
             effectiveWhisperThreadCount(
                 configured = 8,
                 cpuCores = 8,
@@ -86,8 +86,8 @@ class SettingsRulesTest {
                 memoryClassMb = 512,
             ),
         )
-        assertEquals(2, maximumWhisperThreadCount(cpuCores = 8, lowRamDevice = false, memoryClassMb = 192))
-        assertEquals(4, maximumWhisperThreadCount(cpuCores = 8, lowRamDevice = false, memoryClassMb = 256))
-        assertEquals(8, maximumWhisperThreadCount(cpuCores = 12, lowRamDevice = false, memoryClassMb = 512))
+        assertEquals(8, maximumWhisperThreadCount(cpuCores = 8))
+        assertEquals(12, maximumWhisperThreadCount(cpuCores = 12))
+        assertEquals(1, maximumWhisperThreadCount(cpuCores = 0))
     }
 }

@@ -1,0 +1,5559 @@
+[
+  {
+    "id": "held-cr-001",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-002",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-003",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-004",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-005",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-006",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-007",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-008",
+    "scope": "assistant",
+    "utterance": "Хорошо бы не забыть получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-009",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-010",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-011",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-012",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-013",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-014",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-015",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-016",
+    "scope": "assistant",
+    "utterance": "Проследи чтобы я не забыл получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-017",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-018",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-019",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-020",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-021",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-022",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-023",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-024",
+    "scope": "assistant",
+    "utterance": "Мне обязательно надо не забыть получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-025",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-026",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-027",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-028",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-029",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-030",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-031",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-032",
+    "scope": "assistant",
+    "utterance": "Оставь мне напоминание получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-033",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-034",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-035",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-036",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-037",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-038",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-039",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-040",
+    "scope": "assistant",
+    "utterance": "Маякни мне чтобы получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-041",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-042",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-043",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-044",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-045",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-046",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-047",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-048",
+    "scope": "assistant",
+    "utterance": "Напомни пожалуйста получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-049",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-050",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-051",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-052",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-053",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-054",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-055",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-056",
+    "scope": "assistant",
+    "utterance": "Поставь мне напоминание получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-057",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-058",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-059",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-060",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-061",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-062",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-063",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-064",
+    "scope": "assistant",
+    "utterance": "Запланируй напоминание получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-065",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-066",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-067",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-068",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-069",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-070",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-071",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-072",
+    "scope": "assistant",
+    "utterance": "Завтра утром мне надо получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-073",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-074",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-075",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-076",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-077",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-078",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-079",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-080",
+    "scope": "assistant",
+    "utterance": "Через сорок минут мне нужно получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-081",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-082",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-083",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-084",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-085",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-086",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-087",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-088",
+    "scope": "assistant",
+    "utterance": "В пятницу вечером не забыть получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-cr-089",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно проверить давление",
+    "intent": "create_reminder",
+    "text": "проверить давление"
+  },
+  {
+    "id": "held-cr-090",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно заменить батарейки в датчике",
+    "intent": "create_reminder",
+    "text": "заменить батарейки в датчике"
+  },
+  {
+    "id": "held-cr-091",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно забрать обувь из ремонта",
+    "intent": "create_reminder",
+    "text": "забрать обувь из ремонта"
+  },
+  {
+    "id": "held-cr-092",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно передать документы бухгалтеру",
+    "intent": "create_reminder",
+    "text": "передать документы бухгалтеру"
+  },
+  {
+    "id": "held-cr-093",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно заказать корм собаке",
+    "intent": "create_reminder",
+    "text": "заказать корм собаке"
+  },
+  {
+    "id": "held-cr-094",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно позвонить участковому",
+    "intent": "create_reminder",
+    "text": "позвонить участковому"
+  },
+  {
+    "id": "held-cr-095",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно отключить автоплатёж",
+    "intent": "create_reminder",
+    "text": "отключить автоплатёж"
+  },
+  {
+    "id": "held-cr-096",
+    "scope": "assistant",
+    "utterance": "Послезавтра обязательно получить результаты обследования",
+    "intent": "create_reminder",
+    "text": "получить результаты обследования"
+  },
+  {
+    "id": "held-lr-097",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-098",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-099",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-100",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-101",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-102",
+    "scope": "assistant",
+    "utterance": "Расскажи о моих планах на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-103",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-104",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-105",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-106",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-107",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-108",
+    "scope": "assistant",
+    "utterance": "Что мне предстоит на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-109",
+    "scope": "assistant",
+    "utterance": "Проверь расписание сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-110",
+    "scope": "assistant",
+    "utterance": "Проверь расписание завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-111",
+    "scope": "assistant",
+    "utterance": "Проверь расписание на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-112",
+    "scope": "assistant",
+    "utterance": "Проверь расписание в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-113",
+    "scope": "assistant",
+    "utterance": "Проверь расписание в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-114",
+    "scope": "assistant",
+    "utterance": "Проверь расписание на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-115",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-116",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-117",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-118",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-119",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-120",
+    "scope": "assistant",
+    "utterance": "Есть что-нибудь запланированное на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-121",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-122",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-123",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-124",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-125",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-126",
+    "scope": "assistant",
+    "utterance": "Какие задачи у меня стоят на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-127",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-128",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-129",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-130",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-131",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-132",
+    "scope": "assistant",
+    "utterance": "Чем предстоит заняться на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-133",
+    "scope": "assistant",
+    "utterance": "Покажи список дел сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-134",
+    "scope": "assistant",
+    "utterance": "Покажи список дел завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-135",
+    "scope": "assistant",
+    "utterance": "Покажи список дел на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-136",
+    "scope": "assistant",
+    "utterance": "Покажи список дел в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-137",
+    "scope": "assistant",
+    "utterance": "Покажи список дел в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-138",
+    "scope": "assistant",
+    "utterance": "Покажи список дел на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-139",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-140",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-141",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-142",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-143",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-144",
+    "scope": "assistant",
+    "utterance": "Что я собирался сделать на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-145",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-146",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-147",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-148",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-149",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-150",
+    "scope": "assistant",
+    "utterance": "Напомни мои планы на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-151",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-152",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-153",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-154",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-155",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-156",
+    "scope": "assistant",
+    "utterance": "Выведи запланированные дела на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-157",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-158",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-159",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-160",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-161",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-162",
+    "scope": "assistant",
+    "utterance": "Есть ли напоминания на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-163",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-164",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание завтра",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-165",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание на выходных",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-166",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание в понедельник",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-167",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание в конце месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-lr-168",
+    "scope": "assistant",
+    "utterance": "Какое у меня расписание на следующей неделе",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "held-dr-169",
+    "scope": "assistant",
+    "utterance": "Отмени проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-170",
+    "scope": "assistant",
+    "utterance": "Отмени поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-171",
+    "scope": "assistant",
+    "utterance": "Отмени заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-172",
+    "scope": "assistant",
+    "utterance": "Отмени звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-173",
+    "scope": "assistant",
+    "utterance": "Отмени получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-174",
+    "scope": "assistant",
+    "utterance": "Отмени заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-175",
+    "scope": "assistant",
+    "utterance": "Отмени встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-176",
+    "scope": "assistant",
+    "utterance": "Отмени оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-177",
+    "scope": "assistant",
+    "utterance": "Убери напоминание проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-178",
+    "scope": "assistant",
+    "utterance": "Убери напоминание поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-179",
+    "scope": "assistant",
+    "utterance": "Убери напоминание заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-180",
+    "scope": "assistant",
+    "utterance": "Убери напоминание звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-181",
+    "scope": "assistant",
+    "utterance": "Убери напоминание получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-182",
+    "scope": "assistant",
+    "utterance": "Убери напоминание заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-183",
+    "scope": "assistant",
+    "utterance": "Убери напоминание встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-184",
+    "scope": "assistant",
+    "utterance": "Убери напоминание оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-185",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-186",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-187",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-188",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-189",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-190",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-191",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-192",
+    "scope": "assistant",
+    "utterance": "Сними напоминание про оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-193",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-194",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-195",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-196",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-197",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-198",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-199",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-200",
+    "scope": "assistant",
+    "utterance": "Мне больше не нужно напоминание оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-201",
+    "scope": "assistant",
+    "utterance": "Напоминание проверить давление можно удалить",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-202",
+    "scope": "assistant",
+    "utterance": "Напоминание поездку к родителям можно удалить",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-203",
+    "scope": "assistant",
+    "utterance": "Напоминание заказ корма можно удалить",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-204",
+    "scope": "assistant",
+    "utterance": "Напоминание звонок участковому можно удалить",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-205",
+    "scope": "assistant",
+    "utterance": "Напоминание получить результаты можно удалить",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-206",
+    "scope": "assistant",
+    "utterance": "Напоминание заменить батарейки можно удалить",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-207",
+    "scope": "assistant",
+    "utterance": "Напоминание встречу с курьером можно удалить",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-208",
+    "scope": "assistant",
+    "utterance": "Напоминание оплату страховки можно удалить",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-209",
+    "scope": "assistant",
+    "utterance": "Задачу проверить давление можно убрать",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-210",
+    "scope": "assistant",
+    "utterance": "Задачу поездку к родителям можно убрать",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-211",
+    "scope": "assistant",
+    "utterance": "Задачу заказ корма можно убрать",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-212",
+    "scope": "assistant",
+    "utterance": "Задачу звонок участковому можно убрать",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-213",
+    "scope": "assistant",
+    "utterance": "Задачу получить результаты можно убрать",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-214",
+    "scope": "assistant",
+    "utterance": "Задачу заменить батарейки можно убрать",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-215",
+    "scope": "assistant",
+    "utterance": "Задачу встречу с курьером можно убрать",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-216",
+    "scope": "assistant",
+    "utterance": "Задачу оплату страховки можно убрать",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-217",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-218",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-219",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-220",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-221",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-222",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-223",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-224",
+    "scope": "assistant",
+    "utterance": "Не напоминай больше про оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-225",
+    "scope": "assistant",
+    "utterance": "Удали из планов проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-226",
+    "scope": "assistant",
+    "utterance": "Удали из планов поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-227",
+    "scope": "assistant",
+    "utterance": "Удали из планов заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-228",
+    "scope": "assistant",
+    "utterance": "Удали из планов звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-229",
+    "scope": "assistant",
+    "utterance": "Удали из планов получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-230",
+    "scope": "assistant",
+    "utterance": "Удали из планов заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-231",
+    "scope": "assistant",
+    "utterance": "Удали из планов встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-232",
+    "scope": "assistant",
+    "utterance": "Удали из планов оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-233",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-234",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-235",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-236",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-237",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-238",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-239",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-240",
+    "scope": "assistant",
+    "utterance": "Откажись от напоминания оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-241",
+    "scope": "assistant",
+    "utterance": "Убери из расписания проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-242",
+    "scope": "assistant",
+    "utterance": "Убери из расписания поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-243",
+    "scope": "assistant",
+    "utterance": "Убери из расписания заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-244",
+    "scope": "assistant",
+    "utterance": "Убери из расписания звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-245",
+    "scope": "assistant",
+    "utterance": "Убери из расписания получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-246",
+    "scope": "assistant",
+    "utterance": "Убери из расписания заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-247",
+    "scope": "assistant",
+    "utterance": "Убери из расписания встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-248",
+    "scope": "assistant",
+    "utterance": "Убери из расписания оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-249",
+    "scope": "assistant",
+    "utterance": "Можно отменить проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-250",
+    "scope": "assistant",
+    "utterance": "Можно отменить поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-251",
+    "scope": "assistant",
+    "utterance": "Можно отменить заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-252",
+    "scope": "assistant",
+    "utterance": "Можно отменить звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-253",
+    "scope": "assistant",
+    "utterance": "Можно отменить получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-254",
+    "scope": "assistant",
+    "utterance": "Можно отменить заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-255",
+    "scope": "assistant",
+    "utterance": "Можно отменить встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-256",
+    "scope": "assistant",
+    "utterance": "Можно отменить оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-257",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание проверить давление",
+    "intent": "delete_reminder",
+    "target": "проверить давление"
+  },
+  {
+    "id": "held-dr-258",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание поездку к родителям",
+    "intent": "delete_reminder",
+    "target": "поездку к родителям"
+  },
+  {
+    "id": "held-dr-259",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание заказ корма",
+    "intent": "delete_reminder",
+    "target": "заказ корма"
+  },
+  {
+    "id": "held-dr-260",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание звонок участковому",
+    "intent": "delete_reminder",
+    "target": "звонок участковому"
+  },
+  {
+    "id": "held-dr-261",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание получить результаты",
+    "intent": "delete_reminder",
+    "target": "получить результаты"
+  },
+  {
+    "id": "held-dr-262",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание заменить батарейки",
+    "intent": "delete_reminder",
+    "target": "заменить батарейки"
+  },
+  {
+    "id": "held-dr-263",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание встречу с курьером",
+    "intent": "delete_reminder",
+    "target": "встречу с курьером"
+  },
+  {
+    "id": "held-dr-264",
+    "scope": "assistant",
+    "utterance": "Закрой напоминание оплату страховки",
+    "intent": "delete_reminder",
+    "target": "оплату страховки"
+  },
+  {
+    "id": "held-dr-last-265",
+    "scope": "assistant",
+    "utterance": "Отмени последнее",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "held-dr-last-266",
+    "scope": "assistant",
+    "utterance": "Удали самую последнюю задачу",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "held-dr-last-267",
+    "scope": "assistant",
+    "utterance": "Убери последнее из планов",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "held-dr-last-268",
+    "scope": "assistant",
+    "utterance": "Последнее напоминание можно удалить",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "held-dr-last-269",
+    "scope": "assistant",
+    "utterance": "Мне не нужно последнее напоминание",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "held-cn-270",
+    "scope": "assistant",
+    "utterance": "Зафиксируй код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-271",
+    "scope": "assistant",
+    "utterance": "Зафиксируй номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-272",
+    "scope": "assistant",
+    "utterance": "Зафиксируй мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-273",
+    "scope": "assistant",
+    "utterance": "Зафиксируй рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-274",
+    "scope": "assistant",
+    "utterance": "Зафиксируй адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-275",
+    "scope": "assistant",
+    "utterance": "Зафиксируй артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-276",
+    "scope": "assistant",
+    "utterance": "Зафиксируй телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-277",
+    "scope": "assistant",
+    "utterance": "Зафиксируй идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-278",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-279",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-280",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-281",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-282",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-283",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-284",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-285",
+    "scope": "assistant",
+    "utterance": "Запомни пожалуйста идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-286",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-287",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-288",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-289",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-290",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-291",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-292",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-293",
+    "scope": "assistant",
+    "utterance": "Мне важно сохранить идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-294",
+    "scope": "assistant",
+    "utterance": "Оставь заметку код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-295",
+    "scope": "assistant",
+    "utterance": "Оставь заметку номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-296",
+    "scope": "assistant",
+    "utterance": "Оставь заметку мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-297",
+    "scope": "assistant",
+    "utterance": "Оставь заметку рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-298",
+    "scope": "assistant",
+    "utterance": "Оставь заметку адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-299",
+    "scope": "assistant",
+    "utterance": "Оставь заметку артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-300",
+    "scope": "assistant",
+    "utterance": "Оставь заметку телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-301",
+    "scope": "assistant",
+    "utterance": "Оставь заметку идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-302",
+    "scope": "assistant",
+    "utterance": "Сделай запись код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-303",
+    "scope": "assistant",
+    "utterance": "Сделай запись номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-304",
+    "scope": "assistant",
+    "utterance": "Сделай запись мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-305",
+    "scope": "assistant",
+    "utterance": "Сделай запись рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-306",
+    "scope": "assistant",
+    "utterance": "Сделай запись адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-307",
+    "scope": "assistant",
+    "utterance": "Сделай запись артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-308",
+    "scope": "assistant",
+    "utterance": "Сделай запись телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-309",
+    "scope": "assistant",
+    "utterance": "Сделай запись идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-310",
+    "scope": "assistant",
+    "utterance": "Запиши себе код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-311",
+    "scope": "assistant",
+    "utterance": "Запиши себе номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-312",
+    "scope": "assistant",
+    "utterance": "Запиши себе мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-313",
+    "scope": "assistant",
+    "utterance": "Запиши себе рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-314",
+    "scope": "assistant",
+    "utterance": "Запиши себе адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-315",
+    "scope": "assistant",
+    "utterance": "Запиши себе артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-316",
+    "scope": "assistant",
+    "utterance": "Запиши себе телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-317",
+    "scope": "assistant",
+    "utterance": "Запиши себе идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-318",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-319",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-320",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-321",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-322",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-323",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-324",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-325",
+    "scope": "assistant",
+    "utterance": "Сохрани без изменений идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-326",
+    "scope": "assistant",
+    "utterance": "Нужно записать код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-327",
+    "scope": "assistant",
+    "utterance": "Нужно записать номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-328",
+    "scope": "assistant",
+    "utterance": "Нужно записать мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-329",
+    "scope": "assistant",
+    "utterance": "Нужно записать рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-330",
+    "scope": "assistant",
+    "utterance": "Нужно записать адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-331",
+    "scope": "assistant",
+    "utterance": "Нужно записать артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-332",
+    "scope": "assistant",
+    "utterance": "Нужно записать телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-333",
+    "scope": "assistant",
+    "utterance": "Нужно записать идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-334",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-335",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-336",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-337",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-338",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-339",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-340",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-341",
+    "scope": "assistant",
+    "utterance": "Добавь в заметки идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-342",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-343",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-344",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-345",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-346",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-347",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-348",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-349",
+    "scope": "assistant",
+    "utterance": "Пусть в заметках будет идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-350",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-351",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-352",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-353",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-354",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-355",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-356",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-357",
+    "scope": "assistant",
+    "utterance": "Сохрани как заметку идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cn-358",
+    "scope": "assistant",
+    "utterance": "Запомни что код ворот 7391",
+    "intent": "create_note",
+    "text": "код ворот 7391"
+  },
+  {
+    "id": "held-cn-359",
+    "scope": "assistant",
+    "utterance": "Запомни что номер полиса 460027",
+    "intent": "create_note",
+    "text": "номер полиса 460027"
+  },
+  {
+    "id": "held-cn-360",
+    "scope": "assistant",
+    "utterance": "Запомни что мысль сначала проверить питание",
+    "intent": "create_note",
+    "text": "мысль сначала проверить питание"
+  },
+  {
+    "id": "held-cn-361",
+    "scope": "assistant",
+    "utterance": "Запомни что рецепт соуса три ложки масла",
+    "intent": "create_note",
+    "text": "рецепт соуса три ложки масла"
+  },
+  {
+    "id": "held-cn-362",
+    "scope": "assistant",
+    "utterance": "Запомни что адрес склада Советская 41",
+    "intent": "create_note",
+    "text": "адрес склада Советская 41"
+  },
+  {
+    "id": "held-cn-363",
+    "scope": "assistant",
+    "utterance": "Запомни что артикул детали ZX-904",
+    "intent": "create_note",
+    "text": "артикул детали ZX-904"
+  },
+  {
+    "id": "held-cn-364",
+    "scope": "assistant",
+    "utterance": "Запомни что телефон диспетчера 88005553535",
+    "intent": "create_note",
+    "text": "телефон диспетчера 88005553535"
+  },
+  {
+    "id": "held-cn-365",
+    "scope": "assistant",
+    "utterance": "Запомни что идея добавить автономный поиск",
+    "intent": "create_note",
+    "text": "идея добавить автономный поиск"
+  },
+  {
+    "id": "held-cf-366",
+    "scope": "assistant",
+    "utterance": "Организуй папку Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-367",
+    "scope": "assistant",
+    "utterance": "Организуй папку Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-368",
+    "scope": "assistant",
+    "utterance": "Организуй папку Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-369",
+    "scope": "assistant",
+    "utterance": "Организуй папку Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-370",
+    "scope": "assistant",
+    "utterance": "Организуй папку Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-371",
+    "scope": "assistant",
+    "utterance": "Организуй папку Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-372",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-373",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-374",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-375",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-376",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-377",
+    "scope": "assistant",
+    "utterance": "Заведи раздел Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-378",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-379",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-380",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-381",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-382",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-383",
+    "scope": "assistant",
+    "utterance": "Мне нужна папка Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-384",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-385",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-386",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-387",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-388",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-389",
+    "scope": "assistant",
+    "utterance": "Добавь новый раздел Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-390",
+    "scope": "assistant",
+    "utterance": "Сделай папку Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-391",
+    "scope": "assistant",
+    "utterance": "Сделай папку Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-392",
+    "scope": "assistant",
+    "utterance": "Сделай папку Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-393",
+    "scope": "assistant",
+    "utterance": "Сделай папку Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-394",
+    "scope": "assistant",
+    "utterance": "Сделай папку Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-395",
+    "scope": "assistant",
+    "utterance": "Сделай папку Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-396",
+    "scope": "assistant",
+    "utterance": "Создай каталог Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-397",
+    "scope": "assistant",
+    "utterance": "Создай каталог Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-398",
+    "scope": "assistant",
+    "utterance": "Создай каталог Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-399",
+    "scope": "assistant",
+    "utterance": "Создай каталог Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-400",
+    "scope": "assistant",
+    "utterance": "Создай каталог Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-401",
+    "scope": "assistant",
+    "utterance": "Создай каталог Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-402",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-403",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-404",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-405",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-406",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-407",
+    "scope": "assistant",
+    "utterance": "Хочу новую папку Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-cf-408",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Домашний ремонт",
+    "intent": "create_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-cf-409",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Документы семьи",
+    "intent": "create_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-cf-410",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Летняя поездка",
+    "intent": "create_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-cf-411",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Идеи на будущее",
+    "intent": "create_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-cf-412",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Медицина 2026",
+    "intent": "create_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-cf-413",
+    "scope": "assistant",
+    "utterance": "Пусть будет папка Рабочие встречи",
+    "intent": "create_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-414",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-415",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-416",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-417",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-418",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-419",
+    "scope": "assistant",
+    "utterance": "Избавься от папки Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-420",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-421",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-422",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-423",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-424",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-425",
+    "scope": "assistant",
+    "utterance": "Закрой раздел Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-426",
+    "scope": "assistant",
+    "utterance": "Папка Домашний ремонт больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-427",
+    "scope": "assistant",
+    "utterance": "Папка Документы семьи больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-428",
+    "scope": "assistant",
+    "utterance": "Папка Летняя поездка больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-429",
+    "scope": "assistant",
+    "utterance": "Папка Идеи на будущее больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-430",
+    "scope": "assistant",
+    "utterance": "Папка Медицина 2026 больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-431",
+    "scope": "assistant",
+    "utterance": "Папка Рабочие встречи больше не нужна",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-432",
+    "scope": "assistant",
+    "utterance": "Раздел Домашний ремонт можно удалить",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-433",
+    "scope": "assistant",
+    "utterance": "Раздел Документы семьи можно удалить",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-434",
+    "scope": "assistant",
+    "utterance": "Раздел Летняя поездка можно удалить",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-435",
+    "scope": "assistant",
+    "utterance": "Раздел Идеи на будущее можно удалить",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-436",
+    "scope": "assistant",
+    "utterance": "Раздел Медицина 2026 можно удалить",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-437",
+    "scope": "assistant",
+    "utterance": "Раздел Рабочие встречи можно удалить",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-438",
+    "scope": "assistant",
+    "utterance": "Убери папку Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-439",
+    "scope": "assistant",
+    "utterance": "Убери папку Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-440",
+    "scope": "assistant",
+    "utterance": "Убери папку Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-441",
+    "scope": "assistant",
+    "utterance": "Убери папку Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-442",
+    "scope": "assistant",
+    "utterance": "Убери папку Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-443",
+    "scope": "assistant",
+    "utterance": "Убери папку Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-444",
+    "scope": "assistant",
+    "utterance": "Удали каталог Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-445",
+    "scope": "assistant",
+    "utterance": "Удали каталог Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-446",
+    "scope": "assistant",
+    "utterance": "Удали каталог Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-447",
+    "scope": "assistant",
+    "utterance": "Удали каталог Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-448",
+    "scope": "assistant",
+    "utterance": "Удали каталог Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-449",
+    "scope": "assistant",
+    "utterance": "Удали каталог Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-450",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-451",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-452",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-453",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-454",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-455",
+    "scope": "assistant",
+    "utterance": "Мне не нужен раздел Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-df-456",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Домашний ремонт",
+    "intent": "delete_folder",
+    "folder": "Домашний ремонт"
+  },
+  {
+    "id": "held-df-457",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Документы семьи",
+    "intent": "delete_folder",
+    "folder": "Документы семьи"
+  },
+  {
+    "id": "held-df-458",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Летняя поездка",
+    "intent": "delete_folder",
+    "folder": "Летняя поездка"
+  },
+  {
+    "id": "held-df-459",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Идеи на будущее",
+    "intent": "delete_folder",
+    "folder": "Идеи на будущее"
+  },
+  {
+    "id": "held-df-460",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Медицина 2026",
+    "intent": "delete_folder",
+    "folder": "Медицина 2026"
+  },
+  {
+    "id": "held-df-461",
+    "scope": "assistant",
+    "utterance": "Можно убрать папку Рабочие встречи",
+    "intent": "delete_folder",
+    "folder": "Рабочие встречи"
+  },
+  {
+    "id": "held-un-462",
+    "scope": "assistant",
+    "utterance": "Я уже успел проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-463",
+    "scope": "assistant",
+    "utterance": "Я уже успел выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-464",
+    "scope": "assistant",
+    "utterance": "Я уже успел позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-465",
+    "scope": "assistant",
+    "utterance": "Я уже успел забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-466",
+    "scope": "assistant",
+    "utterance": "Я уже успел купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-467",
+    "scope": "assistant",
+    "utterance": "Я уже успел отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-468",
+    "scope": "assistant",
+    "utterance": "Я уже успел проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-469",
+    "scope": "assistant",
+    "utterance": "Я уже успел полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-470",
+    "scope": "assistant",
+    "utterance": "Почему мне надо проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-471",
+    "scope": "assistant",
+    "utterance": "Почему мне надо выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-472",
+    "scope": "assistant",
+    "utterance": "Почему мне надо позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-473",
+    "scope": "assistant",
+    "utterance": "Почему мне надо забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-474",
+    "scope": "assistant",
+    "utterance": "Почему мне надо купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-475",
+    "scope": "assistant",
+    "utterance": "Почему мне надо отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-476",
+    "scope": "assistant",
+    "utterance": "Почему мне надо проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-477",
+    "scope": "assistant",
+    "utterance": "Почему мне надо полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-478",
+    "scope": "assistant",
+    "utterance": "Как лучше проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-479",
+    "scope": "assistant",
+    "utterance": "Как лучше выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-480",
+    "scope": "assistant",
+    "utterance": "Как лучше позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-481",
+    "scope": "assistant",
+    "utterance": "Как лучше забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-482",
+    "scope": "assistant",
+    "utterance": "Как лучше купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-483",
+    "scope": "assistant",
+    "utterance": "Как лучше отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-484",
+    "scope": "assistant",
+    "utterance": "Как лучше проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-485",
+    "scope": "assistant",
+    "utterance": "Как лучше полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-486",
+    "scope": "assistant",
+    "utterance": "Не хочу проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-487",
+    "scope": "assistant",
+    "utterance": "Не хочу выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-488",
+    "scope": "assistant",
+    "utterance": "Не хочу позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-489",
+    "scope": "assistant",
+    "utterance": "Не хочу забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-490",
+    "scope": "assistant",
+    "utterance": "Не хочу купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-491",
+    "scope": "assistant",
+    "utterance": "Не хочу отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-492",
+    "scope": "assistant",
+    "utterance": "Не хочу проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-493",
+    "scope": "assistant",
+    "utterance": "Не хочу полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-494",
+    "scope": "assistant",
+    "utterance": "Объясни как проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-495",
+    "scope": "assistant",
+    "utterance": "Объясни как выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-496",
+    "scope": "assistant",
+    "utterance": "Объясни как позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-497",
+    "scope": "assistant",
+    "utterance": "Объясни как забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-498",
+    "scope": "assistant",
+    "utterance": "Объясни как купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-499",
+    "scope": "assistant",
+    "utterance": "Объясни как отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-500",
+    "scope": "assistant",
+    "utterance": "Объясни как проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-501",
+    "scope": "assistant",
+    "utterance": "Объясни как полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-502",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-503",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-504",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-505",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-506",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-507",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-508",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-509",
+    "scope": "assistant",
+    "utterance": "Стоит ли сегодня полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-510",
+    "scope": "assistant",
+    "utterance": "Кто должен проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-511",
+    "scope": "assistant",
+    "utterance": "Кто должен выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-512",
+    "scope": "assistant",
+    "utterance": "Кто должен позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-513",
+    "scope": "assistant",
+    "utterance": "Кто должен забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-514",
+    "scope": "assistant",
+    "utterance": "Кто должен купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-515",
+    "scope": "assistant",
+    "utterance": "Кто должен отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-516",
+    "scope": "assistant",
+    "utterance": "Кто должен проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-517",
+    "scope": "assistant",
+    "utterance": "Кто должен полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-518",
+    "scope": "assistant",
+    "utterance": "Я передумал проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-519",
+    "scope": "assistant",
+    "utterance": "Я передумал выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-520",
+    "scope": "assistant",
+    "utterance": "Я передумал позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-521",
+    "scope": "assistant",
+    "utterance": "Я передумал забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-522",
+    "scope": "assistant",
+    "utterance": "Я передумал купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-523",
+    "scope": "assistant",
+    "utterance": "Я передумал отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-524",
+    "scope": "assistant",
+    "utterance": "Я передумал проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-525",
+    "scope": "assistant",
+    "utterance": "Я передумал полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-526",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-527",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-528",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-529",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-530",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-531",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-532",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-533",
+    "scope": "assistant",
+    "utterance": "Расскажи зачем полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-534",
+    "scope": "assistant",
+    "utterance": "Можно ли не проверить давление",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-535",
+    "scope": "assistant",
+    "utterance": "Можно ли не выбросить мусор",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-536",
+    "scope": "assistant",
+    "utterance": "Можно ли не позвонить врачу",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-537",
+    "scope": "assistant",
+    "utterance": "Можно ли не забрать документы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-538",
+    "scope": "assistant",
+    "utterance": "Можно ли не купить продукты",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-539",
+    "scope": "assistant",
+    "utterance": "Можно ли не отправить отчёт",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-540",
+    "scope": "assistant",
+    "utterance": "Можно ли не проверить почту",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-541",
+    "scope": "assistant",
+    "utterance": "Можно ли не полить цветы",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-542",
+    "scope": "assistant",
+    "utterance": "Покажи заметки",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-543",
+    "scope": "assistant",
+    "utterance": "Удали заметку про полис",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-544",
+    "scope": "assistant",
+    "utterance": "Переименуй папку Архив",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-545",
+    "scope": "assistant",
+    "utterance": "Измени последнее напоминание",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-546",
+    "scope": "assistant",
+    "utterance": "Перенеси встречу на завтра",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-547",
+    "scope": "assistant",
+    "utterance": "Открой папку Работа",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-548",
+    "scope": "assistant",
+    "utterance": "Сколько времени",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-549",
+    "scope": "assistant",
+    "utterance": "Включи музыку",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-550",
+    "scope": "assistant",
+    "utterance": "Найди аптеку",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-551",
+    "scope": "assistant",
+    "utterance": "Позвони маме",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-552",
+    "scope": "assistant",
+    "utterance": "Напиши сообщение",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-553",
+    "scope": "assistant",
+    "utterance": "Какая погода завтра",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-554",
+    "scope": "assistant",
+    "utterance": "Расскажи новости",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-555",
+    "scope": "assistant",
+    "utterance": "Открой календарь",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-556",
+    "scope": "assistant",
+    "utterance": "Сохрани",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-557",
+    "scope": "assistant",
+    "utterance": "Создай",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-558",
+    "scope": "assistant",
+    "utterance": "Удали всё",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-559",
+    "scope": "assistant",
+    "utterance": "Отмени",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-560",
+    "scope": "assistant",
+    "utterance": "Напомни",
+    "intent": "unknown"
+  },
+  {
+    "id": "held-un-fixed-561",
+    "scope": "assistant",
+    "utterance": "Запиши",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-create-reminder-001",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-002",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-003",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-004",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-005",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-006",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-007",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-008",
+    "scope": "assistant",
+    "utterance": "Оставь контрольную точку: сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-create-reminder-009",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-010",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-011",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-012",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-013",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-014",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-015",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-016",
+    "scope": "assistant",
+    "utterance": "Мне потребуется вовремя сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-create-reminder-017",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-018",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-019",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-020",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-021",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-022",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-023",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-024",
+    "scope": "assistant",
+    "utterance": "Пусть в календаре появится действие сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-create-reminder-025",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-026",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-027",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-028",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-029",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-030",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-031",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-032",
+    "scope": "assistant",
+    "utterance": "Подай мне сигнал перед тем, как сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-create-reminder-033",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-034",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-035",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-036",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-037",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-038",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-039",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-040",
+    "scope": "assistant",
+    "utterance": "Возьми на заметку как будущее дело — сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-create-reminder-041",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно получить акт сверки у поставщика",
+    "intent": "create_reminder",
+    "text": "получить акт сверки у поставщика"
+  },
+  {
+    "id": "blind5-create-reminder-042",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно проверить датчик протечки под ванной",
+    "intent": "create_reminder",
+    "text": "проверить датчик протечки под ванной"
+  },
+  {
+    "id": "blind5-create-reminder-043",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно забрать заказанные шторы из салона",
+    "intent": "create_reminder",
+    "text": "забрать заказанные шторы из салона"
+  },
+  {
+    "id": "blind5-create-reminder-044",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно передать копию паспорта нотариусу",
+    "intent": "create_reminder",
+    "text": "передать копию паспорта нотариусу"
+  },
+  {
+    "id": "blind5-create-reminder-045",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно записать заводской номер стабилизатора",
+    "intent": "create_reminder",
+    "text": "записать заводской номер стабилизатора"
+  },
+  {
+    "id": "blind5-create-reminder-046",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно продлить абонемент на парковку",
+    "intent": "create_reminder",
+    "text": "продлить абонемент на парковку"
+  },
+  {
+    "id": "blind5-create-reminder-047",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно заказать профилактику газовой плиты",
+    "intent": "create_reminder",
+    "text": "заказать профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-create-reminder-048",
+    "scope": "assistant",
+    "utterance": "К завтрашнему дню важно сверить расход воды по квитанции",
+    "intent": "create_reminder",
+    "text": "сверить расход воды по квитанции"
+  },
+  {
+    "id": "blind5-list-reminders-049",
+    "scope": "assistant",
+    "utterance": "Выведи таблицу ожидающих действий до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-050",
+    "scope": "assistant",
+    "utterance": "Выведи таблицу ожидающих действий на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-051",
+    "scope": "assistant",
+    "utterance": "Выведи таблицу ожидающих действий на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-052",
+    "scope": "assistant",
+    "utterance": "Выведи таблицу ожидающих действий на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-053",
+    "scope": "assistant",
+    "utterance": "Что осталось выполнить до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-054",
+    "scope": "assistant",
+    "utterance": "Что осталось выполнить на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-055",
+    "scope": "assistant",
+    "utterance": "Что осталось выполнить на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-056",
+    "scope": "assistant",
+    "utterance": "Что осталось выполнить на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-057",
+    "scope": "assistant",
+    "utterance": "Как выглядит очередь задач до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-058",
+    "scope": "assistant",
+    "utterance": "Как выглядит очередь задач на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-059",
+    "scope": "assistant",
+    "utterance": "Как выглядит очередь задач на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-060",
+    "scope": "assistant",
+    "utterance": "Как выглядит очередь задач на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-061",
+    "scope": "assistant",
+    "utterance": "Сделай выжимку из календаря до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-062",
+    "scope": "assistant",
+    "utterance": "Сделай выжимку из календаря на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-063",
+    "scope": "assistant",
+    "utterance": "Сделай выжимку из календаря на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-064",
+    "scope": "assistant",
+    "utterance": "Сделай выжимку из календаря на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-065",
+    "scope": "assistant",
+    "utterance": "Какие обязательства ещё открыты до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-066",
+    "scope": "assistant",
+    "utterance": "Какие обязательства ещё открыты на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-067",
+    "scope": "assistant",
+    "utterance": "Какие обязательства ещё открыты на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-068",
+    "scope": "assistant",
+    "utterance": "Какие обязательства ещё открыты на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-069",
+    "scope": "assistant",
+    "utterance": "Покажи перечень контрольных точек до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-070",
+    "scope": "assistant",
+    "utterance": "Покажи перечень контрольных точек на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-071",
+    "scope": "assistant",
+    "utterance": "Покажи перечень контрольных точек на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-072",
+    "scope": "assistant",
+    "utterance": "Покажи перечень контрольных точек на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-073",
+    "scope": "assistant",
+    "utterance": "Чем занят мой график до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-074",
+    "scope": "assistant",
+    "utterance": "Чем занят мой график на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-075",
+    "scope": "assistant",
+    "utterance": "Чем занят мой график на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-076",
+    "scope": "assistant",
+    "utterance": "Чем занят мой график на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-077",
+    "scope": "assistant",
+    "utterance": "Что назначено на исполнение до пятницы",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-078",
+    "scope": "assistant",
+    "utterance": "Что назначено на исполнение на следующие семь дней",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-079",
+    "scope": "assistant",
+    "utterance": "Что назначено на исполнение на конец месяца",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-list-reminders-080",
+    "scope": "assistant",
+    "utterance": "Что назначено на исполнение на сегодня",
+    "intent": "list_reminders"
+  },
+  {
+    "id": "blind5-delete-reminder-081",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи получение акта сверки",
+    "intent": "delete_reminder",
+    "target": "получение акта сверки"
+  },
+  {
+    "id": "blind5-delete-reminder-082",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи проверку датчика протечки",
+    "intent": "delete_reminder",
+    "target": "проверку датчика протечки"
+  },
+  {
+    "id": "blind5-delete-reminder-083",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи поездку за шторами",
+    "intent": "delete_reminder",
+    "target": "поездку за шторами"
+  },
+  {
+    "id": "blind5-delete-reminder-084",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи передачу паспорта нотариусу",
+    "intent": "delete_reminder",
+    "target": "передачу паспорта нотариусу"
+  },
+  {
+    "id": "blind5-delete-reminder-085",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи запись номера стабилизатора",
+    "intent": "delete_reminder",
+    "target": "запись номера стабилизатора"
+  },
+  {
+    "id": "blind5-delete-reminder-086",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи продление парковки",
+    "intent": "delete_reminder",
+    "target": "продление парковки"
+  },
+  {
+    "id": "blind5-delete-reminder-087",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи профилактику газовой плиты",
+    "intent": "delete_reminder",
+    "target": "профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-delete-reminder-088",
+    "scope": "assistant",
+    "utterance": "Останови контроль задачи проверку расхода воды",
+    "intent": "delete_reminder",
+    "target": "проверку расхода воды"
+  },
+  {
+    "id": "blind5-delete-reminder-089",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди получение акта сверки",
+    "intent": "delete_reminder",
+    "target": "получение акта сверки"
+  },
+  {
+    "id": "blind5-delete-reminder-090",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди проверку датчика протечки",
+    "intent": "delete_reminder",
+    "target": "проверку датчика протечки"
+  },
+  {
+    "id": "blind5-delete-reminder-091",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди поездку за шторами",
+    "intent": "delete_reminder",
+    "target": "поездку за шторами"
+  },
+  {
+    "id": "blind5-delete-reminder-092",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди передачу паспорта нотариусу",
+    "intent": "delete_reminder",
+    "target": "передачу паспорта нотариусу"
+  },
+  {
+    "id": "blind5-delete-reminder-093",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди запись номера стабилизатора",
+    "intent": "delete_reminder",
+    "target": "запись номера стабилизатора"
+  },
+  {
+    "id": "blind5-delete-reminder-094",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди продление парковки",
+    "intent": "delete_reminder",
+    "target": "продление парковки"
+  },
+  {
+    "id": "blind5-delete-reminder-095",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди профилактику газовой плиты",
+    "intent": "delete_reminder",
+    "target": "профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-delete-reminder-096",
+    "scope": "assistant",
+    "utterance": "Удали из календарной очереди проверку расхода воды",
+    "intent": "delete_reminder",
+    "target": "проверку расхода воды"
+  },
+  {
+    "id": "blind5-delete-reminder-097",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание получение акта сверки в отменённые",
+    "intent": "delete_reminder",
+    "target": "получение акта сверки"
+  },
+  {
+    "id": "blind5-delete-reminder-098",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание проверку датчика протечки в отменённые",
+    "intent": "delete_reminder",
+    "target": "проверку датчика протечки"
+  },
+  {
+    "id": "blind5-delete-reminder-099",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание поездку за шторами в отменённые",
+    "intent": "delete_reminder",
+    "target": "поездку за шторами"
+  },
+  {
+    "id": "blind5-delete-reminder-100",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание передачу паспорта нотариусу в отменённые",
+    "intent": "delete_reminder",
+    "target": "передачу паспорта нотариусу"
+  },
+  {
+    "id": "blind5-delete-reminder-101",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание запись номера стабилизатора в отменённые",
+    "intent": "delete_reminder",
+    "target": "запись номера стабилизатора"
+  },
+  {
+    "id": "blind5-delete-reminder-102",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание продление парковки в отменённые",
+    "intent": "delete_reminder",
+    "target": "продление парковки"
+  },
+  {
+    "id": "blind5-delete-reminder-103",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание профилактику газовой плиты в отменённые",
+    "intent": "delete_reminder",
+    "target": "профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-delete-reminder-104",
+    "scope": "assistant",
+    "utterance": "Переведи напоминание проверку расхода воды в отменённые",
+    "intent": "delete_reminder",
+    "target": "проверку расхода воды"
+  },
+  {
+    "id": "blind5-delete-reminder-105",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие получение акта сверки",
+    "intent": "delete_reminder",
+    "target": "получение акта сверки"
+  },
+  {
+    "id": "blind5-delete-reminder-106",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие проверку датчика протечки",
+    "intent": "delete_reminder",
+    "target": "проверку датчика протечки"
+  },
+  {
+    "id": "blind5-delete-reminder-107",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие поездку за шторами",
+    "intent": "delete_reminder",
+    "target": "поездку за шторами"
+  },
+  {
+    "id": "blind5-delete-reminder-108",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие передачу паспорта нотариусу",
+    "intent": "delete_reminder",
+    "target": "передачу паспорта нотариусу"
+  },
+  {
+    "id": "blind5-delete-reminder-109",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие запись номера стабилизатора",
+    "intent": "delete_reminder",
+    "target": "запись номера стабилизатора"
+  },
+  {
+    "id": "blind5-delete-reminder-110",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие продление парковки",
+    "intent": "delete_reminder",
+    "target": "продление парковки"
+  },
+  {
+    "id": "blind5-delete-reminder-111",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие профилактику газовой плиты",
+    "intent": "delete_reminder",
+    "target": "профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-delete-reminder-112",
+    "scope": "assistant",
+    "utterance": "Не отслеживай больше действие проверку расхода воды",
+    "intent": "delete_reminder",
+    "target": "проверку расхода воды"
+  },
+  {
+    "id": "blind5-delete-reminder-113",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле получение акта сверки",
+    "intent": "delete_reminder",
+    "target": "получение акта сверки"
+  },
+  {
+    "id": "blind5-delete-reminder-114",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле проверку датчика протечки",
+    "intent": "delete_reminder",
+    "target": "проверку датчика протечки"
+  },
+  {
+    "id": "blind5-delete-reminder-115",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле поездку за шторами",
+    "intent": "delete_reminder",
+    "target": "поездку за шторами"
+  },
+  {
+    "id": "blind5-delete-reminder-116",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле передачу паспорта нотариусу",
+    "intent": "delete_reminder",
+    "target": "передачу паспорта нотариусу"
+  },
+  {
+    "id": "blind5-delete-reminder-117",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле запись номера стабилизатора",
+    "intent": "delete_reminder",
+    "target": "запись номера стабилизатора"
+  },
+  {
+    "id": "blind5-delete-reminder-118",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле продление парковки",
+    "intent": "delete_reminder",
+    "target": "продление парковки"
+  },
+  {
+    "id": "blind5-delete-reminder-119",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле профилактику газовой плиты",
+    "intent": "delete_reminder",
+    "target": "профилактику газовой плиты"
+  },
+  {
+    "id": "blind5-delete-reminder-120",
+    "scope": "assistant",
+    "utterance": "Сними отметку о будущем деле проверку расхода воды",
+    "intent": "delete_reminder",
+    "target": "проверку расхода воды"
+  },
+  {
+    "id": "blind5-delete-last-121",
+    "scope": "assistant",
+    "utterance": "Останови контроль наиболее свежей задачи",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "blind5-delete-last-122",
+    "scope": "assistant",
+    "utterance": "Самое недавнее дело переведи в отменённые",
+    "intent": "delete_reminder",
+    "targetLast": true
+  },
+  {
+    "id": "blind5-create-note-123",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: номер договора поставщика SP-48019",
+    "intent": "create_note",
+    "text": "номер договора поставщика SP-48019"
+  },
+  {
+    "id": "blind5-create-note-124",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: значение датчика влажности 47.8 процента",
+    "intent": "create_note",
+    "text": "значение датчика влажности 47.8 процента"
+  },
+  {
+    "id": "blind5-create-note-125",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: контакт салона штор 89046661221",
+    "intent": "create_note",
+    "text": "контакт салона штор 89046661221"
+  },
+  {
+    "id": "blind5-create-note-126",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: реестровый номер нотариуса 38/114-н",
+    "intent": "create_note",
+    "text": "реестровый номер нотариуса 38/114-н"
+  },
+  {
+    "id": "blind5-create-note-127",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: модель стабилизатора ACH-12000/1",
+    "intent": "create_note",
+    "text": "модель стабилизатора ACH-12000/1"
+  },
+  {
+    "id": "blind5-create-note-128",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: номер парковочного абонемента PK:01841",
+    "intent": "create_note",
+    "text": "номер парковочного абонемента PK:01841"
+  },
+  {
+    "id": "blind5-create-note-129",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: адрес газовой службы Коммунальная 9",
+    "intent": "create_note",
+    "text": "адрес газовой службы Коммунальная 9"
+  },
+  {
+    "id": "blind5-create-note-130",
+    "scope": "assistant",
+    "utterance": "Сложи в справочные данные: идея ежемесячно фотографировать квитанции",
+    "intent": "create_note",
+    "text": "идея ежемесячно фотографировать квитанции"
+  },
+  {
+    "id": "blind5-create-note-131",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым номер договора поставщика SP-48019",
+    "intent": "create_note",
+    "text": "номер договора поставщика SP-48019"
+  },
+  {
+    "id": "blind5-create-note-132",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым значение датчика влажности 47.8 процента",
+    "intent": "create_note",
+    "text": "значение датчика влажности 47.8 процента"
+  },
+  {
+    "id": "blind5-create-note-133",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым контакт салона штор 89046661221",
+    "intent": "create_note",
+    "text": "контакт салона штор 89046661221"
+  },
+  {
+    "id": "blind5-create-note-134",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым реестровый номер нотариуса 38/114-н",
+    "intent": "create_note",
+    "text": "реестровый номер нотариуса 38/114-н"
+  },
+  {
+    "id": "blind5-create-note-135",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым модель стабилизатора ACH-12000/1",
+    "intent": "create_note",
+    "text": "модель стабилизатора ACH-12000/1"
+  },
+  {
+    "id": "blind5-create-note-136",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым номер парковочного абонемента PK:01841",
+    "intent": "create_note",
+    "text": "номер парковочного абонемента PK:01841"
+  },
+  {
+    "id": "blind5-create-note-137",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым адрес газовой службы Коммунальная 9",
+    "intent": "create_note",
+    "text": "адрес газовой службы Коммунальная 9"
+  },
+  {
+    "id": "blind5-create-note-138",
+    "scope": "assistant",
+    "utterance": "Оформи карточку с содержимым идея ежемесячно фотографировать квитанции",
+    "intent": "create_note",
+    "text": "идея ежемесячно фотографировать квитанции"
+  },
+  {
+    "id": "blind5-create-note-139",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — номер договора поставщика SP-48019",
+    "intent": "create_note",
+    "text": "номер договора поставщика SP-48019"
+  },
+  {
+    "id": "blind5-create-note-140",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — значение датчика влажности 47.8 процента",
+    "intent": "create_note",
+    "text": "значение датчика влажности 47.8 процента"
+  },
+  {
+    "id": "blind5-create-note-141",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — контакт салона штор 89046661221",
+    "intent": "create_note",
+    "text": "контакт салона штор 89046661221"
+  },
+  {
+    "id": "blind5-create-note-142",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — реестровый номер нотариуса 38/114-н",
+    "intent": "create_note",
+    "text": "реестровый номер нотариуса 38/114-н"
+  },
+  {
+    "id": "blind5-create-note-143",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — модель стабилизатора ACH-12000/1",
+    "intent": "create_note",
+    "text": "модель стабилизатора ACH-12000/1"
+  },
+  {
+    "id": "blind5-create-note-144",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — номер парковочного абонемента PK:01841",
+    "intent": "create_note",
+    "text": "номер парковочного абонемента PK:01841"
+  },
+  {
+    "id": "blind5-create-note-145",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — адрес газовой службы Коммунальная 9",
+    "intent": "create_note",
+    "text": "адрес газовой службы Коммунальная 9"
+  },
+  {
+    "id": "blind5-create-note-146",
+    "scope": "assistant",
+    "utterance": "Оставь неизменённую строку — идея ежемесячно фотографировать квитанции",
+    "intent": "create_note",
+    "text": "идея ежемесячно фотографировать квитанции"
+  },
+  {
+    "id": "blind5-create-note-147",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку номер договора поставщика SP-48019",
+    "intent": "create_note",
+    "text": "номер договора поставщика SP-48019"
+  },
+  {
+    "id": "blind5-create-note-148",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку значение датчика влажности 47.8 процента",
+    "intent": "create_note",
+    "text": "значение датчика влажности 47.8 процента"
+  },
+  {
+    "id": "blind5-create-note-149",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку контакт салона штор 89046661221",
+    "intent": "create_note",
+    "text": "контакт салона штор 89046661221"
+  },
+  {
+    "id": "blind5-create-note-150",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку реестровый номер нотариуса 38/114-н",
+    "intent": "create_note",
+    "text": "реестровый номер нотариуса 38/114-н"
+  },
+  {
+    "id": "blind5-create-note-151",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку модель стабилизатора ACH-12000/1",
+    "intent": "create_note",
+    "text": "модель стабилизатора ACH-12000/1"
+  },
+  {
+    "id": "blind5-create-note-152",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку номер парковочного абонемента PK:01841",
+    "intent": "create_note",
+    "text": "номер парковочного абонемента PK:01841"
+  },
+  {
+    "id": "blind5-create-note-153",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку адрес газовой службы Коммунальная 9",
+    "intent": "create_note",
+    "text": "адрес газовой службы Коммунальная 9"
+  },
+  {
+    "id": "blind5-create-note-154",
+    "scope": "assistant",
+    "utterance": "Запиши в личную памятку идея ежемесячно фотографировать квитанции",
+    "intent": "create_note",
+    "text": "идея ежемесячно фотографировать квитанции"
+  },
+  {
+    "id": "blind5-create-note-155",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: номер договора поставщика SP-48019",
+    "intent": "create_note",
+    "text": "номер договора поставщика SP-48019"
+  },
+  {
+    "id": "blind5-create-note-156",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: значение датчика влажности 47.8 процента",
+    "intent": "create_note",
+    "text": "значение датчика влажности 47.8 процента"
+  },
+  {
+    "id": "blind5-create-note-157",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: контакт салона штор 89046661221",
+    "intent": "create_note",
+    "text": "контакт салона штор 89046661221"
+  },
+  {
+    "id": "blind5-create-note-158",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: реестровый номер нотариуса 38/114-н",
+    "intent": "create_note",
+    "text": "реестровый номер нотариуса 38/114-н"
+  },
+  {
+    "id": "blind5-create-note-159",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: модель стабилизатора ACH-12000/1",
+    "intent": "create_note",
+    "text": "модель стабилизатора ACH-12000/1"
+  },
+  {
+    "id": "blind5-create-note-160",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: номер парковочного абонемента PK:01841",
+    "intent": "create_note",
+    "text": "номер парковочного абонемента PK:01841"
+  },
+  {
+    "id": "blind5-create-note-161",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: адрес газовой службы Коммунальная 9",
+    "intent": "create_note",
+    "text": "адрес газовой службы Коммунальная 9"
+  },
+  {
+    "id": "blind5-create-note-162",
+    "scope": "assistant",
+    "utterance": "Добавь в информационный архив: идея ежемесячно фотографировать квитанции",
+    "intent": "create_note",
+    "text": "идея ежемесячно фотографировать квитанции"
+  },
+  {
+    "id": "blind5-create-folder-163",
+    "scope": "assistant",
+    "utterance": "Заведи группу Квитанции водоснабжения",
+    "intent": "create_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-create-folder-164",
+    "scope": "assistant",
+    "utterance": "Заведи группу Газовое оборудование",
+    "intent": "create_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-create-folder-165",
+    "scope": "assistant",
+    "utterance": "Заведи группу Документы нотариуса",
+    "intent": "create_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-create-folder-166",
+    "scope": "assistant",
+    "utterance": "Заведи группу Парковочные разрешения",
+    "intent": "create_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-create-folder-167",
+    "scope": "assistant",
+    "utterance": "Заведи группу Датчики безопасности",
+    "intent": "create_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-create-folder-168",
+    "scope": "assistant",
+    "utterance": "Создай тематическую полку Квитанции водоснабжения",
+    "intent": "create_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-create-folder-169",
+    "scope": "assistant",
+    "utterance": "Создай тематическую полку Газовое оборудование",
+    "intent": "create_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-create-folder-170",
+    "scope": "assistant",
+    "utterance": "Создай тематическую полку Документы нотариуса",
+    "intent": "create_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-create-folder-171",
+    "scope": "assistant",
+    "utterance": "Создай тематическую полку Парковочные разрешения",
+    "intent": "create_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-create-folder-172",
+    "scope": "assistant",
+    "utterance": "Создай тематическую полку Датчики безопасности",
+    "intent": "create_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-create-folder-173",
+    "scope": "assistant",
+    "utterance": "Добавь рубрику записей Квитанции водоснабжения",
+    "intent": "create_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-create-folder-174",
+    "scope": "assistant",
+    "utterance": "Добавь рубрику записей Газовое оборудование",
+    "intent": "create_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-create-folder-175",
+    "scope": "assistant",
+    "utterance": "Добавь рубрику записей Документы нотариуса",
+    "intent": "create_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-create-folder-176",
+    "scope": "assistant",
+    "utterance": "Добавь рубрику записей Парковочные разрешения",
+    "intent": "create_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-create-folder-177",
+    "scope": "assistant",
+    "utterance": "Добавь рубрику записей Датчики безопасности",
+    "intent": "create_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-create-folder-178",
+    "scope": "assistant",
+    "utterance": "Открой блок материалов Квитанции водоснабжения",
+    "intent": "create_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-create-folder-179",
+    "scope": "assistant",
+    "utterance": "Открой блок материалов Газовое оборудование",
+    "intent": "create_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-create-folder-180",
+    "scope": "assistant",
+    "utterance": "Открой блок материалов Документы нотариуса",
+    "intent": "create_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-create-folder-181",
+    "scope": "assistant",
+    "utterance": "Открой блок материалов Парковочные разрешения",
+    "intent": "create_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-create-folder-182",
+    "scope": "assistant",
+    "utterance": "Открой блок материалов Датчики безопасности",
+    "intent": "create_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-delete-folder-183",
+    "scope": "assistant",
+    "utterance": "Удали группу Квитанции водоснабжения",
+    "intent": "delete_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-delete-folder-184",
+    "scope": "assistant",
+    "utterance": "Удали группу Газовое оборудование",
+    "intent": "delete_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-delete-folder-185",
+    "scope": "assistant",
+    "utterance": "Удали группу Документы нотариуса",
+    "intent": "delete_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-delete-folder-186",
+    "scope": "assistant",
+    "utterance": "Удали группу Парковочные разрешения",
+    "intent": "delete_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-delete-folder-187",
+    "scope": "assistant",
+    "utterance": "Удали группу Датчики безопасности",
+    "intent": "delete_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-delete-folder-188",
+    "scope": "assistant",
+    "utterance": "Откажись от тематической полки Квитанции водоснабжения",
+    "intent": "delete_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-delete-folder-189",
+    "scope": "assistant",
+    "utterance": "Откажись от тематической полки Газовое оборудование",
+    "intent": "delete_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-delete-folder-190",
+    "scope": "assistant",
+    "utterance": "Откажись от тематической полки Документы нотариуса",
+    "intent": "delete_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-delete-folder-191",
+    "scope": "assistant",
+    "utterance": "Откажись от тематической полки Парковочные разрешения",
+    "intent": "delete_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-delete-folder-192",
+    "scope": "assistant",
+    "utterance": "Откажись от тематической полки Датчики безопасности",
+    "intent": "delete_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-delete-folder-193",
+    "scope": "assistant",
+    "utterance": "Закрой рубрику записей Квитанции водоснабжения",
+    "intent": "delete_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-delete-folder-194",
+    "scope": "assistant",
+    "utterance": "Закрой рубрику записей Газовое оборудование",
+    "intent": "delete_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-delete-folder-195",
+    "scope": "assistant",
+    "utterance": "Закрой рубрику записей Документы нотариуса",
+    "intent": "delete_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-delete-folder-196",
+    "scope": "assistant",
+    "utterance": "Закрой рубрику записей Парковочные разрешения",
+    "intent": "delete_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-delete-folder-197",
+    "scope": "assistant",
+    "utterance": "Закрой рубрику записей Датчики безопасности",
+    "intent": "delete_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-delete-folder-198",
+    "scope": "assistant",
+    "utterance": "Больше не используй блок материалов Квитанции водоснабжения",
+    "intent": "delete_folder",
+    "folder": "Квитанции водоснабжения"
+  },
+  {
+    "id": "blind5-delete-folder-199",
+    "scope": "assistant",
+    "utterance": "Больше не используй блок материалов Газовое оборудование",
+    "intent": "delete_folder",
+    "folder": "Газовое оборудование"
+  },
+  {
+    "id": "blind5-delete-folder-200",
+    "scope": "assistant",
+    "utterance": "Больше не используй блок материалов Документы нотариуса",
+    "intent": "delete_folder",
+    "folder": "Документы нотариуса"
+  },
+  {
+    "id": "blind5-delete-folder-201",
+    "scope": "assistant",
+    "utterance": "Больше не используй блок материалов Парковочные разрешения",
+    "intent": "delete_folder",
+    "folder": "Парковочные разрешения"
+  },
+  {
+    "id": "blind5-delete-folder-202",
+    "scope": "assistant",
+    "utterance": "Больше не используй блок материалов Датчики безопасности",
+    "intent": "delete_folder",
+    "folder": "Датчики безопасности"
+  },
+  {
+    "id": "blind5-unknown-203",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-204",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-205",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-206",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-207",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-208",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-209",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-210",
+    "scope": "assistant",
+    "utterance": "Покажи инструкцию, как сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-211",
+    "scope": "assistant",
+    "utterance": "Я закончил получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-212",
+    "scope": "assistant",
+    "utterance": "Я закончил проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-213",
+    "scope": "assistant",
+    "utterance": "Я закончил забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-214",
+    "scope": "assistant",
+    "utterance": "Я закончил передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-215",
+    "scope": "assistant",
+    "utterance": "Я закончил записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-216",
+    "scope": "assistant",
+    "utterance": "Я закончил продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-217",
+    "scope": "assistant",
+    "utterance": "Я закончил заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-218",
+    "scope": "assistant",
+    "utterance": "Я закончил сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-219",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-220",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-221",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-222",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-223",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-224",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-225",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-226",
+    "scope": "assistant",
+    "utterance": "Кого нанять, чтобы сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-227",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-228",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-229",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-230",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-231",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-232",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-233",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-234",
+    "scope": "assistant",
+    "utterance": "Нужно ли специалисту сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-235",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-236",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-237",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-238",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-239",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-240",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-241",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-242",
+    "scope": "assistant",
+    "utterance": "Я рассматриваю возможность сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-243",
+    "scope": "assistant",
+    "utterance": "Сколько стоит получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-244",
+    "scope": "assistant",
+    "utterance": "Сколько стоит проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-245",
+    "scope": "assistant",
+    "utterance": "Сколько стоит забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-246",
+    "scope": "assistant",
+    "utterance": "Сколько стоит передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-247",
+    "scope": "assistant",
+    "utterance": "Сколько стоит записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-248",
+    "scope": "assistant",
+    "utterance": "Сколько стоит продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-249",
+    "scope": "assistant",
+    "utterance": "Сколько стоит заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-250",
+    "scope": "assistant",
+    "utterance": "Сколько стоит сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-251",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы получить акт сверки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-252",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы проверить датчик протечки",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-253",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы забрать шторы",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-254",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы передать паспорт нотариусу",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-255",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы записать номер стабилизатора",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-256",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы продлить парковку",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-257",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы заказать профилактику плиты",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-258",
+    "scope": "assistant",
+    "utterance": "Какие документы нужны, чтобы сверить расход воды",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-259",
+    "scope": "assistant",
+    "utterance": "Останови воспроизведение",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-260",
+    "scope": "assistant",
+    "utterance": "Удали загруженный документ",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-261",
+    "scope": "assistant",
+    "utterance": "Закрой панель материалов",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-262",
+    "scope": "assistant",
+    "utterance": "Не отслеживай местоположение",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-263",
+    "scope": "assistant",
+    "utterance": "Покажи информационный архив",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-264",
+    "scope": "assistant",
+    "utterance": "Очисти форму заявления",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-265",
+    "scope": "assistant",
+    "utterance": "Измени группу контактов",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-266",
+    "scope": "assistant",
+    "utterance": "Отправь квитанцию поставщику",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-267",
+    "scope": "assistant",
+    "utterance": "Открой сайт нотариуса",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-268",
+    "scope": "assistant",
+    "utterance": "Сложи числа в таблице",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-269",
+    "scope": "assistant",
+    "utterance": "Сверь две фотографии счётчика",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-unknown-fixed-270",
+    "scope": "assistant",
+    "utterance": "Запиши видео с камеры",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-scope-271",
+    "scope": "reminders",
+    "utterance": "Создай тематическую полку Квитанции",
+    "intent": "unknown"
+  },
+  {
+    "id": "blind5-scope-272",
+    "scope": "notes",
+    "utterance": "Останови контроль задачи оплатить воду",
+    "intent": "unknown"
+  }
+]

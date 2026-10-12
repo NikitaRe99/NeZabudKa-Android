@@ -4,8 +4,8 @@ import androidx.compose.ui.unit.dp
 
 /** Shared horizontal grid for all full-screen application surfaces. */
 internal object AppLayout {
-    val horizontalPadding = 8.dp
+    val horizontalPadding = 12.dp
     val contentTopPadding = 16.dp
-    val sectionSpacing = 10.dp
-    val gridSpacing = 8.dp
+    val sectionSpacing = 12.dp
+    val gridSpacing = 10.dp
 }
