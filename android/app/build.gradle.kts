@@ -31,8 +31,8 @@ android {
         // compileSdk stays current so modern Compose/Room APIs can compile.
         minSdk = 29
         targetSdk = 36
-        versionCode = 76
-        versionName = "0.2.53"
+        versionCode = 77
+        versionName = "0.2.54"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(

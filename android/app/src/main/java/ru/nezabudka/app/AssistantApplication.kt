@@ -13,6 +13,7 @@ import ru.nezabudka.app.data.RoomNotesRepository
 import ru.nezabudka.app.data.RoomReminderRepository
 import ru.nezabudka.app.data.SettingsStore
 import ru.nezabudka.app.data.NoteTrashCleanupWorker
+import ru.nezabudka.app.updates.GithubAppUpdater
 import ru.nezabudka.app.data.UserModelsStorage
 import ru.nezabudka.app.data.UserDataBackupManager
 import ru.nezabudka.app.llm.ClassicNluCommandMapper
@@ -161,6 +162,7 @@ class AppContainer(val app: Application) {
         val signature = "${PackageInfoCompat.getLongVersionCode(packageInfo)}:${settings.state.value.noteTrashRetentionDays}"
         if (preferences.getString("signature", null) == signature) return
         NoteTrashCleanupWorker.configure(app, settings.state.value.noteTrashRetentionDays)
+        GithubAppUpdater.configure(app)
         runCatching { modelStorage.cleanupLegacyDownloads() }
             .onFailure { Log.w("LocalAssistant", "Не удалось очистить временный кэш", it) }
         preferences.edit().putString("signature", signature).apply()

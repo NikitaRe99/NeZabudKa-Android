@@ -94,6 +94,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import ru.nezabudka.app.data.AppIconOption
+import ru.nezabudka.app.updates.AppUpdateState
+import ru.nezabudka.app.updates.GithubAppUpdater
 import ru.nezabudka.app.R
 import ru.nezabudka.app.data.DeviceCapabilities
 import ru.nezabudka.app.domain.AppSettings
@@ -211,6 +213,10 @@ internal fun SettingsScreen(
     consumeRequestedSearch: () -> Unit = {},
     appIcon: AppIconOption = AppIconOption.CHECK,
     selectAppIcon: (AppIconOption) -> Unit = {},
+    appUpdateState: AppUpdateState,
+    setAutomaticUpdates: (Boolean) -> Unit,
+    checkForUpdate: () -> Unit,
+    installUpdate: () -> Unit,
 ) {
     var selectedCategory by rememberSaveable { mutableStateOf<SettingsCategory?>(null) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -1253,6 +1259,40 @@ internal fun SettingsScreen(
                     trailingDescription = "Импортировать",
                 )
                 classicNluModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        }
+        if (showSection("github-updates")) item(key = "github-updates", contentType = "settings-section") {
+            SettingsSection("Обновления") {
+                if (GithubAppUpdater.supported) {
+                    SettingsToggleRow(
+                        title = "Скачивать обновления автоматически",
+                        checked = appUpdateState.automatic,
+                        onCheckedChange = setAutomaticUpdates,
+                        description = "Только релизы GitHub и сеть без тарификации (обычно Wi-Fi). Установку подтверждает Android.",
+                    )
+                    val status = when (appUpdateState.status) {
+                        "checking" -> "Проверка GitHub…"
+                        "downloading" -> "Скачивание ${appUpdateState.version.orEmpty()}: ${appUpdateState.percent}%"
+                        "ready" -> "Версия ${appUpdateState.version} готова к установке"
+                        "available" -> "Версия ${appUpdateState.version} доступна для загрузки"
+                        "none" -> "Установлена последняя версия"
+                        "error" -> appUpdateState.message ?: "Ошибка проверки обновлений"
+                        else -> "Проверка ещё не выполнялась"
+                    }
+                    SettingsSupportingText(status)
+                    if (appUpdateState.status == "ready") {
+                        SettingsActionRow(title = "Установить обновление", onClick = installUpdate)
+                    } else {
+                        SettingsActionRow(
+                            title = "Проверить и скачать сейчас",
+                            description = "При ручной проверке можно использовать любую сеть",
+                            onClick = checkForUpdate,
+                            enabled = appUpdateState.status != "checking" && appUpdateState.status != "downloading",
+                        )
+                    }
+                } else {
+                    SettingsSupportingText("Обновления через GitHub доступны в релизной версии приложения. Эта тестовая сборка обновляется отдельно.")
+                }
             }
         }
         if (showSection("О приложении")) item(key = "О приложении", contentType = "settings-section") {

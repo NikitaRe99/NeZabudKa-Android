@@ -6,7 +6,7 @@ internal enum class SettingsCategory(val title: String, val description: String)
     NOTES("Заметки", "Интерфейс папок, корзина и хранение заметок"),
     APPEARANCE("Интерфейс", "Тема, оформление и производительность"),
     STORAGE("Данные и модели", "Каталог, резервные копии и очистка кэша"),
-    ABOUT("О приложении", "Версия, автор и сброс первого запуска"),
+    ABOUT("О приложении", "Обновления, версия и автор"),
 }
 
 internal data class SettingsEntry(val key: String, val category: SettingsCategory, val title: String, val keywords: String) {
@@ -36,6 +36,7 @@ internal val SETTINGS_CATALOG = listOf(
     SettingsEntry("Модель Whisper.cpp", SettingsCategory.SPEECH, "Модель Whisper.cpp", "виспер потоки обработка точность точный режим скорость тест оптимальное количество скачать импорт память tiny base small ru"),
     SettingsEntry("Распознавание команд", SettingsCategory.SPEECH, "Распознавание команд", "nlu ntu модель расширенное скачать импорт"),
     SettingsEntry("О приложении", SettingsCategory.ABOUT, "О приложении", "версия автор связь сброс первый запуск обучение предложения"),
+    SettingsEntry("github-updates", SettingsCategory.ABOUT, "Обновления", "github релиз скачать установить новая версия автоматически wifi wi-fi"),
 )
 
 internal fun availableSettingsEntries(engine: String, localOnly: Boolean, alarmMode: Boolean): List<SettingsEntry> =

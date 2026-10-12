@@ -637,6 +637,8 @@ private fun AssistantApp(
             }
             composable("settings") {
                 LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
+                val appUpdateState by remember(widgetContext) { ru.nezabudka.app.updates.GithubAppUpdater.observe(widgetContext) }
+                    .collectAsStateWithLifecycle(initialValue = ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext))
                 val appIcon by vm.appIcon.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
                 val whisperModels by vm.whisperModels.collectAsStateWithLifecycle()
@@ -692,6 +694,10 @@ private fun AssistantApp(
                     consumeRequestedSearch = { settingsSearchRequest = null },
                     appIcon = appIcon,
                     selectAppIcon = vm::setAppIcon,
+                    appUpdateState = appUpdateState,
+                    setAutomaticUpdates = { ru.nezabudka.app.updates.GithubAppUpdater.setAutomatic(widgetContext, it) },
+                    checkForUpdate = { ru.nezabudka.app.updates.GithubAppUpdater.checkNow(widgetContext) },
+                    installUpdate = { ru.nezabudka.app.updates.GithubAppUpdater.install(widgetContext) },
                 )
             }
             composable("reminders") {
