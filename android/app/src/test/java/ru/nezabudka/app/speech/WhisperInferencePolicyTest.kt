@@ -6,6 +6,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WhisperInferencePolicyTest {
+    @Test fun `limited resources allow slow inference without changing decoding accuracy`() {
+        val normal = whisperInferencePolicy(wavBytes(seconds = 3), accurateMode = false)
+        val slow = whisperInferencePolicy(wavBytes(seconds = 3), accurateMode = false, limitedResources = true)
+        assertEquals(normal.copy(timeLimitMs = slow.timeLimitMs), slow)
+        assertEquals(normal.timeLimitMs * 4, slow.timeLimitMs)
+        assertEquals(240_000, whisperDeviceTimeLimitMs(wavBytes(seconds = 60), true, true))
+    }
+
     @Test fun `calendar contexts avoid the looping short window while regular commands stay fast`() {
         val short = whisperInferencePolicy(wavBytes(seconds = 3))
         assertEquals(208, short.audioContext)

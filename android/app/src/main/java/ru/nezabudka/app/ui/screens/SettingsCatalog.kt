@@ -33,7 +33,7 @@ internal val SETTINGS_CATALOG = listOf(
     SettingsEntry("google_cloud", SettingsCategory.SPEECH, "Google Cloud", "гугл облако ключ токен oauth"),
     SettingsEntry("vk_cloud", SettingsCategory.SPEECH, "VK Cloud", "вк облако ключ токен endpoint"),
     SettingsEntry("Пунктуация голосовых заметок", SettingsCategory.SPEECH, "Пунктуация голосовых заметок", "запятые знаки препинания rupunc модель скачать"),
-    SettingsEntry("Модель Whisper.cpp", SettingsCategory.SPEECH, "Модель Whisper.cpp", "виспер потоки обработка точность точный режим скорость тест оптимальное количество скачать импорт память tiny base small ru"),
+    SettingsEntry("Модель Whisper.cpp", SettingsCategory.SPEECH, "Модель Whisper.cpp", "виспер потоки обработка точность точный режим скорость тест оптимальное количество скачать импорт память base q5 small ru"),
     SettingsEntry("Распознавание команд", SettingsCategory.SPEECH, "Распознавание команд", "nlu ntu модель расширенное скачать импорт"),
     SettingsEntry("О приложении", SettingsCategory.ABOUT, "О приложении", "версия автор связь сброс первый запуск обучение предложения"),
     SettingsEntry("github-updates", SettingsCategory.ABOUT, "Обновления", "github релиз скачать установить новая версия автоматически wifi wi-fi"),

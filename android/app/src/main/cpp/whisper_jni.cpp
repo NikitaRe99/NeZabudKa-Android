@@ -329,7 +329,7 @@ Java_ru_nezabudka_app_speech_WhisperNative_transcribeWav(
     if (abort_control.timed_out.load(std::memory_order_relaxed) &&
             !g_abort_requested.load(std::memory_order_relaxed)) {
         jclass cls = env->FindClass("java/util/concurrent/TimeoutException");
-        if (cls != nullptr) env->ThrowNew(cls, "Точный поиск превысил лимит времени");
+        if (cls != nullptr) env->ThrowNew(cls, "Распознавание Whisper превысило лимит времени");
         return nullptr;
     }
     if (status != 0) {

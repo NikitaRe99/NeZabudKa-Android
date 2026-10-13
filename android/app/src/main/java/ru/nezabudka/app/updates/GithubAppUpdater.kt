@@ -57,7 +57,7 @@ object GithubAppUpdater {
         val prefs = preferences(context)
         val status = prefs.getString("status", "idle") ?: "idle"
         return AppUpdateState(
-            automatic = prefs.getBoolean("automatic", true),
+            automatic = prefs.getBoolean("automatic", false),
             status = if (status == "ready" && !file(context).isFile) "available" else status,
             version = prefs.getString("version", null),
             percent = prefs.getInt("percent", 0),
@@ -91,7 +91,7 @@ object GithubAppUpdater {
 
     fun configure(context: Context) {
         val manager = WorkManager.getInstance(context)
-        if (!supported || !preferences(context).getBoolean("automatic", true)) {
+        if (!supported || !preferences(context).getBoolean("automatic", false)) {
             manager.cancelUniqueWork(PERIODIC)
             return
         }

@@ -23,3 +23,8 @@ internal fun whisperTextsAgree(first: String, second: String): Boolean {
 
 internal fun whisperFastTimeLimitMs(wavBytes: Long): Int =
     (((wavBytes - 44L).coerceAtLeast(0L) / 32L) * 2L + 2_000L).coerceIn(6_000L, 25_000L).toInt()
+
+internal fun whisperDeviceTimeLimitMs(wavBytes: Long, accurateMode: Boolean, limitedResources: Boolean): Int {
+    val normal = if (accurateMode) whisperAccurateTimeLimitMs(wavBytes) else whisperFastTimeLimitMs(wavBytes)
+    return if (limitedResources) (normal.toLong() * 4L).coerceAtMost(240_000L).toInt() else normal
+}

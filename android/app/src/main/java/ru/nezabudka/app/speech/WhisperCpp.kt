@@ -81,7 +81,7 @@ class WhisperModelManager(
     private val observerStarted = AtomicBoolean(false)
 
     val downloads = listOf(
-        WhisperDownload("tiny", "Tiny", "Максимальная скорость, минимальная точность", "ggml-tiny.bin", "≈75 МБ", hf("ggml-tiny.bin")),
+        WhisperDownload("base-q5", "Base Q5", "Компактная Base для телефонов с ограниченными ресурсами", "ggml-base-q5_1.bin", "≈60 МБ", hf("ggml-base-q5_1.bin")),
         WhisperDownload("base", "Base", "Оптимальный вариант для большинства телефонов", "ggml-base.bin", "≈142 МБ", hf("ggml-base.bin")),
         WhisperDownload("small-q5", "Small Q5", "Выше точность при умеренном размере", "ggml-small-q5_1.bin", "≈181 МБ", hf("ggml-small-q5_1.bin")),
         WhisperDownload(
@@ -122,6 +122,13 @@ class WhisperModelManager(
             lowRamDevice = manager.isLowRamDevice,
             memoryClassMb = manager.memoryClass,
         )
+    }
+
+    fun needsLongerInferenceBudget(): Boolean {
+        val manager = context.getSystemService(ActivityManager::class.java)
+        val memory = ActivityManager.MemoryInfo().also(manager::getMemoryInfo)
+        return manager.isLowRamDevice || manager.memoryClass <= 192 ||
+            memory.totalMem <= 4L * 1024L * 1024L * 1024L
     }
 
     fun select(fileName: String) {
@@ -193,7 +200,7 @@ class WhisperModelManager(
         val memory = ActivityManager.MemoryInfo().also(manager::getMemoryInfo)
         val estimatedPeak = estimatedWhisperPeakBytes(model.length(), pcmWavBytes, modelWeightsRetained = alreadyLoaded)
         require(hasNativeMemoryHeadroom(estimatedPeak, memory.availMem, memory.totalMem)) {
-            "Недостаточно свободной памяти для ${model.name} и этой записи. Освободите память или выберите модель Whisper Tiny."
+            "Недостаточно свободной памяти для ${model.name} и этой записи. Освободите память или выберите модель Whisper Base Q5."
         }
     }
 
@@ -253,6 +260,7 @@ internal fun whisperInferencePolicy(
     wavBytes: Long,
     tinyModel: Boolean = false,
     accurateMode: Boolean = false,
+    limitedResources: Boolean = false,
 ): WhisperInferencePolicy {
     val samples = ((wavBytes - 44L).coerceAtLeast(0L) / 2L)
     // Whisper's standard 30-second window contains 1500 encoder positions.
@@ -285,7 +293,7 @@ internal fun whisperInferencePolicy(
         maxTokens = 0,
         singleSegment = shortUtterance,
         beamSize = if (accurateMode) 3 else 1,
-        timeLimitMs = if (accurateMode) whisperAccurateTimeLimitMs(wavBytes) else whisperFastTimeLimitMs(wavBytes),
+        timeLimitMs = whisperDeviceTimeLimitMs(wavBytes, accurateMode, limitedResources),
     )
 }
 
@@ -384,7 +392,7 @@ class WhisperCppSttEngine(
                 val model = withContext(Dispatchers.IO) { models.selectedModel(retainedModelPath, sample.length()) }
                 retainedModelPath = model.absolutePath
                 val requestAccurateMode = accurateMode()
-                val policy = whisperInferencePolicy(sample.length(), model.length() <= TINY_WHISPER_MODEL_MAX_BYTES, requestAccurateMode)
+                val policy = whisperInferencePolicy(sample.length(), isTinyWhisperModel(model), requestAccurateMode)
                 val prompt = whisperRequestPrompt(emptyList(), if (commandVocabularyEnabled) WhisperRequestContext.COMMAND
                     else WhisperRequestContext.DICTATION, policy.audioContext)
                 suspend fun measure(threads: Int): Long {
@@ -392,7 +400,10 @@ class WhisperCppSttEngine(
                     val started = SystemClock.elapsedRealtime()
                     val text = runNative {
                         WhisperNative.transcribeWav(model.absolutePath, sample.absolutePath, "", "ru", prompt,
-                            threads, policy.audioContext, policy.maxTokens, policy.singleSegment, policy.beamSize, policy.timeLimitMs, 0f)
+                            // Calibration measures slow configurations too. A normal
+                            // inference deadline would discard precisely those timings.
+                            // Native cancellation remains available via runNative.
+                            threads, policy.audioContext, policy.maxTokens, policy.singleSegment, policy.beamSize, 0, 0f)
                     }
                     require(text.isNotBlank()) { "Whisper не распознал тестовую фразу. Запишите новую фразу длительностью 3–5 секунд." }
                     return (SystemClock.elapsedRealtime() - started).coerceAtLeast(1)
@@ -404,7 +415,7 @@ class WhisperCppSttEngine(
                 val durations = LongArray(maximum)
                 var completed = 0
                 for (round in 0..1) {
-                    val counts = if (round == 0) (1..maximum).toList() else (maximum downTo 1).toList()
+                    val counts = if (round == 0) (maximum downTo 1).toList() else (1..maximum).toList()
                     for (threads in counts) {
                         onProgress(completed, total, threads)
                         durations[threads - 1] += measure(threads)
@@ -444,6 +455,7 @@ class WhisperCppSttEngine(
             nativeMutex.withLock {
                 val requestAccurateMode = accurateMode()
                 val requestCommandMode = commandVocabularyEnabled
+                val requestLimitedResources = models.needsLongerInferenceBudget()
                 val requestHints = contextHints.toList()
                 val requestContext = when {
                     !requestCommandMode -> WhisperRequestContext.DICTATION
@@ -499,7 +511,7 @@ class WhisperCppSttEngine(
                 }
                 try {
                     retainedModelPath = model.absolutePath
-                    val tinyModel = model.length() <= TINY_WHISPER_MODEL_MAX_BYTES
+                    val tinyModel = isTinyWhisperModel(model)
                     val audioSeconds = ((processedWav.length() - 44L).coerceAtLeast(0L) / 32_000.0)
                     val preparationDuration = SystemClock.elapsedRealtime() - preparationStarted
                     _runtime.value = _runtime.value.copy(
@@ -528,9 +540,11 @@ class WhisperCppSttEngine(
                             else "Whisper: часть ${index + 1} из ${segments.size}",
                         )
                         val policy = whisperPolicyForRequest(
-                            whisperInferencePolicy(segment.length(), tinyModel, requestAccurateMode), requestContext)
+                            whisperInferencePolicy(segment.length(), tinyModel, requestAccurateMode,
+                                limitedResources = requestLimitedResources), requestContext)
                         val segmentStarted = SystemClock.elapsedRealtime()
-                        val segmentBudget = if (requestAccurateMode) policy.timeLimitMs + whisperFastTimeLimitMs(segment.length())
+                        val segmentBudget = if (requestAccurateMode) policy.timeLimitMs +
+                            whisperDeviceTimeLimitMs(segment.length(), false, requestLimitedResources)
                             else policy.timeLimitMs * 2
                         data class Result(val text: String, val quality: WhisperDecodeQuality, val decoderLoop: Boolean)
                         suspend fun decode(audioContext: Int, beam: Int, limitMs: Int): Result = runNative {
@@ -710,7 +724,6 @@ internal const val WHISPER_ACCURATE_MIN_CONFIDENCE = 0.90f
 private const val FAST_CONTEXT_MIN_CONFIDENCE = 0.80f
 private const val FAST_CONTEXT_RETRY_FILL_PERCENT = 95L
 private const val FAST_CONTEXT_MAX_SAMPLES = 67_200L
-private const val TINY_WHISPER_MODEL_MAX_BYTES = 96L * 1024L * 1024L
 private const val TINY_MIN_AUDIO_CONTEXT = 512
 private const val DYNAMIC_SPEECH_SEGMENT_SECONDS = 19
 

@@ -32,7 +32,7 @@ internal fun WhisperThreadBenchmarkDialog(
             Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Проверка использует до 5 секунд последней записи и выбранную модель. Лучше предварительно записать обычную фразу длительностью 3–5 секунд.")
-                Text("Сравним все доступные значения дважды. Проверка может занять несколько минут; распознавание временно будет занято.")
+                Text("Сравним все доступные значения дважды. На слабом телефоне проверка может занять больше нескольких минут. Обычный лимит времени распознавания здесь отключён; остановить проверку можно кнопкой «Остановить».")
                 if (state.running) {
                     Text(state.stage)
                     if (state.total > 0) LinearProgressIndicator(
