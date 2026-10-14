@@ -8,6 +8,42 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UserDataBackupCodecTest {
+    @Test fun `notes file excludes reminders and settings and preserves folders`() {
+        val full = UserDataBackupCodec.decode(VERSION_ONE_FIXTURE).copy(settings = PortableAppSettings(theme = "dark"))
+        val restored = UserDataBackupCodec.decode(UserDataBackupCodec.encode(UserDataBackupCodec.forContent(full, BackupContent.NOTES)))
+        assertEquals("notes", restored.content)
+        assertTrue(restored.reminders.isEmpty())
+        assertNull(restored.settings)
+        assertEquals(full.notes, restored.notes)
+        assertEquals(full.folders, restored.folders)
+    }
+
+    @Test fun `reminders file preserves recurrence completed state and favorite without notes`() {
+        val full = UserDataBackupCodec.decode(VERSION_ONE_FIXTURE)
+        val reminder = full.reminders.single().copy(recurrence = "monthly", status = "completed",
+            completedAt = "2026-10-13T19:30:00", favorite = true)
+        val result = UserDataBackupCodec.decode(UserDataBackupCodec.encode(
+            UserDataBackupCodec.forContent(full.copy(reminders = listOf(reminder)), BackupContent.REMINDERS)))
+        assertTrue(result.notes.isEmpty())
+        assertTrue(result.folders.isEmpty())
+        assertEquals(reminder, result.reminders.single())
+        assertEquals("completed", BackupRestorePlan.from(result).reminders.single().status)
+    }
+
+    @Test fun `wrong type of file cannot be restored as an empty successful import`() {
+        val notes = UserDataBackupCodec.forContent(UserDataBackupCodec.decode(VERSION_ONE_FIXTURE), BackupContent.NOTES)
+        assertThrows(IllegalArgumentException::class.java) { UserDataBackupCodec.forContent(notes, BackupContent.REMINDERS) }
+    }
+
+    @Test fun `import uses new note id and remaps original folder instead of linking an unrelated existing folder`() {
+        val plan = BackupRestorePlan.from(UserDataBackupCodec.decode(VERSION_ONE_FIXTURE))
+        val mapped = plan.notes.single().forImport(mapOf(7L to 81L))
+        assertEquals(0L, mapped.entity.id)
+        assertEquals(81L, mapped.entity.folderId)
+        assertEquals(listOf(81L), mapped.folderIds)
+        assertEquals(plan.notes.single().entity.text, mapped.entity.text)
+        assertEquals(plan.notes.single().entity.pinned, mapped.entity.pinned)
+    }
     @Test
     fun `version one backup remains readable`() {
         val decoded = UserDataBackupCodec.decode(VERSION_ONE_FIXTURE)

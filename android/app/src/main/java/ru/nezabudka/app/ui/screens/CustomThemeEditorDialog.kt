@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -64,6 +67,7 @@ import ru.nezabudka.app.domain.CustomThemeSettings
 import ru.nezabudka.app.domain.automaticContentColorHex
 import ru.nezabudka.app.domain.automaticPlaceholderHex
 import ru.nezabudka.app.domain.defaultCustomTheme
+import ru.nezabudka.app.domain.withAutomaticDependentColors
 import ru.nezabudka.app.ui.AppLayout
 import ru.nezabudka.app.ui.appShadowElevation
 import ru.nezabudka.app.ui.themeColor
@@ -80,10 +84,14 @@ private data class ThemeColorBinding(
 @Composable
 internal fun CustomThemeEditorDialog(
     initial: CustomThemeSettings,
+    dismiss: () -> Unit,
     save: (CustomThemeSettings) -> Unit,
 ) {
     var draft by remember(initial) { mutableStateOf(initial) }
     var editedColor by remember { mutableStateOf<ThemeColorBinding?>(null) }
+    var confirmDiscard by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf<String?>(null) }
+    var expandedPreview by remember { mutableStateOf(false) }
     val replaceBase: (String) -> Unit = { base ->
         draft = defaultCustomTheme(base).copy(
             fontFamily = draft.fontFamily,
@@ -92,10 +100,11 @@ internal fun CustomThemeEditorDialog(
             shadowsEnabled = draft.shadowsEnabled,
         )
     }
-    val saveAndClose = { save(draft) }
+    val saveAndClose = { save(draft.withAutomaticDependentColors()) }
+    val requestClose = { if (draft != initial) confirmDiscard = true else dismiss() }
 
     AppDialog(
-        onDismissRequest = saveAndClose,
+        onDismissRequest = requestClose,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
         dimBackground = false,
     ) {
@@ -108,7 +117,7 @@ internal fun CustomThemeEditorDialog(
                     Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = saveAndClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") }
+                    IconButton(onClick = requestClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") }
                     Text(
                         "Пользовательская тема",
                         Modifier.weight(1f),
@@ -116,6 +125,7 @@ internal fun CustomThemeEditorDialog(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    TextButton(onClick = saveAndClose) { Text("Сохранить") }
                 }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -124,10 +134,10 @@ internal fun CustomThemeEditorDialog(
                         end = AppLayout.horizontalPadding,
                         bottom = 28.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     item {
-                        ThemePreview(draft)
+                        ThemePreview(draft.withAutomaticDependentColors(), expandedPreview) { expandedPreview = !expandedPreview }
                     }
                     item {
                         ThemeEditorSection("Основа темы") {
@@ -138,21 +148,21 @@ internal fun CustomThemeEditorDialog(
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 FilterChip(
                                     selected = draft.base == "light",
-                                    onClick = { replaceBase("light") },
+                                    onClick = { if (draft.base != "light") confirmReset = "light" },
                                     label = { Text("Светлая") },
                                 )
                                 FilterChip(
                                     selected = draft.base == "dark",
-                                    onClick = { replaceBase("dark") },
+                                    onClick = { if (draft.base != "dark") confirmReset = "dark" },
                                     label = { Text("Тёмная") },
                                 )
                             }
                         }
                     }
                     item {
-                        ThemeEditorSection("Текст") {
+                        ThemeEditorSection("Шрифт и форма") {
                             Text("Семейство шрифта", style = MaterialTheme.typography.bodyMedium)
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 listOf(
                                     "sans" to "Обычный",
                                     "serif" to "С засечками",
@@ -204,7 +214,7 @@ internal fun CustomThemeEditorDialog(
                                     onCheckedChange = { draft = draft.copy(shadowsEnabled = it) },
                                 )
                             }
-                            ThemeTypographyPreview(draft)
+                            ThemeTypographyPreview(draft.withAutomaticDependentColors())
                         }
                     }
                     colorSection(
@@ -217,15 +227,16 @@ internal fun CustomThemeEditorDialog(
                                     placeholder = automaticPlaceholderHex(draft.textSecondary, it),
                                 )
                             },
-                            ThemeColorBinding("Карточки и нижняя навигация", draft.card) {
+                            ThemeColorBinding("Карточки, сообщения и нижняя панель", draft.card) {
                                 draft = draft.copy(card = it, navigation = it, noteDefault = it)
                             },
                             ThemeColorBinding("Поля ввода и поиска", draft.input) { draft = draft.copy(input = it) },
                             ThemeColorBinding("Область папок", draft.folderArea) { draft = draft.copy(folderArea = it) },
-                            ThemeColorBinding("Выбранный элемент и уведомления", draft.selected) {
+                            ThemeColorBinding("Выбранный элемент и проверка текста", draft.selected) {
                                 draft = draft.copy(selected = it, notice = it)
                             },
                             ThemeColorBinding("Границы и разделители", draft.outline) { draft = draft.copy(outline = it) },
+                            ThemeColorBinding("Затемнение окон", draft.scrim, supportsAlpha = true) { draft = draft.copy(scrim = it) },
                         ),
                         edit = { editedColor = it },
                     )
@@ -241,6 +252,8 @@ internal fun CustomThemeEditorDialog(
                                     onTalkButton = contentColor,
                                 )
                             },
+                            ThemeColorBinding("Ошибка и удаление", draft.danger) { draft = draft.copy(danger = it) },
+                            ThemeColorBinding("Избранное", draft.warning) { draft = draft.copy(warning = it) },
                         ),
                         edit = { editedColor = it },
                     )
@@ -259,21 +272,30 @@ internal fun CustomThemeEditorDialog(
                         ),
                         edit = { editedColor = it },
                     )
-                    colorSection(
-                        title = "Состояния",
-                        bindings = listOf(
-                            ThemeColorBinding("Ошибка и опасное действие", draft.danger) { draft = draft.copy(danger = it) },
-                            ThemeColorBinding("Фон опасного действия", draft.dangerContainer) { draft = draft.copy(dangerContainer = it) },
-                            ThemeColorBinding("Текст опасного действия", draft.onDangerContainer) { draft = draft.copy(onDangerContainer = it) },
-                            ThemeColorBinding("Успешное состояние", draft.success) { draft = draft.copy(success = it) },
-                            ThemeColorBinding("Предупреждение и избранное", draft.warning) { draft = draft.copy(warning = it) },
-                            ThemeColorBinding("Затемнение окон", draft.scrim, supportsAlpha = true) { draft = draft.copy(scrim = it) },
-                        ),
-                        edit = { editedColor = it },
-                    )
+                    item {
+                        ThemeEditorSection("Цвета заметок") {
+                            Text("Нажмите на цвет, чтобы изменить его", style = MaterialTheme.typography.bodySmall)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                draft.notePalette.forEachIndexed { index, color ->
+                                    Surface(onClick = {
+                                        editedColor = ThemeColorBinding("Цвет заметки ${index + 1}", color) { selected ->
+                                            draft = draft.copy(notePalette = draft.notePalette.mapIndexed { i, previous ->
+                                                if (i == index) selected else previous
+                                            })
+                                        }
+                                    }, modifier = Modifier.size(48.dp), shape = RoundedCornerShape(12.dp),
+                                        color = color.themeColor(), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text("${index + 1}", color = automaticContentColorHex(color).themeColor())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     item {
                         OutlinedButton(
-                            onClick = { replaceBase(draft.base) },
+                            onClick = { confirmReset = draft.base },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Default.RestartAlt, null)
@@ -283,6 +305,23 @@ internal fun CustomThemeEditorDialog(
                 }
             }
         }
+    }
+
+    if (confirmDiscard) AppAlertDialog(
+        onDismissRequest = { confirmDiscard = false },
+        title = { Text("Сохранить изменения темы?") },
+        text = { Text("Можно сохранить оформление или выйти без изменений.") },
+        confirmButton = { TextButton(onClick = saveAndClose) { Text("Сохранить") } },
+        dismissButton = { TextButton(onClick = dismiss) { Text("Не сохранять") } },
+    )
+    confirmReset?.let { base ->
+        AppAlertDialog(
+            onDismissRequest = { confirmReset = null },
+            title = { Text("Заменить цвета темы?") },
+            text = { Text("Будут восстановлены цвета выбранной основы. Шрифт, скругление и тени сохранятся.") },
+            confirmButton = { TextButton(onClick = { replaceBase(base); confirmReset = null }) { Text("Заменить") } },
+            dismissButton = { TextButton(onClick = { confirmReset = null }) { Text("Отмена") } },
+        )
     }
 
     editedColor?.let { binding ->
@@ -303,10 +342,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.colorSection(
     edit: (ThemeColorBinding) -> Unit,
 ) {
     item(key = "section-$title") {
-        Text(title, style = MaterialTheme.typography.titleMedium)
-    }
-    items(bindings, key = { "$title-${it.label}" }) { binding ->
-        ThemeColorRow(binding = binding, onClick = { edit(binding) })
+        ThemeEditorSection(title) {
+            if (title == "Акценты") Text("Цвет текста на кнопках и фон удаления подбираются автоматически.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            bindings.forEach { binding ->
+                ThemeColorRow(binding = binding, onClick = { edit(binding) })
+            }
+        }
     }
 }
 
@@ -317,7 +359,9 @@ private fun ThemeEditorSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
+        shape = RoundedCornerShape(ru.nezabudka.app.ui.AppTheme.tokens.shapes.card),
+        colors = CardDefaults.cardColors(containerColor = ru.nezabudka.app.ui.AppTheme.tokens.colors.card),
+        elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(4.dp)),
     ) {
         Column(
             Modifier.fillMaxWidth().padding(14.dp),
@@ -330,58 +374,83 @@ private fun ThemeEditorSection(
 }
 
 @Composable
-private fun ThemePreview(theme: CustomThemeSettings) {
+private fun ThemePreview(theme: CustomThemeSettings, expanded: Boolean, toggleExpanded: () -> Unit) {
     val radius = 22.dp * theme.cornerScale
+    val family = previewFontFamily(theme.fontFamily)
+    val body = TextStyle(fontFamily = family, fontSize = (14 * theme.fontScale).sp,
+        lineHeight = (20 * theme.fontScale).sp)
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(radius),
+        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(radius),
         color = theme.background.themeColor(),
-        shadowElevation = if (theme.shadowsEnabled) 8.dp else 0.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, theme.outline.themeColor()),
+        shadowElevation = if (theme.shadowsEnabled) 4.dp else 0.dp,
     ) {
-    Column(
-        Modifier.fillMaxWidth().border(1.dp, theme.outline.themeColor(), RoundedCornerShape(radius)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text("Предварительный просмотр", color = theme.textPrimary.themeColor())
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                Modifier.weight(1f).height(58.dp)
-                    .background(theme.talkButton.themeColor(), RoundedCornerShape(26.dp * theme.cornerScale)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("Говорить", color = theme.onTalkButton.themeColor())
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Предварительный просмотр", Modifier.weight(1f), style = body.copy(fontWeight = FontWeight.SemiBold),
+                    color = theme.textPrimary.themeColor())
+                TextButton(onClick = toggleExpanded) { Text(if (expanded) "Свернуть" else "Все элементы", color = theme.accent.themeColor()) }
             }
-            Box(
-                Modifier.size(58.dp)
-                    .background(theme.selected.themeColor(), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("+", color = theme.textPrimary.themeColor(), style = MaterialTheme.typography.titleLarge)
+            if (expanded) {
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp * theme.cornerScale),
+                color = theme.folderArea.themeColor()) {
+                Text("Личное · Работа", Modifier.padding(12.dp), style = body, color = theme.textSecondary.themeColor())
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(
-                modifier = Modifier.weight(1f).height(54.dp),
-                shape = RoundedCornerShape(18.dp * theme.cornerScale),
-                color = theme.card.themeColor(),
-                shadowElevation = if (theme.shadowsEnabled) 4.dp else 0.dp,
-            ) {
-                Box(Modifier.fillMaxSize().padding(10.dp)) {
-                    Text("Обычная карточка", color = theme.textPrimary.themeColor())
+            }
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(radius), color = theme.card.themeColor(),
+                shadowElevation = if (theme.shadowsEnabled) 2.dp else 0.dp) {
+                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.size(20.dp).border(1.dp, theme.textSecondary.themeColor(), CircleShape))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Купить продукты вечером", style = body, color = theme.textPrimary.themeColor())
+                        Text("Сегодня", style = body, color = theme.textSecondary.themeColor())
+                    }
+                    Icon(Icons.Default.Star, "Избранное", Modifier.size(24.dp), tint = theme.warning.themeColor())
                 }
             }
-            Surface(
-                modifier = Modifier.weight(1f).height(54.dp),
-                shape = RoundedCornerShape(18.dp * theme.cornerScale),
-                color = theme.notice.themeColor(),
-                shadowElevation = if (theme.shadowsEnabled) 4.dp else 0.dp,
-            ) {
-                Box(Modifier.fillMaxSize().padding(10.dp)) {
-                    Text("Уведомление", color = theme.textPrimary.themeColor())
+            if (expanded) {
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp * theme.cornerScale),
+                color = theme.input.themeColor(), border = androidx.compose.foundation.BorderStroke(1.dp, theme.outline.themeColor())) {
+                Text("Введите команду…", Modifier.padding(12.dp), style = body, color = theme.placeholder.themeColor())
+            }
+            }
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(26.dp * theme.cornerScale),
+                color = theme.talkButton.themeColor()) {
+                Text("Удерживайте и говорите", Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    style = body.copy(fontWeight = FontWeight.Medium), textAlign = TextAlign.Center, color = theme.onTalkButton.themeColor())
+            }
+            if (expanded) {
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(radius), color = theme.selected.themeColor(),
+                border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent.themeColor().copy(alpha = 0.5f))) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Текст во время речи", style = body.copy(fontWeight = FontWeight.SemiBold), color = theme.textPrimary.themeColor())
+                    Text("Настройте предварительный текст GigaAM", style = body, color = theme.textPrimary.themeColor())
+                    Text("Открыть настройки", Modifier.align(Alignment.End), style = body, color = theme.accent.themeColor())
                 }
             }
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(radius), color = theme.card.themeColor(),
+                border = androidx.compose.foundation.BorderStroke(1.dp, theme.outline.themeColor())) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Заметка добавлена", style = body, color = theme.textPrimary.themeColor())
+                    Text("Отмена", Modifier.align(Alignment.End), style = body, color = theme.accent.themeColor())
+                }
+            }
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp * theme.cornerScale),
+                color = theme.dangerContainer.themeColor()) {
+                Text("Удалить заметку", Modifier.padding(12.dp), style = body, color = theme.onDangerContainer.themeColor())
+            }
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(radius), color = theme.card.themeColor(),
+                border = androidx.compose.foundation.BorderStroke(1.dp, theme.danger.themeColor())) {
+                Text("Речь не обнаружена. Попробуйте ещё раз.", Modifier.padding(12.dp), style = body, color = theme.danger.themeColor())
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                theme.notePalette.forEach { color ->
+                    Box(Modifier.size(28.dp).background(color.themeColor(), RoundedCornerShape(8.dp * theme.cornerScale)))
+                }
+            }
+            }
         }
-    }
     }
 }
 
@@ -532,10 +601,11 @@ private fun ThemeColorEditorDialog(
                     label = { Text(if (binding.supportsAlpha) "Цвет #AARRGGBB" else "Цвет #RRGGBB") },
                     singleLine = true,
                     isError = normalized == null,
+                    shape = RoundedCornerShape(16.dp),
                 )
                 if (binding.supportsAlpha) {
                     HsvSlider(
-                        title = "A",
+                        title = "Непрозрачность",
                         value = alpha.toFloat(),
                         valueRange = 0f..255f,
                         valueText = alpha.toString(),
@@ -547,7 +617,7 @@ private fun ThemeColorEditorDialog(
                     )
                 }
                 HsvSlider(
-                    title = "H",
+                    title = "Оттенок",
                     value = hue,
                     valueRange = 0f..360f,
                     valueText = hue.roundToInt().toString(),
@@ -557,7 +627,7 @@ private fun ThemeColorEditorDialog(
                     onValueChange = { updateHsv(h = it) },
                 )
                 HsvSlider(
-                    title = "S",
+                    title = "Насыщенность",
                     value = saturation,
                     valueRange = 0f..1f,
                     valueText = "${(saturation * 100).roundToInt()}%",
@@ -568,7 +638,7 @@ private fun ThemeColorEditorDialog(
                     onValueChange = { updateHsv(s = it) },
                 )
                 HsvSlider(
-                    title = "V",
+                    title = "Яркость",
                     value = brightness,
                     valueRange = 0f..1f,
                     valueText = "${(brightness * 100).roundToInt()}%",

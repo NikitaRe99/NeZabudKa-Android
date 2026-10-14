@@ -32,9 +32,11 @@ class UserModelsStorage(private val context: Context) {
         )
         preferences.edit().putString(KEY_ROOT, uri.toString()).commit()
         ensureFolder("whisper")
+        ensureFolder("gigaam")
         ensureFolder("nlu")
         ensureFolder("punctuation")
         migrateLegacy("whisper", "bin")
+        migrateLegacy("gigaam", "onnx")
         migrateLegacy("nlu", "onnx")
         migrateLegacy("punctuation", "onnx")
         _state.value = readState().copy(cache = _state.value.cache)
@@ -46,6 +48,17 @@ class UserModelsStorage(private val context: Context) {
         .sorted()
 
     fun exists(kind: String, fileName: String): Boolean = find(kind, fileName)?.isFile == true
+
+    fun deleteModel(kind: String, fileName: String) {
+        require(kind in MODEL_KINDS) { "Неизвестный каталог моделей" }
+        requireSafeName(fileName)
+        val source = find(kind, fileName) ?: throw IOException("Модель $fileName не найдена")
+        require(source.isFile) { "Можно удалить только файл модели" }
+        if (!source.delete()) throw IOException("Не удалось удалить модель $fileName")
+        val cached = File(context.cacheDir, "native-models/$kind/$fileName")
+        if (cached.isFile) cached.delete()
+        refreshCacheStats()
+    }
 
     fun store(kind: String, fileName: String, source: File) {
         requireSafeName(fileName)
@@ -129,7 +142,7 @@ class UserModelsStorage(private val context: Context) {
 
     private fun hasActiveModelDownload(): Boolean = runCatching {
         val workManager = WorkManager.getInstance(context)
-        listOf(ModelDownloadWorker.KIND_WHISPER, ModelDownloadWorker.KIND_NLU, ModelDownloadWorker.KIND_PUNCTUATION).any { kind ->
+        listOf(ModelDownloadWorker.KIND_WHISPER, ModelDownloadWorker.KIND_NLU, ModelDownloadWorker.KIND_PUNCTUATION, "gigaam").any { kind ->
             workManager.getWorkInfosForUniqueWork(ModelDownloadWorker.uniqueWorkName(kind))
                 .get(5, TimeUnit.SECONDS)
                 .any { info ->
@@ -255,7 +268,7 @@ class UserModelsStorage(private val context: Context) {
 
     private fun readState(): UserModelsStorageState {
         val root = root() ?: return UserModelsStorageState()
-        return UserModelsStorageState(true, rootDescription(root))
+        return UserModelsStorageState(true, rootDescription(root), userSelectedDirectory = preferences.contains(KEY_ROOT))
     }
 
     private fun initialState(): UserModelsStorageState {
@@ -267,6 +280,7 @@ class UserModelsStorage(private val context: Context) {
             UserModelsStorageState(
                 configured = true,
                 location = uri.lastPathSegment ?: customRoot,
+                userSelectedDirectory = true,
             )
         }
     }
@@ -290,7 +304,7 @@ class UserModelsStorage(private val context: Context) {
 
     companion object {
         private const val KEY_ROOT = "root_uri"
-        private val MODEL_KINDS = setOf("whisper", "nlu", "punctuation")
+        private val MODEL_KINDS = setOf("whisper", "gigaam", "nlu", "punctuation")
         private const val DEFAULT_ROOT_FOLDER = "НеЗабудьКа"
         private const val LEGACY_ROOT_FOLDER = "LocalAssistant"
         private const val DATA_FOLDER = "data"

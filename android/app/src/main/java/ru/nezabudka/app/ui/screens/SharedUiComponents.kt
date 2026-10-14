@@ -3,6 +3,8 @@ package ru.nezabudka.app.ui.screens
 import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,7 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.outlined.MicNone
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import ru.nezabudka.app.ui.VoiceActionUiState
 import androidx.compose.foundation.layout.imePadding
@@ -26,6 +29,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
@@ -76,6 +80,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -126,7 +131,6 @@ internal fun Modifier.pushToTalkGesture(
     endPushToTalk: () -> Unit,
     primaryAction: () -> Unit,
 ): Modifier {
-    val hapticFeedback = LocalHapticFeedback.current
     val currentEnabled by rememberUpdatedState(enabled)
     val currentHasRecognizedText by rememberUpdatedState(hasRecognizedText)
     val currentBegin by rememberUpdatedState(beginPushToTalk)
@@ -140,12 +144,10 @@ internal fun Modifier.pushToTalkGesture(
                     if (tryAwaitRelease()) currentPrimaryAction()
                 } else {
                     currentBegin()
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.VirtualKey)
                     try {
                         tryAwaitRelease()
                     } finally {
                         currentEnd()
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
                     }
                 }
             },
@@ -160,16 +162,30 @@ internal fun AppNoticeCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color? = null,
+    essential: Boolean = false,
+    isError: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
+    if (!ru.nezabudka.app.ui.LocalPopupNoticesEnabled.current && !essential && !isError) return
     val theme = AppTheme.tokens
+    val inlineClose = isError || message in setOf("Создание напоминания отменено.", "Напоминаний не найдено.", "Подходящее напоминание не найдено.")
     Card(
         modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
         shape = RoundedCornerShape(theme.shapes.card),
-        colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.notice, contentColor = theme.colors.textPrimary),
+        colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.card, contentColor = if (isError) theme.colors.danger else theme.colors.textPrimary),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isError) theme.colors.danger else theme.colors.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        if (inlineClose) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                IconButton(onClick = onDismiss, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Clear, "Закрыть", Modifier.size(18.dp), tint = theme.colors.textSecondary)
+                }
+            }
+        } else {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 IconButton(onClick = onDismiss, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.Clear, "Закрыть", Modifier.size(18.dp), tint = theme.colors.textSecondary)
@@ -183,6 +199,7 @@ internal fun AppNoticeCard(
             ) {
                 actions()
             }
+        }
         }
     }
 }
@@ -206,12 +223,79 @@ internal fun RowScope.AppNoticeTextAction(label: String, onClick: () -> Unit) {
 
 @Composable
 internal fun AppSnackbarHost(state: SnackbarHostState) {
+    val enabled = ru.nezabudka.app.ui.LocalPopupNoticesEnabled.current
+    androidx.compose.runtime.LaunchedEffect(enabled, state.currentSnackbarData) {
+        if (!enabled) state.currentSnackbarData?.dismiss()
+    }
+    if (!enabled) return
     SnackbarHost(state) { data ->
-        AppNoticeCard(data.visuals.message, data::dismiss) {
-            data.visuals.actionLabel?.let { label ->
-                if (label == "Отменить") AppNoticeAction(Icons.AutoMirrored.Filled.Undo, label, data::performAction)
-                else AppNoticeTextAction(label, data::performAction)
+        val theme = AppTheme.tokens
+        // Short status feedback should not occupy the space of a command result.
+        Card(
+            Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
+            shape = RoundedCornerShape(theme.shapes.card),
+            colors = CardDefaults.cardColors(containerColor = theme.colors.card, contentColor = theme.colors.textPrimary),
+            border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.outline),
+            elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
+        ) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(data.visuals.message, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                if (data.visuals.withDismissAction) {
+                    IconButton(onClick = data::dismiss, modifier = Modifier.size(44.dp)) {
+                        Icon(Icons.Default.Clear, "Закрыть", Modifier.size(18.dp), tint = theme.colors.textSecondary)
+                    }
+                }
+                data.visuals.actionLabel?.let { label ->
+                    AppNoticeTextAction(if (label == "Отменить") "Отмена" else label, data::performAction)
+                }
             }
+        }
+    }
+}
+
+/** Identical centered voice captions on the assistant and both collection tabs. */
+@Composable
+internal fun AppVoiceActionContent(recording: Boolean, processing: Boolean, hasText: Boolean) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)) {
+        if (processing) {
+            CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
+        } else {
+            Icon(if (hasText) Icons.AutoMirrored.Filled.Send else Icons.Outlined.MicNone,
+                null, Modifier.size(22.dp))
+        }
+        Text(when {
+            recording -> "Отпустите для распознавания"
+            processing -> "Выполняю…"
+            hasText -> "Выполнить"
+            else -> "Удерживайте и говорите"
+        }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+internal fun RecordingPreviewCard(text: String) {
+    val theme = AppTheme.tokens
+    val scroll = rememberScrollState()
+    androidx.compose.runtime.LaunchedEffect(text) {
+        androidx.compose.runtime.withFrameNanos { }
+        scroll.scrollTo(scroll.maxValue)
+    }
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
+        shape = RoundedCornerShape(theme.shapes.card),
+        colors = CardDefaults.cardColors(containerColor = theme.colors.card),
+        border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.outline),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Предварительный текст", style = MaterialTheme.typography.labelMedium, color = theme.colors.textSecondary)
+            Text(text.ifBlank { "Говорите…" }, style = MaterialTheme.typography.bodyMedium,
+                color = theme.colors.textPrimary,
+                modifier = Modifier.heightIn(max = 140.dp).verticalScroll(scroll))
         }
     }
 }
@@ -225,26 +309,38 @@ internal fun SttConfirmationCard(
     val theme = AppTheme.tokens
     Card(
         modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = theme.colors.notice),
+        shape = RoundedCornerShape(theme.shapes.card),
+        colors = CardDefaults.cardColors(containerColor = theme.colors.card, contentColor = theme.colors.textPrimary),
+        border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
     ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            minLines = 2,
-            maxLines = 4,
-            label = { Text("Проверьте распознанный текст") },
-            trailingIcon = {
-                IconButton(onClick = { onTextChange("") }) {
-                    Icon(Icons.Default.Clear, "Очистить")
-                }
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = theme.colors.input,
-                unfocusedContainerColor = theme.colors.input,
-            ),
-        )
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Проверьте распознанный текст", style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium, color = theme.colors.textPrimary)
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(theme.shapes.tag),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                minLines = 2,
+                maxLines = 4,
+                trailingIcon = {
+                    IconButton(onClick = { onTextChange("") }) {
+                        Icon(Icons.Default.Clear, "Очистить")
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = theme.colors.input,
+                    unfocusedContainerColor = theme.colors.input,
+                    focusedTextColor = theme.colors.textPrimary,
+                    unfocusedTextColor = theme.colors.textPrimary,
+                    focusedBorderColor = theme.colors.accent,
+                    unfocusedBorderColor = theme.colors.outline,
+                    cursorColor = theme.colors.cursor,
+                ),
+            )
+        }
     }
 }
 
@@ -379,16 +475,7 @@ internal fun AppVoiceActionBar(
                 beginPushToTalk = begin, endPushToTalk = end, primaryAction = execute,
             ),
         ) {
-            Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Default.Mic, null, Modifier.size(22.dp))
-                Text(when {
-                    ui.isRecording -> "Отпустите для распознавания"
-                    ui.isProcessing -> "Выполняю…"
-                    ui.recognizedText.isNotBlank() -> "Выполнить"
-                    else -> "Удерживайте и говорите"
-                }, style = MaterialTheme.typography.labelLarge)
-            }
+            AppVoiceActionContent(ui.isRecording, ui.isProcessing, ui.recognizedText.isNotBlank())
         }
         Surface(shape = CircleShape, color = theme.colors.selected, contentColor = theme.colors.accent,
             modifier = Modifier.size(58.dp).clickable(onClick = add)) {

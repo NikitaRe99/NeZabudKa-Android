@@ -61,13 +61,13 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Unarchive
-import androidx.compose.material.icons.filled.ViewAgenda
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
@@ -225,6 +225,7 @@ internal fun NotesScreen(
     openNote: (Note) -> Unit, newNote: (Long?) -> Unit,
     reducedUiEffects: Boolean = false,
     isLoading: Boolean = false,
+    openTrashSettings: () -> Unit = {},
 ) {
     val selectedFolder = selectedFolderId
     val columns = noteColumns.coerceIn(1, 2)
@@ -664,7 +665,7 @@ internal fun NotesScreen(
         },
         bottomBar = { Column(horizontalAlignment = Alignment.End) {
             actionNotice?.let { notice ->
-                AppNoticeCard(notice.message, dismissNotice) {
+                AppNoticeCard(notice.message, dismissNotice, isError = notice.isError) {
                     val effect = notice.effect
                     if (effect is ActionEffect.NoteCreated) {
                         AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); openNote(effect.note) })
@@ -674,6 +675,7 @@ internal fun NotesScreen(
                     }
                 }
             }
+            ui.recordingPreview?.let { RecordingPreviewCard(it) }
             if (ui.awaitingSttConfirmation && ui.recognizedText.isNotBlank()) {
                 SttConfirmationCard(ui.recognizedText, editRecognizedText)
             }
@@ -698,8 +700,8 @@ internal fun NotesScreen(
             modifier = Modifier.fillMaxSize()
                 .onGloballyPositioned { notesGridRootOffset = it.positionInRoot() }
                 .then(carouselSwipeModifier),
-            horizontalArrangement = Arrangement.spacedBy(AppLayout.gridSpacing),
-            verticalItemSpacing = AppLayout.gridSpacing,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalItemSpacing = 8.dp,
         ) {
             if (!selectionMode) item(key = "notes-toolbar", contentType = "toolbar", span = StaggeredGridItemSpan.FullLine) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -710,7 +712,7 @@ internal fun NotesScreen(
                         modifier = Modifier.weight(1f),
                         reducedEffects = reducedUiEffects,
                         trailingContent = {
-                            IconButton(onClick = { setNoteColumns(if (columns == 1) 2 else 1) }) { Icon(if (columns == 1) Icons.Default.GridView else Icons.Default.ViewAgenda, "Один или два столбца") }
+                            IconButton(onClick = { setNoteColumns(if (columns == 1) 2 else 1) }) { Icon(if (columns == 1) Icons.Outlined.GridView else Icons.Outlined.ViewAgenda, "Один или два столбца") }
                             Box {
                                 IconButton(onClick = { sortMenu = true }) { Icon(Icons.AutoMirrored.Filled.Sort, "Сортировка") }
                                 AppDropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
@@ -834,6 +836,9 @@ internal fun NotesScreen(
                         Text("Очистить корзину", Modifier.padding(start = 6.dp))
                     }
                 }
+            }
+            if (section == NoteSection.TRASH) item(key = "trash-retention-settings", span = StaggeredGridItemSpan.FullLine) {
+                TextButton(onClick = openTrashSettings) { Text("Срок хранения в корзине") }
             }
             if (displayedPinned.isNotEmpty()) {
                 item(key = "pinned-header", contentType = "section-header", span = StaggeredGridItemSpan.FullLine) { Text("Закреплённые", style = MaterialTheme.typography.labelLarge) }

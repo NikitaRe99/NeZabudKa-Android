@@ -1,0 +1,578 @@
+{
+  "export": {
+    "frontendChecks": [
+      {
+        "id": "greeting",
+        "maxLogMelDifference": 2.002716064453125E-05
+      },
+      {
+        "id": "repeat",
+        "maxLogMelDifference": 5.53131103515625E-05
+      },
+      {
+        "id": "capture0",
+        "maxLogMelDifference": 7.152557373046875E-05
+      },
+      {
+        "id": "capture1",
+        "maxLogMelDifference": 6.008148193359375E-05
+      },
+      {
+        "id": "capture2",
+        "maxLogMelDifference": 4.9591064453125E-05
+      },
+      {
+        "id": "date",
+        "maxLogMelDifference": 4.673004150390625E-05
+      },
+      {
+        "id": "show",
+        "maxLogMelDifference": 6.103515625E-05
+      },
+      {
+        "id": "check",
+        "maxLogMelDifference": 0.00010204315185546875
+      },
+      {
+        "id": "count",
+        "maxLogMelDifference": 1.621246337890625E-05
+      },
+      {
+        "id": "raw-show",
+        "maxLogMelDifference": 6.29425048828125E-05
+      },
+      {
+        "id": "raw-check",
+        "maxLogMelDifference": 5.91278076171875E-05
+      }
+    ],
+    "variants": [
+      {
+        "file": "v3_ctc-waveform-fp32.onnx",
+        "bytes": 885713240,
+        "sha256": "d49dd2d180d68fc4169bc756dfb90da96b9d236c6f93ba445422ce09ece61537",
+        "loadMs": 1785.3536999900825,
+        "cases": [
+          {
+            "id": "greeting",
+            "text": "привет",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              41.33859998546541,
+              40.86949996417388,
+              42.47179999947548
+            ]
+          },
+          {
+            "id": "repeat",
+            "text": "привет привет очень очень важно",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              106.94959998363629,
+              102.69020003033802,
+              95.32089997082949
+            ]
+          },
+          {
+            "id": "capture0",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              183.3984000259079,
+              170.21950002526864,
+              169.7221000213176
+            ]
+          },
+          {
+            "id": "capture1",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              165.55969999171793,
+              154.61120003601536,
+              154.382600041572
+            ]
+          },
+          {
+            "id": "capture2",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              160.1479999953881,
+              152.78379997471347,
+              156.07289999024943
+            ]
+          },
+          {
+            "id": "date",
+            "text": "завтра в десять двадцать пять",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              133.12200002837926,
+              124.46259998250753,
+              113.66029997589067
+            ]
+          },
+          {
+            "id": "show",
+            "text": "покажи напоминание на завтра в восемь вечера",
+            "wordErrors": 1,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              133.52319999830797,
+              128.70140001177788,
+              119.58759999834001
+            ]
+          },
+          {
+            "id": "check",
+            "text": "напомни завтра в десять проверить документы в синей папке",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              165.51910003181547,
+              154.6925999573432,
+              150.09710000595078
+            ]
+          },
+          {
+            "id": "count",
+            "text": "раз два три",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              65.07209996925667,
+              62.19460000284016,
+              66.15359999705106
+            ]
+          },
+          {
+            "id": "raw-show",
+            "text": "покажи напоминание на завтра в восемь вечера",
+            "wordErrors": 1,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              136.35629997588694,
+              131.428400054574,
+              121.45999999484047
+            ]
+          },
+          {
+            "id": "raw-check",
+            "text": "напомни завтра в десять проверить документы в синей папке",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              160.63390002818778,
+              149.92199995322153,
+              143.54530000127852
+            ]
+          }
+        ]
+      },
+      {
+        "file": "v3_ctc-waveform-int8.onnx",
+        "bytes": 320716556,
+        "sha256": "77e9427a795852f5e744cb93e19b0254ef0c55aa7a9ee1d9c0b3b5fadf097170",
+        "loadMs": 1009.4089000485837,
+        "cases": [
+          {
+            "id": "greeting",
+            "text": "привет",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              28.60970003530383,
+              25.394299998879433,
+              25.205400015693158
+            ]
+          },
+          {
+            "id": "repeat",
+            "text": "привет привет очень очень важно",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              65.05360000301152,
+              59.36620000284165,
+              57.76320002041757
+            ]
+          },
+          {
+            "id": "capture0",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              96.45189996808767,
+              95.73649999219924,
+              89.44050001446158
+            ]
+          },
+          {
+            "id": "capture1",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              120.5455000163056,
+              86.28399996086955,
+              79.03480000095442
+            ]
+          },
+          {
+            "id": "capture2",
+            "text": "напомни завтра утром сходить к врачу и купить бумаги",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              87.03170000808313,
+              81.89410000341013,
+              79.45670001208782
+            ]
+          },
+          {
+            "id": "date",
+            "text": "завтра в десять двадцать пять",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              67.52819998655468,
+              66.55069999396801,
+              66.50359998457134
+            ]
+          },
+          {
+            "id": "show",
+            "text": "покажи напоминание на завтра в восемь вечера",
+            "wordErrors": 1,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              69.13610000628978,
+              67.46879999991506,
+              67.42640002630651
+            ]
+          },
+          {
+            "id": "check",
+            "text": "напомни завтра в десять проверить документы в синей папке",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              83.46039999742061,
+              82.41510001244023,
+              80.83359996089712
+            ]
+          },
+          {
+            "id": "count",
+            "text": "раз два три",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              37.31380001408979,
+              37.9141999874264,
+              35.90090002398938
+            ]
+          },
+          {
+            "id": "raw-show",
+            "text": "покажи напоминание на завтра в восемь вечера",
+            "wordErrors": 1,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              67.83000001451,
+              67.0924000442028,
+              67.97510001342744
+            ]
+          },
+          {
+            "id": "raw-check",
+            "text": "напомни завтра в десять проверить документы в синей папке",
+            "wordErrors": 0,
+            "sameAsOfficial": true,
+            "desktopMs": [
+              82.91160000953823,
+              81.4698999747634,
+              79.12670000223443
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "syntheticControls": [
+    {
+      "variant": "fp32",
+      "id": "silence-5s",
+      "expected": "",
+      "text": "",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "greeting-quiet18dB",
+      "expected": "Привет",
+      "text": "привет",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "greeting-silence-padding",
+      "expected": "Привет",
+      "text": "привет",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "repeat-quiet18dB",
+      "expected": "Привет привет очень очень важно",
+      "text": "привет привет очень очень важно",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "repeat-silence-padding",
+      "expected": "Привет привет очень очень важно",
+      "text": "привет привет очень очень важно",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture0-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture0-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture1-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture1-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture2-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "capture2-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "date-quiet18dB",
+      "expected": "Завтра в десять двадцать пять",
+      "text": "завтра в десять двадцать пять",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "date-silence-padding",
+      "expected": "Завтра в десять двадцать пять",
+      "text": "завтра в десять двадцать пять",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "show-quiet18dB",
+      "expected": "Покажи напоминания на завтра в восемь вечера",
+      "text": "покажи напоминание на завтра в восемь вечера",
+      "errors": 1
+    },
+    {
+      "variant": "fp32",
+      "id": "show-silence-padding",
+      "expected": "Покажи напоминания на завтра в восемь вечера",
+      "text": "покажи напоминание на завтра в восемь вечера",
+      "errors": 1
+    },
+    {
+      "variant": "fp32",
+      "id": "check-quiet18dB",
+      "expected": "Напомни завтра в десять проверить документы в синей папке",
+      "text": "напомни завтра в десять проверить документы в синей папке",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "check-silence-padding",
+      "expected": "Напомни завтра в десять проверить документы в синей папке",
+      "text": "напомни завтра в десять проверьть документы в синей папке",
+      "errors": 1
+    },
+    {
+      "variant": "fp32",
+      "id": "count-quiet18dB",
+      "expected": "Раз два три",
+      "text": "раз два три",
+      "errors": 0
+    },
+    {
+      "variant": "fp32",
+      "id": "count-silence-padding",
+      "expected": "Раз два три",
+      "text": "раз два три",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "silence-5s",
+      "expected": "",
+      "text": "",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "greeting-quiet18dB",
+      "expected": "Привет",
+      "text": "привет",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "greeting-silence-padding",
+      "expected": "Привет",
+      "text": "привет",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "repeat-quiet18dB",
+      "expected": "Привет привет очень очень важно",
+      "text": "привет привет очень очень важно",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "repeat-silence-padding",
+      "expected": "Привет привет очень очень важно",
+      "text": "привет привет очень очень важно",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture0-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture0-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture1-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture1-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture2-quiet18dB",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "capture2-silence-padding",
+      "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+      "text": "напомни завтра утром сходить к врачу и купить бумаги",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "date-quiet18dB",
+      "expected": "Завтра в десять двадцать пять",
+      "text": "завтра в десять двадцать пять",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "date-silence-padding",
+      "expected": "Завтра в десять двадцать пять",
+      "text": "завтра в десять двадцать пять",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "show-quiet18dB",
+      "expected": "Покажи напоминания на завтра в восемь вечера",
+      "text": "покажи напоминание на завтра в восемь вечера",
+      "errors": 1
+    },
+    {
+      "variant": "int8",
+      "id": "show-silence-padding",
+      "expected": "Покажи напоминания на завтра в восемь вечера",
+      "text": "покажи напоминание на завтра в восемь вечера",
+      "errors": 1
+    },
+    {
+      "variant": "int8",
+      "id": "check-quiet18dB",
+      "expected": "Напомни завтра в десять проверить документы в синей папке",
+      "text": "напомни завтра в десять проверить документы в синей папке",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "check-silence-padding",
+      "expected": "Напомни завтра в десять проверить документы в синей папке",
+      "text": "напомни завтра в десять проверьть документы в синей папке",
+      "errors": 1
+    },
+    {
+      "variant": "int8",
+      "id": "count-quiet18dB",
+      "expected": "Раз два три",
+      "text": "раз два три",
+      "errors": 0
+    },
+    {
+      "variant": "int8",
+      "id": "count-silence-padding",
+      "expected": "Раз два три",
+      "text": "раз два три",
+      "errors": 0
+    }
+  ]
+}

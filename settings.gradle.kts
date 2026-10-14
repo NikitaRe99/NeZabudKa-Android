@@ -18,3 +18,8 @@ rootProject.name = "LocalReminderAssistant"
 include(":app", ":baselineprofile")
 project(":app").projectDir = file("android/app")
 project(":baselineprofile").projectDir = file("android/baselineprofile")
+// Local, opt-in audio audit; never packaged with the application.
+if (providers.gradleProperty("includeSpeechAudit").orNull == "true") {
+    include(":speechAudit")
+    project(":speechAudit").projectDir = file("tools/whisper/audit-apk")
+}

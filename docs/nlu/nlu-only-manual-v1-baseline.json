@@ -1,0 +1,265 @@
+[
+  {
+    "case": {
+      "id": 1,
+      "intent": "create_folder",
+      "utterance": "Заведи отдельную папку Лунный архив",
+      "expected": "Папка Лунный архив",
+      "scope": "assistant"
+    },
+    "intent": "create_folder",
+    "confidence": 0.9998600482940674,
+    "slots": {
+      "FOLDER": "Лунный архив"
+    },
+    "raw_intent": "create_folder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 2,
+      "intent": "create_folder",
+      "utterance": "Хочу новую папку Медные находки",
+      "expected": "Папка Медные находки",
+      "scope": "assistant"
+    },
+    "intent": "create_folder",
+    "confidence": 0.9998762607574463,
+    "slots": {
+      "FOLDER": "Медные находки"
+    },
+    "raw_intent": "create_folder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 3,
+      "intent": "create_folder",
+      "utterance": "Организуй папку Зелёный маяк",
+      "expected": "Папка Зелёный маяк",
+      "scope": "assistant"
+    },
+    "intent": "create_folder",
+    "confidence": 0.9998619556427002,
+    "slots": {
+      "FOLDER": "Зелёный маяк"
+    },
+    "raw_intent": "create_folder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 4,
+      "intent": "create_note",
+      "utterance": "Зафиксируй мысль медный браслет лежит возле глобуса",
+      "expected": "Заметка: Медный браслет лежит возле глобуса",
+      "scope": "assistant"
+    },
+    "intent": "create_note",
+    "confidence": 0.9998512268066406,
+    "slots": {
+      "TEXT": "мысль медный браслет лежит возле глобуса"
+    },
+    "raw_intent": "create_note",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 5,
+      "intent": "create_note",
+      "utterance": "Пусть в заметках останется такая мысль запасной ключ находится в синей коробке",
+      "expected": "Заметка: Запасной ключ находится в синей коробке",
+      "scope": "assistant"
+    },
+    "intent": "create_note",
+    "confidence": 0.9999020099639893,
+    "slots": {
+      "TEXT": "запасной ключ находится в синей коробке"
+    },
+    "raw_intent": "create_note",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 6,
+      "intent": "create_note",
+      "utterance": "Хочу сохранить заметку о том что крышку контейнера нужно заменить",
+      "expected": "Заметка: Крышку контейнера нужно заменить",
+      "scope": "assistant"
+    },
+    "intent": "create_note",
+    "confidence": 0.9601951837539673,
+    "slots": {},
+    "raw_intent": "create_note",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 7,
+      "intent": "create_note",
+      "utterance": "Оставь запись в папке Лунный архив о том что запасной ремешок лежит возле часов",
+      "expected": "В папке Лунный архив заметка: Запасной ремешок лежит возле часов",
+      "scope": "assistant"
+    },
+    "intent": "create_note",
+    "confidence": 0.998531699180603,
+    "slots": {
+      "TEXT": "запасной ремешок лежит возле",
+      "DATE": "часов",
+      "FOLDER": "Лунный архив"
+    },
+    "raw_intent": "create_note",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 8,
+      "intent": "create_reminder",
+      "utterance": "Не дай мне забыть завтра в семнадцать проверить фонарь у синей калитки",
+      "expected": "Завтра 17:00, задача: Проверить фонарь у синей калитки",
+      "scope": "assistant"
+    },
+    "intent": "create_reminder",
+    "confidence": 0.9998192191123962,
+    "slots": {
+      "DATE": "завтра",
+      "TEXT": "проверить фонарь у синей калитки",
+      "TIME": "в"
+    },
+    "raw_intent": "create_reminder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 9,
+      "intent": "create_reminder",
+      "utterance": "Пусть завтра в десять двадцать пять будет напоминание проверить зарядку датчика",
+      "expected": "Завтра 10:25, задача: Проверить зарядку датчика",
+      "scope": "assistant"
+    },
+    "intent": "create_reminder",
+    "confidence": 0.9998807907104492,
+    "slots": {
+      "DATE": "завтра",
+      "TEXT": "проверить зарядку датчика",
+      "TIME": "двадцать"
+    },
+    "raw_intent": "create_reminder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 10,
+      "intent": "create_reminder",
+      "utterance": "Сигнализируй каждый вечер что нужно закрыть теплицу",
+      "expected": "Ежедневный повтор вечером, задача: Закрыть теплицу",
+      "scope": "assistant"
+    },
+    "intent": "create_reminder",
+    "confidence": 0.9989223480224609,
+    "slots": {
+      "RECURRENCE": "каждый",
+      "TEXT": "закрыть теплицу"
+    },
+    "raw_intent": "create_reminder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 11,
+      "intent": "create_reminder",
+      "utterance": "Хочу получать напоминание по рабочим дням утром протирать экран прибора",
+      "expected": "Повтор по рабочим дням утром, задача: Протирать экран прибора",
+      "scope": "assistant"
+    },
+    "intent": "create_reminder",
+    "confidence": 0.9998345375061035,
+    "slots": {
+      "DATE": "утром",
+      "RECURRENCE": "по",
+      "TEXT": "протирать экран прибора"
+    },
+    "raw_intent": "create_reminder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 12,
+      "intent": "list_reminders",
+      "utterance": "Дай посмотреть расписание на завтра",
+      "expected": "Напоминания только на завтра",
+      "scope": "assistant"
+    },
+    "intent": "unknown",
+    "confidence": 0.6393425464630127,
+    "slots": {
+      "DATE": "на завтра"
+    },
+    "raw_intent": "list_reminders",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 13,
+      "intent": "list_reminders",
+      "utterance": "Отобрази дела на следующую пятницу",
+      "expected": "Напоминания только на пятницу следующей календарной недели",
+      "scope": "assistant"
+    },
+    "intent": "list_reminders",
+    "confidence": 0.7809305191040039,
+    "slots": {
+      "DATE": "следующую пятницу"
+    },
+    "raw_intent": "list_reminders",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 14,
+      "intent": "list_reminders",
+      "utterance": "Мне интересен список напоминаний на следующий месяц",
+      "expected": "Напоминания только за следующий календарный месяц",
+      "scope": "assistant"
+    },
+    "intent": "list_reminders",
+    "confidence": 0.9972207546234131,
+    "slots": {
+      "DATE": "на следующий месяц"
+    },
+    "raw_intent": "list_reminders",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 15,
+      "intent": "delete_reminder",
+      "utterance": "Исключи напоминание проверить фонарь у синей калитки",
+      "expected": "Удалить тестовое напоминание из команды 8",
+      "scope": "assistant"
+    },
+    "intent": "delete_reminder",
+    "confidence": 0.9997262358665466,
+    "slots": {
+      "TARGET": "проверить фонарь у синей калитки"
+    },
+    "raw_intent": "delete_reminder",
+    "now": "2026-10-13T12:00"
+  },
+  {
+    "case": {
+      "id": 16,
+      "intent": "delete_folder",
+      "utterance": "Ликвидируй папку Зелёный маяк",
+      "expected": "Удалить тестовую папку из команды 3",
+      "scope": "assistant"
+    },
+    "intent": "delete_folder",
+    "confidence": 0.9998440742492676,
+    "slots": {
+      "FOLDER": "Зелёный маяк"
+    },
+    "raw_intent": "delete_folder",
+    "now": "2026-10-13T12:00"
+  }
+]

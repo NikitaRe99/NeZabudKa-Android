@@ -1,0 +1,284 @@
+[
+  {
+    "source": "v3_ctc-waveform-fp32.onnx.threads4.json",
+    "device": "V2425A",
+    "sha256": "d49dd2d180d68fc4169bc756dfb90da96b9d236c6f93ba445422ce09ece61537",
+    "modelBytes": 885713240,
+    "threads": 4,
+    "loadMs": 1485.970729,
+    "pssAfterLoadKiB": 953071,
+    "pssAfterInferenceKiB": 972040,
+    "summary": {
+      "primaryCases": 9,
+      "referenceWords": 57,
+      "wordErrors": 1,
+      "minMs": 83.261146,
+      "maxMs": 417.592552,
+      "medianMs": 289.603151
+    },
+    "cases": [
+      {
+        "id": "greeting",
+        "expected": "Привет",
+        "text": "привет",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          83.261146,
+          88.410364
+        ]
+      },
+      {
+        "id": "repeat",
+        "expected": "Привет привет очень очень важно",
+        "text": "привет привет очень очень важно",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          227.681198,
+          229.803229
+        ]
+      },
+      {
+        "id": "capture0",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          417.37776,
+          417.592552
+        ]
+      },
+      {
+        "id": "capture1",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          368.305261,
+          371.525156
+        ]
+      },
+      {
+        "id": "capture2",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          354.094479,
+          363.079791
+        ]
+      },
+      {
+        "id": "date",
+        "expected": "Завтра в десять двадцать пять",
+        "text": "завтра в десять двадцать пять",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          283.850782,
+          286.238959
+        ]
+      },
+      {
+        "id": "show",
+        "expected": "Покажи напоминания на завтра в восемь вечера",
+        "text": "покажи напоминание на завтра в восемь вечера",
+        "wordErrors": 1,
+        "sameAsOfficial": true,
+        "ms": [
+          287.897292,
+          291.30901
+        ]
+      },
+      {
+        "id": "check",
+        "expected": "Напомни завтра в десять проверить документы в синей папке",
+        "text": "напомни завтра в десять проверить документы в синей папке",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          363.399219,
+          361.3625
+        ]
+      },
+      {
+        "id": "count",
+        "expected": "Раз два три",
+        "text": "раз два три",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          144.026354,
+          142.384532
+        ]
+      },
+      {
+        "id": "raw-show",
+        "expected": "Покажи напоминания на завтра в восемь вечера",
+        "text": "покажи напоминание на завтра в восемь вечера",
+        "wordErrors": 1,
+        "sameAsOfficial": true,
+        "ms": [
+          279.926094,
+          281.172916
+        ]
+      },
+      {
+        "id": "raw-check",
+        "expected": "Напомни завтра в десять проверить документы в синей папке",
+        "text": "напомни завтра в десять проверить документы в синей папке",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          356.232552,
+          357.377396
+        ]
+      }
+    ]
+  },
+  {
+    "source": "v3_ctc-waveform-int8.onnx.threads4.json",
+    "device": "V2425A",
+    "sha256": "77e9427a795852f5e744cb93e19b0254ef0c55aa7a9ee1d9c0b3b5fadf097170",
+    "modelBytes": 320716556,
+    "threads": 4,
+    "loadMs": 654.844635,
+    "pssAfterLoadKiB": 497382,
+    "pssAfterInferenceKiB": 431256,
+    "summary": {
+      "primaryCases": 9,
+      "referenceWords": 57,
+      "wordErrors": 1,
+      "minMs": 31.570729,
+      "maxMs": 138.457812,
+      "medianMs": 116.68781200000001
+    },
+    "cases": [
+      {
+        "id": "greeting",
+        "expected": "Привет",
+        "text": "привет",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          31.570729,
+          31.597135
+        ]
+      },
+      {
+        "id": "repeat",
+        "expected": "Привет привет очень очень важно",
+        "text": "привет привет очень очень важно",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          80.174323,
+          77.044166
+        ]
+      },
+      {
+        "id": "capture0",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          134.166979,
+          134.492864
+        ]
+      },
+      {
+        "id": "capture1",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          120.165052,
+          121.434739
+        ]
+      },
+      {
+        "id": "capture2",
+        "expected": "Напомни завтра утром сходить к врачу и купить бумаги",
+        "text": "напомни завтра утром сходить к врачу и купить бумаги",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          117.334791,
+          116.040833
+        ]
+      },
+      {
+        "id": "date",
+        "expected": "Завтра в десять двадцать пять",
+        "text": "завтра в десять двадцать пять",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          136.591302,
+          126.508125
+        ]
+      },
+      {
+        "id": "show",
+        "expected": "Покажи напоминания на завтра в восемь вечера",
+        "text": "покажи напоминание на завтра в восемь вечера",
+        "wordErrors": 1,
+        "sameAsOfficial": true,
+        "ms": [
+          112.501041,
+          113.12802
+        ]
+      },
+      {
+        "id": "check",
+        "expected": "Напомни завтра в десять проверить документы в синей папке",
+        "text": "напомни завтра в десять проверить документы в синей папке",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          138.457812,
+          136.014011
+        ]
+      },
+      {
+        "id": "count",
+        "expected": "Раз два три",
+        "text": "раз два три",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          59.207708,
+          59.717552
+        ]
+      },
+      {
+        "id": "raw-show",
+        "expected": "Покажи напоминания на завтра в восемь вечера",
+        "text": "покажи напоминание на завтра в восемь вечера",
+        "wordErrors": 1,
+        "sameAsOfficial": true,
+        "ms": [
+          108.765104,
+          113.604323
+        ]
+      },
+      {
+        "id": "raw-check",
+        "expected": "Напомни завтра в десять проверить документы в синей папке",
+        "text": "напомни завтра в десять проверить документы в синей папке",
+        "wordErrors": 0,
+        "sameAsOfficial": true,
+        "ms": [
+          137.982395,
+          134.95052
+        ]
+      }
+    ]
+  }
+]

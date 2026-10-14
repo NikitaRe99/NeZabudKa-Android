@@ -44,6 +44,27 @@
 Контрольные суммы должны проверяться после скачивания. При замене файлов описание,
 размеры и SHA-256 необходимо обновить одновременно.
 
+### Classic NLU v8 INT8
+
+`classic_nlu_v8_int8.onnx` — проверенная модель команд с сохранением совместимости
+меток и токенизатора. Публикация в `models-v3`; сведения о дообучении и ограничениях:
+`docs/nlu/nlu-v8-review.md`. Размер 29 265 839 байт,
+SHA-256 `5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f`.
+MIT, атрибуция и полный текст в `assets/nlu/NOTICE.txt` и релизном `MODEL_LICENSES.md`.
+
+## GigaAM v1/v2/v3 CTC INT8
+
+Производные ONNX-модели [salute-developers/GigaAM](https://github.com/salute-developers/GigaAM),
+MIT, upstream `7447938d791c4f3e643386ee22c33777004293a5`.
+Скачиваются отдельно из релиза `models-v3`; в APK нет весов.
+В каждый ONNX встроены log-mel frontend, словарь символов и версия формата
+`gigaam-waveform-ctc-1`. Квантованы линейные MatMul, остальные операции FP32.
+Пунктуация и текстовые подсказки в этих CTC-моделях отсутствуют.
+Точные размеры, SHA-256 и полный текст MIT с атрибуцией находятся в
+[релизе моделей](https://github.com/NikitaRe99/NeZabudKa-Android/releases/tag/models-v3).
+Проверки: `docs/gigaam/evaluation-2026-10-14.md` и
+`docs/gigaam/versions-v1-v2-v3-export.json`.
+
 ## RUPunct Small INT8
 
 Скачиваемая модель `models/punctuation/rupunct_small_int8.onnx`

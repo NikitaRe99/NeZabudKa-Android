@@ -32,7 +32,7 @@ class ModelDownloadWorker(
         .build()
 
     override suspend fun doWork(): Result {
-        val kind = inputData.getString(KEY_KIND)?.takeIf { it in setOf(KIND_WHISPER, KIND_NLU, KIND_PUNCTUATION) }
+        val kind = inputData.getString(KEY_KIND)?.takeIf { it in setOf(KIND_WHISPER, KIND_NLU, KIND_PUNCTUATION, "gigaam") }
             ?: return Result.failure(errorData("Неизвестный тип модели"))
         val modelId = inputData.getString(KEY_MODEL_ID) ?: return Result.failure(errorData("Не указана модель"))
         val title = inputData.getString(KEY_TITLE) ?: modelId
@@ -53,6 +53,9 @@ class ModelDownloadWorker(
             download(url, partial, modelId, title)
             if (kind == KIND_PUNCTUATION) RupunctModel.validate(partial) else validate(partial)
             if (kind == KIND_NLU && fileName == NLU_V7_FILE_NAME) validateNluV7(partial)
+            if (kind == KIND_NLU && fileName == "classic_nlu_v8_int8.onnx") validateChecksum(partial, "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f")
+            if (kind == "gigaam") validateChecksum(partial,
+                ru.nezabudka.app.speech.GigaamCatalog.checksums[fileName] ?: error("Неизвестная модель GigaAM"))
             UserModelsStorage(applicationContext).store(kind, fileName, partial)
             applicationContext.getSharedPreferences("${kind}_models", Context.MODE_PRIVATE)
                 .edit().putString(KEY_SELECTED_MODEL, fileName).commit()
@@ -116,6 +119,10 @@ class ModelDownloadWorker(
 
     private fun validateNluV7(file: File) {
         require(file.length() == NLU_V7_BYTES) { "Размер NLU v7 не совпадает с опубликованной моделью" }
+        validateChecksum(file, NLU_V7_SHA256)
+    }
+
+    private fun validateChecksum(file: File, expected: String) {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().buffered().use { input ->
             val buffer = ByteArray(DEFAULT_BUFFER_SIZE * 8)
@@ -126,7 +133,7 @@ class ModelDownloadWorker(
             }
         }
         val actual = digest.digest().joinToString("") { "%02x".format(it) }
-        require(actual == NLU_V7_SHA256) { "Контрольная сумма NLU v7 не совпадает" }
+        require(actual == expected) { "Контрольная сумма модели не совпадает. Повторите загрузку." }
     }
 
     private fun foregroundInfo(title: String, progress: Int, indeterminate: Boolean): ForegroundInfo {

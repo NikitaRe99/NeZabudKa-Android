@@ -11,7 +11,13 @@ internal data class BackupRestorePlan(
     data class RestoredNote(
         val entity: NoteEntity,
         val folderIds: List<Long>,
-    )
+    ) {
+        fun forImport(mapping: Map<Long, Long>): RestoredNote {
+            val primary = entity.folderId?.let(mapping::get)
+            return RestoredNote(entity.copy(id = 0, folderId = primary),
+                (folderIds.mapNotNull(mapping::get) + listOfNotNull(primary)).distinct())
+        }
+    }
 
     companion object {
         fun from(backup: UserDataBackupDto): BackupRestorePlan {

@@ -178,8 +178,12 @@ internal fun RemindersScreen(
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
-    var overdueExpanded by remember { mutableStateOf(true) }
-    var completedExpanded by remember { mutableStateOf(true) }
+    val sectionContext = androidx.compose.ui.platform.LocalContext.current
+    val sectionPreferences = remember(sectionContext) {
+        sectionContext.getSharedPreferences("reminder_sections", android.content.Context.MODE_PRIVATE)
+    }
+    var overdueExpanded by remember { mutableStateOf(sectionPreferences.getBoolean("overdue_expanded", true)) }
+    var completedExpanded by remember { mutableStateOf(sectionPreferences.getBoolean("completed_expanded", true)) }
     var showCreator by remember { mutableStateOf(false) }
     LaunchedEffect(requestCreate) {
         if (requestCreate) { showCreator = true; consumeCreateRequest() }
@@ -263,8 +267,11 @@ internal fun RemindersScreen(
     }
     val currentComplete = rememberUpdatedState(complete)
     val currentUndoCompleted = rememberUpdatedState(undoCompleted)
-    val completeWithUndo: (Reminder) -> Unit = remember(snackbar, scope) {
+    val completionFeedback = LocalHapticFeedback.current
+    val completeWithUndo: (Reminder) -> Unit = remember(snackbar, scope, completionFeedback) {
+
         { reminder ->
+            completionFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
             currentComplete.value(reminder)
             if (reminder.status != "completed") {
                 scope.launch {
@@ -548,8 +555,8 @@ internal fun RemindersScreen(
                 val reminderEffect = notice?.effect as? ActionEffect.ReminderCreated
                 val reminderDeleted = notice?.effect as? ActionEffect.ReminderDeleted
                 val dateRequested = notice?.effect as? ActionEffect.ReminderDateRequested
-                if (notice != null && (reminderEffect != null || reminderDeleted != null || dateRequested != null)) {
-                    AppNoticeCard(notice.message, dismissNotice) {
+                if (notice != null && (notice.isError || reminderEffect != null || reminderDeleted != null || dateRequested != null)) {
+                    AppNoticeCard(notice.message, dismissNotice, essential = dateRequested != null, isError = notice.isError) {
                         if (reminderEffect != null) {
                             AppNoticeAction(Icons.Default.Edit, "Редактировать", { dismissNotice(); openReminder(reminderEffect.reminder) })
                             AppNoticeAction(Icons.Default.Schedule, "Сменить время", { noticeTimeReminder = reminderEffect.reminder })
@@ -557,11 +564,12 @@ internal fun RemindersScreen(
                         if (dateRequested != null) {
                             AppNoticeTextAction("Без времени", { answerReminderDateClarification("без даты") })
                             AppNoticeTextAction("Отмена", { answerReminderDateClarification("отмена") })
-                        } else {
+                        } else if (!notice.isError) {
                             AppNoticeAction(Icons.AutoMirrored.Filled.Undo, "Отменить", undoLastAction)
                         }
                     }
                 }
+                ui.recordingPreview?.let { RecordingPreviewCard(it) }
                 if (ui.awaitingSttConfirmation && ui.recognizedText.isNotBlank()) {
                     SttConfirmationCard(ui.recognizedText, editRecognizedText)
                 }
@@ -646,7 +654,7 @@ internal fun RemindersScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = theme.colors.danger,
                         )
-                        IconButton(onClick = { overdueExpanded = !overdueExpanded }) {
+                        IconButton(onClick = { overdueExpanded = !overdueExpanded; sectionPreferences.edit().putBoolean("overdue_expanded", overdueExpanded).apply() }) {
                             Icon(
                                 if (overdueExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                 if (overdueExpanded) "Свернуть" else "Развернуть",
@@ -754,7 +762,7 @@ internal fun RemindersScreen(
                 ) {
                     Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Выполненные (${completed.size})", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                        IconButton(onClick = { completedExpanded = !completedExpanded }) {
+                        IconButton(onClick = { completedExpanded = !completedExpanded; sectionPreferences.edit().putBoolean("completed_expanded", completedExpanded).apply() }) {
                             Icon(if (completedExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, if (completedExpanded) "Свернуть" else "Развернуть")
                         }
                     }
@@ -901,7 +909,9 @@ internal fun ReminderDateTimeDialog(
     title: String? = null,
 ) {
     val theme = AppTheme.tokens
+    val feedback = LocalHapticFeedback.current
     var selectedDate by remember { mutableStateOf(initialDate ?: LocalDate.now()) }
+    ru.nezabudka.app.ui.SelectionHapticEffect(selectedDate)
     var displayedMonth by remember { mutableStateOf(YearMonth.from(selectedDate)) }
     var selectedTime by remember { mutableStateOf(initialTime) }
     var selectedRecurrence by remember(initialRecurrence) { mutableStateOf(initialRecurrence) }
@@ -1005,8 +1015,10 @@ internal fun ReminderDateTimeDialog(
                     TextButton(onClick = dismiss) { Text("Отмена") }
                     TextButton(onClick = {
                         if (confirmWithRecurrence != null) {
+                            feedback.performHapticFeedback(HapticFeedbackType.Confirm)
                             confirmWithRecurrence(selectedDate, selectedTime, selectedRecurrence)
                         } else {
+                            feedback.performHapticFeedback(HapticFeedbackType.Confirm)
                             confirm(selectedDate, selectedTime)
                         }
                     }) { Text("Готово") }
@@ -1305,11 +1317,13 @@ private fun ReminderTimePickerDialog(
     confirm: (LocalTime) -> Unit,
 ) {
     val theme = AppTheme.tokens
+    val feedback = LocalHapticFeedback.current
     val state = rememberTimePickerState(
         initialHour = initialTime.hour,
         initialMinute = initialTime.minute,
         is24Hour = true,
     )
+    ru.nezabudka.app.ui.SelectionHapticEffect(state.hour to state.minute)
     AppDialog(onDismissRequest = dismiss) {
         Surface(
             shape = RoundedCornerShape(theme.shapes.dialog),
@@ -1323,7 +1337,7 @@ private fun ReminderTimePickerDialog(
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = dismiss) { Text("Отмена") }
-                    TextButton(onClick = { confirm(LocalTime.of(state.hour, state.minute)) }) { Text("ОК") }
+                    TextButton(onClick = { feedback.performHapticFeedback(HapticFeedbackType.Confirm); confirm(LocalTime.of(state.hour, state.minute)) }) { Text("ОК") }
                 }
             }
         }
@@ -1349,6 +1363,7 @@ internal fun SwipeableReminderRow(
     dragOffset: Float = 0f,
 ) {
     val theme = AppTheme.tokens
+    val feedback = LocalHapticFeedback.current
     val currentReminder by rememberUpdatedState(reminder)
     val currentDelete by rememberUpdatedState(delete)
     val swipeStateHolder = remember { arrayOfNulls<SwipeToDismissBoxState>(1) }
@@ -1368,6 +1383,10 @@ internal fun SwipeableReminderRow(
         confirmValueChange = confirmDismiss,
         positionalThreshold = threshold,
     )
+    LaunchedEffect(state.targetValue) {
+        if (state.targetValue == SwipeToDismissBoxValue.EndToStart)
+            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
     swipeStateHolder[0] = state
     LaunchedEffect(state.currentValue) {
         if (state.currentValue == SwipeToDismissBoxValue.EndToStart) {

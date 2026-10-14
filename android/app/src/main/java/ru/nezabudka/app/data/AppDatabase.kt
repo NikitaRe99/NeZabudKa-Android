@@ -38,6 +38,7 @@ interface ReminderDao {
     @Query("DELETE FROM reminders WHERE id = :id") suspend fun delete(id: Long)
     @Query("SELECT * FROM reminders WHERE id = :id LIMIT 1") suspend fun byId(id: Long): ReminderEntity?
     @Query("SELECT COUNT(*) FROM reminders") suspend fun count(): Int
+    @Query("SELECT * FROM reminders ORDER BY manual_order, id") suspend fun allForBackup(): List<ReminderEntity>
     @Query("SELECT * FROM reminders ORDER BY manual_order ASC, id ASC")
     fun observeAll(): Flow<List<ReminderEntity>>
     @Query("SELECT * FROM reminders WHERE id = :id LIMIT 1")
@@ -101,6 +102,7 @@ interface NotesDao {
     @Query("SELECT COUNT(*) FROM notes") suspend fun noteCount(): Int
     @Insert suspend fun insertNote(value: NoteEntity): Long
     @Query("SELECT * FROM notes ORDER BY manual_order, id") suspend fun allNotesInManualOrder(): List<NoteEntity>
+    @Query("SELECT * FROM note_folder_refs") suspend fun allRefsForBackup(): List<NoteFolderRef>
     @Query("UPDATE notes SET manual_order=:orderValue WHERE id=:id") suspend fun setNoteOrder(id: Long, orderValue: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertRefs(values: List<NoteFolderRef>)
     @Query("DELETE FROM note_folder_refs WHERE note_id=:noteId") suspend fun deleteRefs(noteId: Long)

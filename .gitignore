@@ -43,3 +43,5 @@ tools/nlu/__pycache__/
 *.apk
 *.aab
 /tools/*.bin
+/tools/whisper/audit-apk/build/
+/.gigaam-cache/

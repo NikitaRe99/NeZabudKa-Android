@@ -237,6 +237,7 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("tools/nlu/output"))
     parser.add_argument("--assets", type=Path, help="Optional reviewed metadata/vocab destination; weights stay downloadable")
     parser.add_argument("--recovery-v6", action="store_true")
+    parser.add_argument("--accuracy-v8", action="store_true")
     parser.add_argument("--warm-start", type=Path)
     parser.add_argument("--learning-rate", type=float, default=3e-5)
     parser.add_argument("--retain-teacher", action="store_true", help="Distill deployed model while learning corrective data")
@@ -256,6 +257,11 @@ def main():
     if args.recovery_v6:
         from recovery_v6 import build_recovery_examples, speech_surface
         examples = sorted(set(examples + build_recovery_examples() + [speech_surface(e) for e in examples]), key=lambda e: (e.intent, e.text, e.spans))
+    if args.accuracy_v8:
+        from accuracy_v8 import build_accuracy_examples
+        # Retain the deployed recovery vocabulary as well as the original corpus.
+        retained = set(examples)
+        examples = sorted(set(examples + build_accuracy_examples()), key=lambda e: (e.intent, e.text, e.spans))
     train_examples, validation_examples = stratified_split(examples)
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, use_fast=True)
     train_loader = DataLoader(NluDataset(train_examples, tokenizer, retained), batch_size=args.batch_size, shuffle=True)
@@ -349,6 +355,7 @@ def main():
         "torch_version": torch.__version__,
         "split": "intent-stratified normalized slot-template groups; no template/case/punctuation overlap",
         "recovery_v6": args.recovery_v6,
+        "accuracy_v8": args.accuracy_v8,
         "warm_start_sha256": hashlib.sha256(args.warm_start.read_bytes()).hexdigest() if args.warm_start else None,
         "teacher_retention": args.retain_teacher,
         "learning_rate": args.learning_rate,

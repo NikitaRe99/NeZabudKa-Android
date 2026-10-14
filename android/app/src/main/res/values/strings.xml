@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">НеЗабудьКа</string>
     <string name="app_tagline">Всё важное — вовремя</string>
+    <string name="reminder_display_test_text">Забрать заказ из пункта выдачи</string>
 </resources>

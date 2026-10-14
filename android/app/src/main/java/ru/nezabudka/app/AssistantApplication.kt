@@ -1,6 +1,8 @@
 package ru.nezabudka.app
 
 import android.app.Application
+import android.app.Activity
+import android.os.Bundle
 import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import ru.nezabudka.app.application.Dispatcher
@@ -41,9 +43,25 @@ import java.io.File
 import java.time.LocalTime
 import java.util.concurrent.atomic.AtomicBoolean
 
-class AssistantApplication : Application() {
+open class AssistantApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            private var visibleActivities = 0
+            override fun onActivityStarted(activity: Activity) {
+                visibleActivities++
+                container.setAppVisible(true)
+            }
+            override fun onActivityStopped(activity: Activity) {
+                visibleActivities = (visibleActivities - 1).coerceAtLeast(0)
+                if (visibleActivities == 0 && !activity.isChangingConfigurations) container.setAppVisible(false)
+            }
+            override fun onActivityCreated(activity: Activity, state: Bundle?) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
         ru.nezabudka.app.widget.HomeWidgets.start(this)
     }
     private val containerDelegate = lazy(LazyThreadSafetyMode.SYNCHRONIZED) { AppContainer(this) }
@@ -52,12 +70,12 @@ class AssistantApplication : Application() {
     val container: AppContainer get() = containerDelegate.value
 
     /** Starts UI-only observers after the first screen is already being composed. */
-    fun startUiServices() {
+    open fun startUiServices() {
         if (!uiServicesStarted.compareAndSet(false, true)) return
         val activeContainer = container
         applicationScope.launch {
             delay(750)
-            if (activeContainer.settings.state.value.externalDataBackupEnabled) {
+            if (activeContainer.modelStorage.state.value.userSelectedDirectory) {
                 activeContainer.startDataBackupServices()
             }
             activeContainer.runStartupMaintenanceIfNeeded()
@@ -80,6 +98,14 @@ class AssistantApplication : Application() {
 }
 
 class AppContainer(val app: Application) {
+    private val appVisible = AtomicBoolean(false)
+    fun setAppVisible(visible: Boolean) {
+        appVisible.set(visible)
+        if (!visible) applicationScope.launch {
+            whisper.releaseWhenIdle { !appVisible.get() }
+            gigaam.release()
+        }
+    }
     val appIcons = ru.nezabudka.app.data.AppIconManager(app)
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val portableResourcesLoaded = AtomicBoolean(false)
@@ -113,6 +139,11 @@ class AppContainer(val app: Application) {
     val preprocessor = PcmAudioPreprocessor(app)
     val notePunctuation = ru.nezabudka.app.speech.NotePunctuation(app, modelStorage)
     val whisperModels = WhisperModelManager(app, modelStorage)
+    val gigaamModels = ru.nezabudka.app.speech.GigaamModelManager(app, modelStorage)
+    val gigaam = ru.nezabudka.app.speech.GigaamSttEngine(app, gigaamModels,
+        threads = { settings.state.value.gigaamThreadCount },
+        keepLoaded = { appVisible.get() && settings.state.value.sttEngine == "gigaam" && settings.state.value.keepGigaamModelLoaded },
+    )
     private val whisperVadModel = WhisperVadModelProvider(app)
     val cloudSttCredentials = CloudSttCredentials(app)
     val dataBackup = UserDataBackupManager(
@@ -130,13 +161,15 @@ class AppContainer(val app: Application) {
         vadModels = whisperVadModel,
         temporaryDirectory = File(app.cacheDir, "recordings/whisper-segments"),
         keepModelLoaded = {
-            settings.state.value.sttEngine == "whisper" && settings.state.value.keepWhisperModelLoaded
+            appVisible.get() && settings.state.value.sttEngine == "whisper" && settings.state.value.keepWhisperModelLoaded
         },
         configuredThreadCount = { settings.state.value.whisperThreadCount },
         accurateMode = { settings.state.value.whisperAccurateMode },
+        rawMode = { settings.state.value.whisperRawMode },
+        isAppVisible = { appVisible.get() },
     )
     val stt = SttRegistry(listOf(
-        AndroidSpeechRecognizerEngine(app), whisper,
+        gigaam, AndroidSpeechRecognizerEngine(app), whisper,
         YandexSpeechKitEngine(cloudSttCredentials), GoogleCloudSpeechEngine(cloudSttCredentials),
         VkCloudSpeechEngine(cloudSttCredentials),
     ))
@@ -145,6 +178,7 @@ class AppContainer(val app: Application) {
     fun startSettingsResources() {
         loadPortableResources()
         whisperModels.start()
+        gigaamModels.start(applicationScope)
         classicNlu.startModelObserver(applicationScope)
         notePunctuation.models.start(applicationScope)
     }
@@ -176,6 +210,8 @@ class AppContainer(val app: Application) {
             .onFailure { Log.w("LocalAssistant", "Не удалось проверить каталог моделей", it) }
         runCatching { whisperModels.refresh() }
             .onFailure { Log.w("LocalAssistant", "Не удалось обновить список моделей Whisper", it) }
+        runCatching { gigaamModels.refresh() }
+            .onFailure { Log.w("LocalAssistant", "Не удалось обновить список моделей GigaAM", it) }
         runCatching { classicNlu.refreshModel() }
             .onFailure { Log.w("LocalAssistant", "Не удалось обновить состояние NLU-модели", it) }
     }
@@ -193,6 +229,7 @@ class AppContainer(val app: Application) {
         applicationScope.launch {
             classicNlu.release()
             whisper.release()
+            gigaam.release()
         }
     }
 

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.CircleShape
@@ -79,6 +80,7 @@ import ru.nezabudka.app.ui.AppTheme
 import ru.nezabudka.app.ui.appShadowElevation
 import ru.nezabudka.app.ui.AssistantUiState
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -104,11 +106,25 @@ internal fun AssistantScreen(
     answerReminderDateClarification: (String) -> Unit,
     openWhisperModels: () -> Unit = {},
     hideWelcomeCard: () -> Unit = {},
+    tips: List<ru.nezabudka.app.domain.AssistantTipKind> = emptyList(),
+    acknowledgeTip: (ru.nezabudka.app.domain.AssistantTipKind) -> Unit = {},
+    openSettings: (ru.nezabudka.app.domain.AssistantSettingsTarget) -> Unit = {},
 ) {
     var helpExpanded by remember { mutableStateOf(false) }
+    var logExpanded by remember { mutableStateOf(false) }
     var noticeTimeReminder by remember { mutableStateOf<Reminder?>(null) }
     var bottomControlsHeight by remember { mutableIntStateOf(0) }
     val theme = AppTheme.tokens
+    val assistantListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(state.error) {
+        if (state.error != null) assistantListState.animateScrollToItem(0)
+    }
+    var previouslyVisibleTips by remember { mutableStateOf(tips.map { it.name }.toSet()) }
+    LaunchedEffect(tips) {
+        val added = tips.any { it.name !in previouslyVisibleTips }
+        previouslyVisibleTips = tips.map { it.name }.toSet()
+        if (added) assistantListState.animateScrollToItem(0)
+    }
     Box(Modifier.fillMaxSize().imePadding()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -117,9 +133,12 @@ internal fun AssistantScreen(
             Column(
                 Modifier.fillMaxWidth().onSizeChanged { bottomControlsHeight = it.height },
             ) {
+                // Keep the focused input mounted while preview text changes, otherwise
+                // removing it dismisses the IME and moves the held microphone button.
                 OutlinedTextField(
-                    value = state.recognizedText,
-                    onValueChange = edit,
+                    value = state.recordingPreview ?: state.recognizedText,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences),
+                    onValueChange = { if (!state.isRecording && !state.isProcessing) edit(it) },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
                     minLines = 2,
                     maxLines = 4,
@@ -128,7 +147,7 @@ internal fun AssistantScreen(
                         Text(if (state.awaitingSttConfirmation) "Проверьте распознанный текст" else "Что нужно запомнить?")
                     },
                     trailingIcon = {
-                        if (state.recognizedText.isNotEmpty()) IconButton(onClick = { edit("") }) {
+                        if (!state.isRecording && state.recognizedText.isNotEmpty()) IconButton(onClick = { edit("") }) {
                             Icon(Icons.Default.Clear, "Очистить текст")
                         }
                     },
@@ -160,7 +179,7 @@ internal fun AssistantScreen(
                         shape = RoundedCornerShape(theme.shapes.action),
                         color = if (state.isProcessing) theme.colors.input else theme.colors.talkButton,
                         contentColor = if (state.isProcessing) theme.colors.textSecondary else theme.colors.onTalkButton,
-                        modifier = Modifier.weight(1f).height(58.dp)
+                        modifier = Modifier.weight(1f).heightIn(min = 58.dp)
                             .pushToTalkGesture(
                             enabled = !state.isProcessing,
                             hasRecognizedText = state.recognizedText.isNotBlank(),
@@ -169,42 +188,23 @@ internal fun AssistantScreen(
                             primaryAction = primaryAction,
                         ),
                     ) {
-                        Row(
-                            Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (state.isProcessing) {
-                                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(
-                                    if (state.recognizedText.isNotBlank()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
-                                    null,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                            Text(when {
-                                state.isRecording -> "Отпустите для распознавания"
-                                state.isProcessing -> "Выполняю…"
-                                state.recognizedText.isNotBlank() -> "Выполнить"
-                                else -> "Удерживайте и говорите"
-                            }, style = MaterialTheme.typography.labelLarge)
-                        }
+                        AppVoiceActionContent(state.isRecording, state.isProcessing, state.recognizedText.isNotBlank())
                     }
                 }
             }
         },
     ) { inner -> LazyColumn(
-        Modifier.fillMaxSize().padding(inner).padding(horizontal = AppLayout.horizontalPadding),
+        state = assistantListState,
+        modifier = Modifier.fillMaxSize().padding(inner).padding(horizontal = AppLayout.horizontalPadding),
         contentPadding = PaddingValues(top = AppLayout.contentTopPadding, bottom = AppLayout.sectionSpacing),
         verticalArrangement = Arrangement.spacedBy(AppLayout.sectionSpacing),
     ) {
-        item {
+        item(key = "assistant-heading") {
             Column(
-                Modifier.fillMaxWidth().padding(end = 56.dp, bottom = 8.dp),
+                Modifier.fillMaxWidth().padding(end = 56.dp, bottom = 8.dp).offset(y = (-4).dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AppScreenHeading("НеЗабудьКа", "Место для мыслей и важных дел")
+                AppScreenHeading("НеЗабудьКа")
             }
         }
         if (state.awaitingSttConfirmation) item { Text("Проверьте распознанный текст и нажмите «Выполнить».", style = MaterialTheme.typography.bodySmall) }
@@ -214,13 +214,8 @@ internal fun AssistantScreen(
                 Text("Распознаю и выполняю команду…")
             }
         }
-        state.error?.let { error -> item {
-            Column {
-                Text(error, color = MaterialTheme.colorScheme.error)
-                if (state.whisperModelMissing) TextButton(onClick = openWhisperModels) {
-                    Text("Выбрать и скачать модель")
-                }
-            }
+        state.error?.let { error -> item(key = "assistant-error") {
+            AssistantErrorCard(error)
         } }
         state.result?.let { result -> item {
             Card(
@@ -230,7 +225,10 @@ internal fun AssistantScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
             ) { Text(result, Modifier.padding(12.dp)) }
         } }
-        if (settings.showTechnicalLog) item {
+        items(ru.nezabudka.app.domain.prioritizedAssistantTips(tips), key = { "tip:${it.name}" }) { tip ->
+            AssistantTipCard(tip, openSettings, settings.sttEngine) { acknowledgeTip(tip) }
+        }
+        if (settings.showTechnicalLog) item(key = "technical-log") {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(theme.shapes.card),
@@ -238,7 +236,7 @@ internal fun AssistantScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
             ) {
                 Column(
-                    Modifier.fillMaxWidth(),
+                    Modifier.fillMaxWidth().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text("Технический лог", style = MaterialTheme.typography.titleMedium)
@@ -246,16 +244,11 @@ internal fun AssistantScreen(
                         "Событий в текущем сеансе: ${state.log.size}",
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    SelectionContainer {
-                        Text(
-                            remember(state.log) { state.log.joinToString("\n").ifBlank { "Событий пока нет" } },
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                        )
-                    }
+                    TextButton(onClick = { logExpanded = true }, modifier = Modifier.align(Alignment.End)) { Text("Открыть лог") }
                 }
             }
         }
-        if (settings.showAssistantWelcomeCard) item {
+        if (settings.showAssistantWelcomeCard) item(key = "welcome") {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(theme.shapes.panel),
@@ -264,7 +257,7 @@ internal fun AssistantScreen(
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.MicNone, null, Modifier.size(26.dp), tint = theme.colors.accent)
-                        Text("Скажите — и сохраните", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                        Text("Сохраняйте идеи на лету", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
                     }
                     Text(
                         "Создавайте заметки, планируйте дела и собирайте идеи в папки. Удерживайте кнопку внизу или введите команду текстом.",
@@ -301,7 +294,7 @@ internal fun AssistantScreen(
         }
     } }
     Surface(
-        modifier = Modifier.align(Alignment.TopEnd).padding(end = AppLayout.horizontalPadding, top = AppLayout.contentTopPadding),
+        modifier = Modifier.align(Alignment.TopEnd).padding(end = AppLayout.horizontalPadding).offset(y = (-4).dp),
         shape = RoundedCornerShape(50),
         color = theme.colors.background,
     ) {
@@ -310,10 +303,13 @@ internal fun AssistantScreen(
         }
     }
     if (helpExpanded) AssistantHelpDialog { helpExpanded = false }
-    actionNotice?.let { notice ->
+    if (logExpanded) TechnicalLogDialog(state.log) { logExpanded = false }
+    actionNotice?.takeUnless { it.isError }?.let { notice ->
         AppNoticeCard(
             message = notice.message,
             onDismiss = dismissNotice,
+            essential = notice.effect is ActionEffect.ReminderDateRequested,
+            isError = notice.isError,
             modifier = Modifier.align(Alignment.BottomCenter)
                 .offset { IntOffset(0, -bottomControlsHeight) },
         ) {
@@ -409,7 +405,6 @@ private fun AssistantHelpDialog(onDismiss: () -> Unit) {
                         "На вкладке «Помощник» можно использовать команды для напоминаний, заметок и папок. На остальных вкладках выполняются только команды соответствующего раздела.",
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    Text("Для записи удерживайте кнопку микрофона, говорите и отпустите её для распознавания.", style = MaterialTheme.typography.bodySmall)
                     Text("Стандартные команды", style = MaterialTheme.typography.titleSmall)
                     Text(
                         "Работают сразу и наиболее надёжно. Начинайте фразу с понятного действия.",
@@ -428,7 +423,7 @@ private fun AssistantHelpDialog(onDismiss: () -> Unit) {
                     )
                     HighlightedCommandBullet(
                         label = "Удаление",
-                        commands = listOf("«Удали последнее напоминание»", "«Удали напоминание про…»", "«Отмени напоминание…»"),
+                        commands = listOf("«Удали последнее напоминание»", "«Удали напоминание про…»", "«Отмени последнее напоминание»"),
                     )
                     HighlightedCommandBullet(
                         label = "Уточнение даты",
@@ -449,20 +444,16 @@ private fun AssistantHelpDialog(onDismiss: () -> Unit) {
                     )
                     Text("Расширенное распознавание команд", style = MaterialTheme.typography.titleSmall)
                     Text(
-                        "Локальная NLU-модель распознаёт более свободные формулировки без генерации ответа и без подключения к интернету, например:",
+                        "NLU-классификатор помогает понимать более свободные формулировки, например:",
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    HelpBullet("«Главное не забыть проверить давление»;")
-                    HelpBullet("«Что у меня намечено на завтра?»;")
-                    HelpBullet("«Сохрани мысль сначала проверить сеть»;")
-                    HelpBullet("«Организуй папку Домашний ремонт»;")
-                    HelpBullet("«Больше не напоминай про оплату парковки».")
+                    HelpBullet("Напоминание: «Главное не забыть проверить давление завтра утром».")
+                    HelpBullet("Повтор: «Сигнализируй каждый вечер что нужно закрыть теплицу».")
+                    HelpBullet("Просмотр дел: «Есть ли у меня задачи на завтра».")
+                    HelpBullet("Заметка: «Зафиксируй мысль: запасной ключ лежит в синем футляре».")
+                    HelpBullet("Папка: «Организуй папку Домашний ремонт».")
                     Text(
-                        "Классификатор предназначен только для команд напоминаний, заметок и папок. Это не чат и он не выполняет произвольные запросы. Короткие неоднозначные фразы могут распознаваться менее надёжно.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        "Для таких формулировок включите настройку «Расширенное распознавание команд». Стандартные команды работают и при выключенной модели.",
+                        "Для таких формулировок включите настройку «Расширенное распознавание команд».",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

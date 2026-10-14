@@ -77,6 +77,10 @@ fun extractNoteParts(value: String): Pair<String?, String?> {
 
 /** Linguistic carriers delimit fields even when dictation has no quotes or colon. */
 fun extractSpokenNoteCarrier(value: String): Pair<String?, String>? {
+    SPOKEN_BODY_IN_FOLDER.find(value)?.let { match ->
+        return cleanQuoted(match.groupValues[1]).trim(',', ':', ';').trim() to
+            cleanQuoted(match.groupValues[2])
+    }
     SPOKEN_INSERTION_NOTE.find(value)?.let { match ->
         return cleanQuoted(match.groupValues[1]).trim(',', ':', ';').trim() to
             cleanQuoted(match.groupValues[2]).trim('.', '!', '?').trim()
@@ -98,6 +102,12 @@ private val SPOKEN_INSERTION_NOTE = Regex(
         "(.+?)\\s+запись\\s+о\\s+том\\s*,?\\s*что\\s+(.+)$",
 )
 
+private val SPOKEN_BODY_IN_FOLDER = Regex(
+    "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:оставь|сохрани|добавь|зафиксируй|запиши)" +
+        "\\s+(?:запись|заметку|мысль)\\s+в\\s+папке\\s+(.+?)" +
+        "\\s+о\\s+том\\s*,?\\s*что\\s+(.+)$",
+)
+
 private val SPOKEN_FOLDER_NOTE = Regex(
     "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
         "(?:для\\s+папки|в\\s+папку)\\s+(.+?)\\s+(?:сохрани|добавь|запиши|зафиксируй)" +
@@ -108,6 +118,8 @@ private val SPOKEN_NOTE = Regex(
     "(?iu)^\\s*(?:пожалуйста[\\s,]+)?(?:" +
         "хочу\\s+оставить\\s+себе\\s+(?:такую\\s+)?запись|" +
         "внеси\\s+в\\s+(?:мои\\s+)?заметки|" +
+        "(?:хочу\\s+)?(?:сохранить|сохрани|оставить|оставь|зафиксируй|запиши)" +
+        "\\s+(?:(?:следующую|такую)\\s+)?(?:мысль|запись|заметку)(?!\\s+(?:без\\s+папки|в\\s+папк[уе]))(?:\\s+о\\s+том\\s*,?\\s*что)?|" +
         "сохрани\\s+(?:следующую\\s+)?мысль|зафиксируй\\s+в\\s+заметках" +
         ")\\s*[,.:;—–-]?\\s+(.+)$",
 )

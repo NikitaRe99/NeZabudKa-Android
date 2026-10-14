@@ -1,3 +1,4 @@
+param([switch]$SpeechAudit)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $signingDirectory = Join-Path $projectRoot '.private'
@@ -21,7 +22,11 @@ $env:NEZABUDKA_KEY_ALIAS = 'nezabudka'
 $env:NEZABUDKA_KEY_PASSWORD = $password
 try {
     Push-Location $projectRoot
-    & .\gradlew.bat :app:assembleRelease --offline
+    if ($SpeechAudit) {
+        & .\gradlew.bat :speechAudit:assembleRelease -PincludeSpeechAudit=true --offline
+    } else {
+        & .\gradlew.bat :app:assembleRelease --offline
+    }
     if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE" }
 } finally {
     Pop-Location

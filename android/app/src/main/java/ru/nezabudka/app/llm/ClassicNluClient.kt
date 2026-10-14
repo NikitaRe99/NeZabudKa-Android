@@ -390,7 +390,7 @@ class ClassicNluClient(
         ModelDownloadWorker.enqueue(
             applicationContext,
             ModelDownloadWorker.KIND_NLU,
-            "classic-nlu-v7",
+            "classic-nlu-v8",
             "Расширенное распознавание команд",
             MODEL_FILE,
             url,
@@ -414,6 +414,18 @@ class ClassicNluClient(
                 session = null
                 tokenizer = null
             }
+            refreshModel()
+        }
+    }
+
+    suspend fun deleteModel(fileName: String) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            if (modelLibrary.snapshot().selectedName == fileName) {
+                session?.close()
+                session = null
+                tokenizer = null
+            }
+            modelLibrary.delete(fileName)
             refreshModel()
         }
     }
@@ -455,7 +467,7 @@ class ClassicNluClient(
 
     private companion object {
         const val MAX_LENGTH = 64
-        const val MODEL_FILE = "classic_nlu_v7_int8.onnx"
+        const val MODEL_FILE = "classic_nlu_v8_int8.onnx"
         const val VOCAB_ASSET = "nlu/vocab.txt"
         const val INTENT_THRESHOLD = 0.72
         const val EXPLICIT_DESTRUCTIVE_THRESHOLD = 0.50

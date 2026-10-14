@@ -6,6 +6,7 @@ import ru.nezabudka.app.domain.Note
 import ru.nezabudka.app.domain.NoteFolder
 import ru.nezabudka.app.domain.DeletedNoteFolder
 import ru.nezabudka.app.domain.Reminder
+import ru.nezabudka.app.domain.nextReminderOccurrence
 import ru.nezabudka.app.ports.NotesRepository
 import ru.nezabudka.app.ports.ReminderRepository
 import ru.nezabudka.app.ports.ReminderScheduler
@@ -35,6 +36,8 @@ data class ActionResult(
 data class ReminderDateClarification(
     val text: String,
     val recurrence: String? = null,
+    val dateRange: ru.nezabudka.app.domain.CalendarDateRange? = null,
+    val preferredTime: java.time.LocalTime? = null,
 )
 
 class Dispatcher(
@@ -59,9 +62,25 @@ class Dispatcher(
             }
             CommandIntent.LIST_REMINDERS -> {
                 val now = LocalDateTime.now(clock)
-                val values = reminders.list(command.periodStart, command.periodEnd).filter { reminder ->
-                    reminder.remindAt?.isBefore(now) != true
-                }
+                val hasPeriod = command.periodStart != null || command.periodEnd != null
+                val lower = maxOf(now, command.periodStart ?: now)
+                val values = reminders.list().asSequence()
+                    .filter { it.status == "active" }
+                    .mapNotNull { reminder ->
+                        val stored = reminder.remindAt
+                        if (stored == null) {
+                            reminder.takeUnless { hasPeriod }
+                        } else {
+                            val occurrence = if (hasPeriod && stored.isBefore(lower)) {
+                                nextReminderOccurrence(stored, reminder.recurrence, lower.minusNanos(1))
+                            } else stored
+                            occurrence?.takeIf { !it.isBefore(lower) &&
+                                (command.periodEnd == null || it.isBefore(command.periodEnd)) }
+                                ?.let { reminder.copy(remindAt = it) }
+                        }
+                    }
+                    .sortedWith(compareBy<Reminder> { it.remindAt == null }.thenBy { it.remindAt }.thenBy { it.id })
+                    .toList()
                 ActionResult(
                     if (values.isEmpty()) "Напоминаний не найдено." else values.joinToString("\n") { "• ${describe(it)}" },
                     reminders = values,

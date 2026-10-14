@@ -1,0 +1,197 @@
+[
+  {
+    "case": {
+      "id": 1,
+      "utterance": "Отобразить дела на завтра",
+      "scope": "assistant",
+      "intent": "list_reminders",
+      "period_start": "2026-10-14T00:00",
+      "period_end": "2026-10-15T00:00"
+    },
+    "model_input": "покажи дела на завтра",
+    "now": "2026-10-13T12:00",
+    "intent": "list_reminders",
+    "confidence": 0.9994874000549316,
+    "slots": {
+      "DATE": "на завтра"
+    },
+    "raw_intent": "list_reminders"
+  },
+  {
+    "case": {
+      "id": 2,
+      "utterance": "Отобразить напоминания на следующий месяц",
+      "scope": "assistant",
+      "intent": "list_reminders",
+      "period_start": "2026-11-01T00:00",
+      "period_end": "2026-12-01T00:00"
+    },
+    "model_input": "покажи напоминания на следующий месяц",
+    "now": "2026-10-13T12:00",
+    "intent": "list_reminders",
+    "confidence": 0.9999393224716187,
+    "slots": {
+      "DATE": "на следующий месяц"
+    },
+    "raw_intent": "list_reminders"
+  },
+  {
+    "case": {
+      "id": 3,
+      "utterance": "Показать мои напоминания на сегодня",
+      "scope": "assistant",
+      "intent": "list_reminders",
+      "period_start": "2026-10-13T00:00",
+      "period_end": "2026-10-14T00:00"
+    },
+    "model_input": "покажи мои напоминания на сегодня",
+    "now": "2026-10-13T12:00",
+    "intent": "list_reminders",
+    "confidence": 0.9999256134033203,
+    "slots": {
+      "DATE": "на сегодня"
+    },
+    "raw_intent": "list_reminders"
+  },
+  {
+    "case": {
+      "id": 4,
+      "utterance": "Вывести список задач на послезавтра",
+      "scope": "assistant",
+      "intent": "list_reminders",
+      "period_start": "2026-10-15T00:00",
+      "period_end": "2026-10-16T00:00"
+    },
+    "model_input": "выведи список задач на послезавтра",
+    "now": "2026-10-13T12:00",
+    "intent": "list_reminders",
+    "confidence": 0.9999003410339355,
+    "slots": {
+      "DATE": "послезавтра"
+    },
+    "raw_intent": "list_reminders"
+  },
+  {
+    "case": {
+      "id": 5,
+      "utterance": "Зафиксируем мысль завтра зафиксируем результат",
+      "scope": "assistant",
+      "intent": "create_note",
+      "text": "завтра зафиксируем результат"
+    },
+    "model_input": "зафиксируй мысль завтра зафиксируем результат",
+    "now": "2026-10-13T12:00",
+    "intent": "create_note",
+    "confidence": 0.9996830224990845,
+    "slots": {
+      "DATE": "завтра",
+      "TEXT": "зафиксируем результат"
+    },
+    "raw_intent": "create_note"
+  },
+  {
+    "case": {
+      "id": 6,
+      "utterance": "Зафиксировать мысль ключ находится возле очков",
+      "scope": "assistant",
+      "intent": "create_note",
+      "text": "ключ находится возле очков"
+    },
+    "model_input": "зафиксируй мысль ключ находится возле очков",
+    "now": "2026-10-13T12:00",
+    "intent": "create_note",
+    "confidence": 0.9999256134033203,
+    "slots": {
+      "TEXT": "мысль ключ находится возле очков"
+    },
+    "raw_intent": "create_note"
+  },
+  {
+    "case": {
+      "id": 7,
+      "utterance": "Запишем следующую мысль крышку нужно проверить",
+      "scope": "assistant",
+      "intent": "create_note",
+      "text": "крышку нужно проверить"
+    },
+    "model_input": "запиши следующую мысль крышку нужно проверить",
+    "now": "2026-10-13T12:00",
+    "intent": "create_note",
+    "confidence": 0.9996837377548218,
+    "slots": {
+      "TEXT": "проверить"
+    },
+    "raw_intent": "create_note"
+  },
+  {
+    "case": {
+      "id": 8,
+      "utterance": "Сохраним заметку о том, что часы остановились",
+      "scope": "assistant",
+      "intent": "create_note",
+      "text": "часы остановились"
+    },
+    "model_input": "сохрани заметку о том, что часы остановились",
+    "now": "2026-10-13T12:00",
+    "intent": "unknown",
+    "confidence": 0.9621791839599609,
+    "slots": {},
+    "raw_intent": "unknown"
+  },
+  {
+    "case": {
+      "id": 9,
+      "utterance": "Не отобразить дела",
+      "scope": "assistant",
+      "intent": "unknown"
+    },
+    "model_input": "Не отобразить дела",
+    "now": "2026-10-13T12:00",
+    "intent": "unknown",
+    "confidence": 0.9999178647994995,
+    "slots": {},
+    "raw_intent": "unknown"
+  },
+  {
+    "case": {
+      "id": 10,
+      "utterance": "Можно ли зафиксировать мысль",
+      "scope": "assistant",
+      "intent": "unknown"
+    },
+    "model_input": "Можно ли зафиксировать мысль",
+    "now": "2026-10-13T12:00",
+    "intent": "unknown",
+    "confidence": 0.9998212456703186,
+    "slots": {},
+    "raw_intent": "unknown"
+  },
+  {
+    "case": {
+      "id": 11,
+      "utterance": "Показать расписание автобусов",
+      "scope": "assistant",
+      "intent": "unknown"
+    },
+    "model_input": "покажи расписание автобусов",
+    "now": "2026-10-13T12:00",
+    "intent": "unknown",
+    "confidence": 0.991543173789978,
+    "slots": {},
+    "raw_intent": "unknown"
+  },
+  {
+    "case": {
+      "id": 12,
+      "utterance": "Отобразить фотографии",
+      "scope": "assistant",
+      "intent": "unknown"
+    },
+    "model_input": "Отобразить фотографии",
+    "now": "2026-10-13T12:00",
+    "intent": "unknown",
+    "confidence": 0.9895724654197693,
+    "slots": {},
+    "raw_intent": "unknown"
+  }
+]

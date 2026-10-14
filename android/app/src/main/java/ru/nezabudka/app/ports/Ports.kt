@@ -97,14 +97,18 @@ interface SettingsPort {
     fun setTheme(value: String)
     fun setCustomTheme(value: CustomThemeSettings)
     fun setPopupDurationSeconds(value: Int)
-    fun setLocalOnly(enabled: Boolean)
+    fun setHidePopupNotices(value: Boolean)
     fun setClassicNluEnabled(enabled: Boolean)
-    fun setExternalDataBackupEnabled(enabled: Boolean)
     fun setTimeOfDaySettings(values: List<TimeOfDaySetting>)
     fun setSttEngine(value: String)
+    fun setKeepGigaamModelLoaded(value: Boolean) { error("Настройка GigaAM не поддерживается") }
+    fun setGigaamThreadCount(value: Int) { error("Настройка GigaAM не поддерживается") }
+    fun setGigaamLivePreview(value: Boolean) { error("Настройка GigaAM не поддерживается") }
+    fun setEditorFullPunctuation(value: Boolean) { error("Настройка пунктуации не поддерживается") }
     fun setKeepWhisperModelLoaded(enabled: Boolean)
     fun setWhisperThreadCount(value: Int)
     fun setWhisperAccurateMode(enabled: Boolean)
+    fun setWhisperRawMode(enabled: Boolean)
     fun setNotePunctuationModel(value: String)
     fun setAudioPreprocessing(enabled: Boolean)
     fun setShowPlaybackButton(enabled: Boolean)
@@ -116,6 +120,7 @@ interface SettingsPort {
     fun setNoteColumns(value: Int)
     fun setNoteFolderInterface(value: String)
     fun setNoteTrashRetentionDays(value: Int)
+    fun setUiHapticsEnabled(enabled: Boolean)
     fun setShowNavigationLabels(enabled: Boolean)
     fun setUiPerformanceMode(value: String)
     fun setNotificationSound(uri: String)
