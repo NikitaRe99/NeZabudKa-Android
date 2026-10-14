@@ -29,6 +29,70 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class DispatcherTest {
+    @Test fun `punctuated voice commands keep daily recurrence and calendar clarification`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val voice = ru.nezabudka.app.speech.restoreVoicePunctuation(
+            ru.nezabudka.app.ports.SpeechRecognition("Напомни каждое утро осматривать аквариум"), "rupunct_small",
+            { _, _ -> "Напомни, каждое утро, осматривать аквариум." }, { throw AssertionError(it) })
+        val saved = useCase(voice.text).reminders.single()
+        assertEquals("daily", saved.recurrence)
+        assertEquals("осматривать аквариум", saved.text)
+        val request = useCase("Напомни, в следующем году, заменить коврик.")
+        val resolved = useCase("Пятого февраля, в восемь.", reminderDateClarification = request.reminderDateClarification)
+        assertEquals(LocalDateTime.of(2027, 2, 5, 8, 0), resolved.reminders.single().remindAt)
+        assertEquals("заменить коврик", resolved.reminders.single().text)
+    }
+
+    @Test fun `a calendar period supplied in clarification persists until a day is given`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val draft = useCase("Напомни заменить коврик")
+        val scoped = useCase("в следующем году вечером", reminderDateClarification = draft.reminderDateClarification)
+        assertEquals(2027, scoped.reminderDateClarification!!.dateRange!!.start.year)
+        assertTrue(reminderRepo.values.isEmpty())
+        val saved = useCase("5 февраля", reminderDateClarification = scoped.reminderDateClarification)
+        assertEquals(LocalDateTime.of(2027, 2, 5, 19, 0), saved.reminders.single().remindAt)
+    }
+
+    @Test fun `repeat can be supplied in date reply and persists through another clarification`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val draft = useCase("Напомни осматривать аквариум")
+        val saved = useCase("каждое утро", reminderDateClarification = draft.reminderDateClarification)
+        assertEquals("daily", saved.reminders.single().recurrence)
+        assertEquals(LocalDateTime.now(fixedClock).toLocalDate().plusDays(1).atTime(9, 0), saved.reminders.single().remindAt)
+        val vague = useCase("Напомни в следующем году заменить коврик")
+        val more = useCase("каждое утро", reminderDateClarification = vague.reminderDateClarification)
+        assertEquals("daily", more.reminderDateClarification!!.recurrence)
+        val resolved = useCase("5 февраля", reminderDateClarification = more.reminderDateClarification)
+        assertEquals("daily", resolved.reminders.single().recurrence)
+        assertEquals(LocalDateTime.of(2027, 2, 5, 9, 0), resolved.reminders.single().remindAt)
+    }
+
+    @Test fun `future year clarification retains recurrence time and scope before creating anything`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val draft = useCase("Напомни в следующем году каждое утро осматривать аквариум")
+        val clarification = draft.reminderDateClarification!!
+        assertTrue(reminderRepo.values.isEmpty())
+        assertEquals("осматривать аквариум", clarification.text)
+        assertEquals("daily", clarification.recurrence)
+        val outside = useCase("завтра", reminderDateClarification = clarification)
+        assertTrue(outside.reminderDateClarification != null)
+        assertTrue(reminderRepo.values.isEmpty())
+        val saved = useCase("5 февраля", reminderDateClarification = outside.reminderDateClarification)
+        assertEquals(LocalDateTime.of(2027, 2, 5, 9, 0), saved.reminders.single().remindAt)
+        assertEquals("daily", saved.reminders.single().recurrence)
+        assertEquals("осматривать аквариум", saved.reminders.single().text)
+    }
+
+    @Test fun `month clarification accepts a bare day and implicit daily commands keep repetition`() = runBlocking {
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ -> AssistantCommand(CommandIntent.UNKNOWN) }, dispatcher, fixedClock)
+        val draft = useCase("Напомни в следующем месяце в восемь заменить коврик")
+        val saved = useCase("18 числа", reminderDateClarification = draft.reminderDateClarification)
+        assertEquals(LocalDateTime.of(2026, 8, 18, 8, 0), saved.reminders.single().remindAt)
+        assertEquals("заменить коврик", saved.reminders.single().text)
+        val implicit = useCase("Мне нужно по вечерам осматривать аквариум")
+        assertEquals("daily", implicit.reminders.single().recurrence)
+    }
+
     @Test fun `notes stay loading until both repository snapshots arrive and preserve state on return`() = kotlinx.coroutines.test.runTest {
         val note = notesRepo.create("Работа", "Существующая заметка")
         val folder = notesRepo.findFolder("Работа")!!
@@ -164,6 +228,66 @@ class DispatcherTest {
     private val scheduler = FakeScheduler()
     private val fixedClock = Clock.fixed(Instant.parse("2026-07-14T10:20:00Z"), ZoneOffset.UTC)
     private val dispatcher = Dispatcher(reminderRepo, notesRepo, scheduler, fixedClock)
+
+    @Test fun `alternative command verb forms reach NLU and preserve the note payload`() = runBlocking {
+        val inputs = mutableListOf<String>()
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { text, now, _ ->
+            inputs += text
+            ru.nezabudka.app.llm.ClassicNluCommandMapper().map(
+                if (text.startsWith("покажи")) CommandIntent.LIST_REMINDERS else CommandIntent.CREATE_NOTE,
+                emptyMap(), text, now)
+        }, dispatcher, fixedClock)
+        val list = useCase.preview("Отобразить дела на завтра", CommandContext())
+        assertEquals(CommandIntent.LIST_REMINDERS, list.intent)
+        assertEquals(date(0).plusDays(1), list.periodStart)
+        val note = useCase.preview("Зафиксируем мысль завтра зафиксируем результат", CommandContext())
+        assertEquals("завтра зафиксируем результат", note.noteText)
+        assertEquals(listOf("покажи дела на завтра", "зафиксируй мысль завтра зафиксируем результат"), inputs)
+        assertTrue(notesRepo.notes.isEmpty())
+    }
+
+    @Test fun `verb normalization does not bypass a rejected model intent`() = runBlocking {
+        var calls = 0
+        val useCase = ExecuteTextCommand(CommandUnderstandingPort { _, _, _ ->
+            calls++
+            AssistantCommand(CommandIntent.UNKNOWN)
+        }, dispatcher, fixedClock)
+        for (input in listOf("Зафиксируем мысль проверить питание")) {
+            assertEquals(CommandIntent.UNKNOWN, useCase.preview(input, CommandContext()).intent)
+        }
+        assertEquals(1, calls)
+        assertTrue(notesRepo.notes.isEmpty())
+    }
+
+    @Test fun `future listing projects repetitions without changing stored date or scheduling`() = runBlocking {
+        val daily = reminderRepo.create("ежедневное", date(11), "daily")
+        reminderRepo.create("однократное", date(12), null)
+        val completed = reminderRepo.create("выполненное", date(13), "daily")
+        reminderRepo.setCompleted(completed.id, true)
+        val start = LocalDateTime.of(2026, 8, 1, 0, 0)
+        val result = dispatcher.dispatch(AssistantCommand(CommandIntent.LIST_REMINDERS,
+            periodStart = start, periodEnd = start.plusMonths(1)))
+        assertEquals(listOf(daily.id), result.reminders.map { it.id })
+        assertEquals(start.plusHours(11), result.reminders.single().remindAt)
+        assertEquals(date(11), reminderRepo.values.first { it.id == daily.id }.remindAt)
+        assertTrue(scheduler.scheduled.isEmpty())
+        assertTrue(scheduler.cancelled.isEmpty())
+    }
+
+    @Test fun `future listing respects exclusive end and exhausted custom recurrence`() = runBlocking {
+        val start = date(11).plusDays(1)
+        reminderRepo.create("на границе", start.plusDays(1), null)
+        reminderRepo.create("закончилось", date(11), ru.nezabudka.app.domain.CustomReminderRecurrence(
+            1, ru.nezabudka.app.domain.ReminderRecurrenceUnit.DAY, emptySet(), date(11), repeatCount = 1).storedValue())
+        reminderRepo.create("без даты", null, "daily")
+        val result = dispatcher.dispatch(AssistantCommand(CommandIntent.LIST_REMINDERS,
+            periodStart = start.plusDays(1), periodEnd = start.plusDays(2)))
+        assertEquals(listOf("на границе"), result.reminders.map { it.text })
+        val excluded = dispatcher.dispatch(AssistantCommand(CommandIntent.LIST_REMINDERS,
+            periodStart = start, periodEnd = start.plusDays(1)))
+        assertEquals(listOf("закончилось"), excluded.reminders.map { it.text })
+        assertEquals(start, excluded.reminders.single().remindAt)
+    }
 
     @Test fun `create and delete reminder schedules correctly`() = runBlocking {
         val creation = dispatcher.dispatch(AssistantCommand(CommandIntent.CREATE_REMINDER, text = "духовка", remindAt = date(12)))

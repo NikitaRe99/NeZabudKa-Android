@@ -10,6 +10,61 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class RussianTemporalParserTest {
+    @Test fun `future period in task content does not replace an earlier explicit reminder date`() {
+        val result = parser.parse("Напомни завтра обсудить планы на следующий год", now)
+        assertEquals(now.plusDays(1), result.remindAt)
+        assertEquals("обсудить планы на следующий год", result.cleanText)
+        assertNull(parser.pendingCalendarRange("Напомни завтра обсудить планы на следующий год", now))
+    }
+
+    @Test fun `parts of next month remain ranges instead of becoming tomorrow at given time`() {
+        val parsed = parser.parse("Напомни в конце следующего месяца в восемь заменить коврик", now)
+        assertNull(parsed.remindAt)
+        assertEquals("заменить коврик", parsed.cleanText)
+        val range = parser.pendingCalendarRange("в конце следующего месяца", now)!!
+        assertEquals(LocalDate.of(2026, 8, 21), range.start)
+        assertEquals(LocalDateTime.of(2026, 8, 25, 10, 20), parser.parseDateAnswer("25 числа", now, range, null).remindAt)
+    }
+
+    @Test fun `vague future periods do not invent a date even when a time is given`() {
+        for (phrase in listOf("в следующем году", "на будущий год", "в следующем месяце", "следующего месяца")) {
+            val result = parser.parse("Напомни $phrase вечером заменить коврик", now)
+            assertNull(result.remindAt)
+            assertEquals("заменить коврик", result.cleanText)
+            assertTrue(parser.pendingCalendarRange(phrase, now) != null)
+        }
+    }
+
+    @Test fun `explicit calendar fragments inherit next month or year`() {
+        assertEquals(LocalDateTime.of(2027, 2, 5, 19, 0),
+            parser.parse("Напомни пятого февраля следующего года вечером заменить коврик", now).remindAt)
+        assertEquals(LocalDateTime.of(2026, 8, 18, 9, 0),
+            parser.parse("Напомни в следующем месяце восемнадцатого числа утром заменить коврик", now).remindAt)
+        val december = LocalDateTime.of(2026, 12, 31, 22, 0)
+        assertEquals(LocalDateTime.of(2027, 1, 12, 8, 0),
+            parser.parse("Напомни в следующем месяце 12 числа в восемь заменить коврик", december).remindAt)
+    }
+
+    @Test fun `next calendar periods filter lists without changing exact date filters`() {
+        assertEquals(CalendarDateRange(LocalDate.of(2027, 1, 1), LocalDate.of(2028, 1, 1)),
+            parser.extractDateRange("Покажи напоминания в следующем году", now))
+        assertEquals(CalendarDateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 1)),
+            parser.extractDateRange("Покажи напоминания в следующем месяце", now))
+        assertNull(parser.extractDateRange("в следующем году 5 февраля", now))
+        assertEquals(LocalDate.of(2027, 2, 5), parser.extractDate("в следующем году 5 февраля", now))
+    }
+
+    @Test fun `clarification inherits calendar scope and previous clock but not relative date meaning`() {
+        val range = parser.pendingCalendarRange("в следующем году", now)!!
+        assertEquals(LocalDateTime.of(2027, 2, 5, 19, 0),
+            parser.parseDateAnswer("5 февраля", now, range, LocalTime.of(19, 0)).remindAt)
+        assertEquals(now.toLocalDate().plusDays(1).atTime(19, 0),
+            parser.parseDateAnswer("завтра", now, range, LocalTime.of(19, 0)).remindAt)
+        assertNull(parser.parseDateAnswer("в десять", now, range, LocalTime.of(19, 0)).remindAt)
+        assertTrue(runCatching { parser.parse("Напомни в следующем месяце 5 февраля заменить коврик", now) }
+            .exceptionOrNull() is CommandValidationException)
+    }
+
     private val parser = RussianTemporalParser()
     private val now = LocalDateTime.of(2026, 7, 14, 10, 20) // Tuesday
 

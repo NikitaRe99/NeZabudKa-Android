@@ -26,7 +26,6 @@ data class CustomThemeSettings(
     val danger: String = "#BA1A1A",
     val dangerContainer: String = "#FFDAD6",
     val onDangerContainer: String = "#410002",
-    val success: String = "#2E7D32",
     val warning: String = "#FFB300",
     val scrim: String = "#75000000",
     val noteDefault: String = "#FFFFFF",
@@ -61,7 +60,6 @@ fun defaultCustomTheme(base: String): CustomThemeSettings =
             danger = "#FFB4AB",
             dangerContainer = "#93000A",
             onDangerContainer = "#FFDAD6",
-            success = "#81C784",
             warning = "#FFD54F",
             scrim = "#99000000",
             noteDefault = "#29292B",
@@ -103,7 +101,19 @@ fun CustomThemeSettings.withAutomaticDependentColors(): CustomThemeSettings = co
     placeholder = automaticPlaceholderHex(textSecondary, background),
     cursor = textPrimary,
     noteDefault = card,
+    dangerContainer = automaticDangerContainerHex(danger, background),
+    onDangerContainer = automaticContentColorHex(automaticDangerContainerHex(danger, background)),
 )
+
+fun automaticDangerContainerHex(danger: String, background: String): String {
+    val foreground = parseRgb(danger) ?: return background
+    val surface = parseRgb(background) ?: return background
+    fun blend(f: Int, b: Int) = (f * 0.18f + b * 0.82f).roundToInt().coerceIn(0, 255)
+    return "#%02X%02X%02X".format(
+        blend(foreground.first, surface.first), blend(foreground.second, surface.second),
+        blend(foreground.third, surface.third),
+    )
+}
 
 private fun parseRgb(value: String): Triple<Int, Int, Int>? {
     val normalized = value.trim().removePrefix("#")

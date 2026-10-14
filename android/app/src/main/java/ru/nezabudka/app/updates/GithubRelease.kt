@@ -51,6 +51,12 @@ private fun parseVersion(version: String): List<Int>? {
     return version.split('.').map { it.toIntOrNull() ?: return null }
 }
 
+internal fun isNewerAppVersion(candidate: String?, current: String): Boolean {
+    val next = candidate?.let(::parseVersion) ?: return false
+    val installed = parseVersion(current) ?: return false
+    return compareVersions(next, installed) > 0
+}
+
 private fun compareVersions(left: List<Int>, right: List<Int>): Int {
     for (index in 0..2) {
         val comparison = left[index].compareTo(right[index])

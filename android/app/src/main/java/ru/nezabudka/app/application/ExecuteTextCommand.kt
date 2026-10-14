@@ -11,6 +11,7 @@ import ru.nezabudka.app.domain.parseRecurringReminder
 import ru.nezabudka.app.domain.reanchorSpokenRecurrence
 import ru.nezabudka.app.domain.isUnsupportedCommandMutation
 import ru.nezabudka.app.domain.isNonCommandSpeechStatement
+import ru.nezabudka.app.domain.normalizeCommandVerbForm
 import ru.nezabudka.app.domain.extractExplicitReminderCancellation
 import ru.nezabudka.app.domain.extractExplicitFutureReminder
 import ru.nezabudka.app.domain.extractExplicitFolderRetirement
@@ -20,6 +21,7 @@ import ru.nezabudka.app.domain.isUnsupportedMediaCommand
 import ru.nezabudka.app.domain.isCompletedActionStatement
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 /** Optional local classifier; all state-changing work remains in Kotlin [Dispatcher]. */
 class OptionalCommandUnderstanding(
     private val delegate: CommandUnderstandingPort,
@@ -103,9 +105,12 @@ class ExecuteTextCommand(
         ) dated.copy(noteFolder = defaultNoteFolder) else dated
         if (command.intent == CommandIntent.CREATE_REMINDER && command.remindAt == null) {
             command.validate()
-            val clarification = ReminderDateClarification(command.text.orEmpty(), command.recurrence)
+            val clarification = ReminderDateClarification(command.text.orEmpty(), command.recurrence,
+                temporal.pendingCalendarRange(commandText, now), temporal.extractTime(commandText))
             return ActionResult(
-                message = "Когда напомнить о «${clarification.text}»? Назовите дату и время.",
+                message = if (clarification.dateRange != null) {
+                    "Уточните дату для «${clarification.text}» в периоде ${describeRange(clarification.dateRange)}."
+                } else "Когда напомнить о «${clarification.text}»? Назовите дату и время.",
                 effect = ActionEffect.ReminderDateRequested(clarification),
                 reminderDateClarification = clarification,
             )
@@ -114,10 +119,11 @@ class ExecuteTextCommand(
     }
 
     private suspend fun understandCandidate(
-        text: String,
+        originalText: String,
         now: LocalDateTime,
         context: CommandContext,
     ): AssistantCommand {
+        val text = normalizeCommandVerbForm(originalText)
         if (isUnsupportedMediaCommand(text) || isCompletedActionStatement(text) || isUnsupportedCommandMutation(text) || isNonCommandSpeechStatement(text)) return AssistantCommand(CommandIntent.UNKNOWN)
         if (context.scope != CommandScope.NOTES) extractExplicitReminderCancellation(text)?.let { return it }
         if (context.scope != CommandScope.NOTES) extractExplicitFutureReminder(text, now, temporal)?.let { return it }
@@ -175,7 +181,8 @@ class ExecuteTextCommand(
     }
 
     private fun extractImplicitReminder(text: String, now: LocalDateTime): AssistantCommand? {
-        val parsed = temporal.parse(text, now)
+        val recurring = parseRecurringReminder(text, now, temporal)
+        val parsed = recurring.temporal
         val task = IMPLICIT_REMINDER_PREFIX.matchEntire(parsed.cleanText)
             ?.groupValues?.get(1)
             ?.trim()?.trim(',', '.', ':', ';', '!', '?')?.trim()
@@ -190,6 +197,7 @@ class ExecuteTextCommand(
             intent = CommandIntent.CREATE_REMINDER,
             text = task,
             remindAt = parsed.remindAt,
+            recurrence = recurring.recurrence,
             timeExpression = parsed.expression,
             delayValue = delay?.value,
             delayUnit = delay?.unit,
@@ -218,16 +226,28 @@ class ExecuteTextCommand(
                 ),
             )
         }
-        val parsed = temporal.parse(answer, now)
+        val answerRecurrence = parseRecurringReminder(answer, now, temporal).recurrence
+        val continued = clarification.copy(
+            recurrence = answerRecurrence ?: clarification.recurrence,
+            dateRange = clarification.dateRange ?: temporal.pendingCalendarRange(answer, now),
+            preferredTime = temporal.extractTime(answer) ?: clarification.preferredTime,
+        )
+        val parsed = temporal.parseDateAnswer(answer, now, continued.dateRange, continued.preferredTime)
         if (parsed.remindAt == null) {
             return ActionResult(
                 message = "Не удалось определить дату. Укажите её, например: «завтра в девять», либо ответьте «без даты» или «отмена».",
-                effect = ActionEffect.ReminderDateRequested(clarification),
-                reminderDateClarification = clarification,
+                effect = ActionEffect.ReminderDateRequested(continued),
+                reminderDateClarification = continued,
             )
         }
         val delay = temporal.extractDelay(answer)
-        val (start, recurrence) = reanchorSpokenRecurrence(clarification.recurrence, parsed.remindAt)
+        if (clarification.dateRange != null && !clarification.dateRange.contains(parsed.remindAt.toLocalDate())) {
+            return ActionResult(
+                message = "Дата не входит в выбранный период ${describeRange(clarification.dateRange)}. Уточните дату либо ответьте «отмена».",
+                effect = ActionEffect.ReminderDateRequested(continued), reminderDateClarification = continued,
+            )
+        }
+        val (start, recurrence) = reanchorSpokenRecurrence(continued.recurrence, parsed.remindAt)
         return dispatcher.dispatch(
             AssistantCommand(
                 intent = CommandIntent.CREATE_REMINDER,
@@ -254,6 +274,11 @@ class ExecuteTextCommand(
                 CommandScope.ASSISTANT -> "Команда недоступна"
             },
         )
+    }
+
+    private fun describeRange(range: ru.nezabudka.app.domain.CalendarDateRange): String {
+        val format = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        return "${range.start.format(format)} — ${range.endExclusive.minusDays(1).format(format)}"
     }
 
     private companion object {

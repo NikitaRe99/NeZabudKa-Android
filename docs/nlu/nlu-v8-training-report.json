@@ -1,0 +1,99 @@
+{
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3060",
+  "examples": 27402,
+  "train_examples": 23910,
+  "validation_examples": 3492,
+  "class_counts": {
+    "create_folder": 2784,
+    "create_note": 4694,
+    "create_reminder": 6856,
+    "delete_folder": 2884,
+    "delete_reminder": 3158,
+    "list_reminders": 3191,
+    "unknown": 3835
+  },
+  "best_validation": {
+    "intent_accuracy": 1.0,
+    "intent_macro_f1": 1.0,
+    "slot_token_accuracy": 0.9994622391019393,
+    "slot_macro_f1": 0.8967432988739381,
+    "entity_exact_match": 0.9982817869415808,
+    "confusion_matrix": [
+      [
+        589,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        473,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        391,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        727,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        345,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        421,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        546
+      ]
+    ]
+  },
+  "best_epoch": 2,
+  "seed": 20260808,
+  "torch_version": "2.13.0+cu126",
+  "split": "intent-stratified normalized slot-template groups; no template/case/punctuation overlap",
+  "recovery_v6": true,
+  "accuracy_v8": true,
+  "warm_start_sha256": "da2311a6853518c004e48655cc168a5e480bf5bab8b65fd5de96a764d0fc3ec2",
+  "teacher_retention": true,
+  "learning_rate": 5e-06,
+  "training_sha256": "ac76cfc9e25a3ae31f1ef26c3c59b469410b3ef2362d5dd15569b63f3c7dd69e",
+  "validation_sha256": "2a2a0257962b922eabd51d7fb43d2f210fac80dc887f4badc67a03f7dd53e7e1"
+}

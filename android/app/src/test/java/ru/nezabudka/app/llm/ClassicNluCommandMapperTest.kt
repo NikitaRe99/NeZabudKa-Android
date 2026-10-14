@@ -8,6 +8,28 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClassicNluCommandMapperTest {
+    @Test fun `spoken note carriers override cropped BIO spans without truncating nouns`() {
+        val cases = listOf(
+            Triple("Зафиксируй мысль медный браслет лежит возле глобуса", null, "медный браслет лежит возле глобуса"),
+            Triple("Хочу сохранить заметку о том, что крышку контейнера нужно заменить", null, "крышку контейнера нужно заменить"),
+            Triple("Оставь запись в папке Лунный архив о том что запасной ремешок лежит возле часов", "Лунный архив", "запасной ремешок лежит возле часов"),
+            Triple("Сохрани запись в папке Домашние опыты о том, что мысль о ремонте появилась вчера", "Домашние опыты", "мысль о ремонте появилась вчера"),
+        )
+        for ((input, folder, body) in cases) {
+            val command = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "лежит возле", "DATE" to "часов"), input, now)
+            assertEquals(body, command.noteText)
+            assertEquals(folder, command.noteFolder)
+        }
+    }
+    @Test fun `NLU and direct commands use the same daily and future calendar rules`() {
+        val repeated = mapper.map(CommandIntent.CREATE_REMINDER, emptyMap(), "Не забывай по вечерам осматривать аквариум", now)
+        assertEquals("daily", repeated.recurrence)
+        assertEquals(now.toLocalDate().atTime(19, 0), repeated.remindAt)
+        val future = mapper.map(CommandIntent.CREATE_REMINDER, emptyMap(), "Напомни в следующем году пятого февраля в восемь заменить коврик", now)
+        assertEquals(LocalDateTime.of(2027, 2, 5, 8, 0), future.remindAt)
+        assertEquals("заменить коврик", future.text)
+    }
+
     @Test fun `an explicit note keeps acronyms even if the model drops them`() {
         assertEquals("проверить API", mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "проверить"), "Создай заметку проверить API", now).noteText)
         val withoutFolder = mapper.map(CommandIntent.CREATE_NOTE, mapOf("TEXT" to "позвонить поставщику"), "Сохрани заметку без папки позвонить поставщику", now)

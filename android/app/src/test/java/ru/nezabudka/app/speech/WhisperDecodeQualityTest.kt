@@ -15,7 +15,9 @@ class WhisperDecodeQualityTest {
         assertFalse(whisperTextsAgree("Привет", "привет привет"))
     }
     @Test fun taskContextNeverLeaksCommandsIntoDictation() {
-        assertEquals("", whisperRequestPrompt(listOf("Работа"), WhisperRequestContext.DICTATION, 768))
+        for (window in listOf(0, 208, 288, 512, 768)) {
+            assertEquals("", whisperRequestPrompt(listOf("Работа", "Напомни завтра", "Покажи заметки"), WhisperRequestContext.DICTATION, window))
+        }
         val date = whisperRequestPrompt(listOf("Работа"), WhisperRequestContext.DATE_REPLY, 208)
         assertFalse(date.contains("создай", true)); assertFalse(date.contains("Работа"))
         assertTrue(date.contains("без времени"))

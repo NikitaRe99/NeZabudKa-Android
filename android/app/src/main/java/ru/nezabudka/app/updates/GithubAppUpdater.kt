@@ -14,12 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +25,10 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import androidx.work.workDataOf
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import ru.nezabudka.app.BuildConfig
@@ -35,11 +37,12 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 data class AppUpdateState(
-    val automatic: Boolean,
     val status: String,
     val version: String?,
     val percent: Int,
     val message: String?,
+    val searchEnabled: Boolean = true,
+    val checkedAt: Long = 0L,
 )
 
 object GithubAppUpdater {
@@ -48,20 +51,29 @@ object GithubAppUpdater {
     private const val MANUAL = "github-release-manual"
     private const val CHANNEL = "app_updates"
     internal const val API_URL = "https://api.github.com/repos/NikitaRe99/NeZabudKa-Android/releases?per_page=30"
-    internal val supported: Boolean get() = BuildConfig.BUILD_TYPE == "release" && BuildConfig.APPLICATION_ID == "ru.nezabudka.app"
+    internal val supported: Boolean get() = BuildConfig.GITHUB_UPDATES_ENABLED && BuildConfig.BUILD_TYPE == "release" && BuildConfig.APPLICATION_ID == "ru.nezabudka.app"
 
     private fun preferences(context: Context) = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
     internal fun file(context: Context) = File(context.cacheDir, "updates/release.apk")
 
     fun read(context: Context): AppUpdateState {
+        if (!BuildConfig.GITHUB_UPDATES_ENABLED) return AppUpdateState("disabled", null, 0, null, searchEnabled = false)
         val prefs = preferences(context)
         val status = prefs.getString("status", "idle") ?: "idle"
+        val version = prefs.getString("version", null)
+        val actionable = status in setOf("ready", "available", "downloading")
+        val newer = isNewerAppVersion(version, BuildConfig.VERSION_NAME)
         return AppUpdateState(
-            automatic = prefs.getBoolean("automatic", false),
-            status = if (status == "ready" && !file(context).isFile) "available" else status,
-            version = prefs.getString("version", null),
+            status = when {
+                actionable && !newer -> "none"
+                status == "ready" && !file(context).isFile -> "available"
+                else -> status
+            },
+            version = version.takeIf { newer },
             percent = prefs.getInt("percent", 0),
             message = prefs.getString("message", null),
+            searchEnabled = prefs.getBoolean("search_enabled", true),
+            checkedAt = prefs.getLong("checked_at", 0L),
         )
     }
 
@@ -76,37 +88,37 @@ object GithubAppUpdater {
     }
 
     internal fun update(context: Context, status: String, version: String? = null, percent: Int = 0, message: String? = null) {
-        preferences(context).edit()
+        val editor = preferences(context).edit()
             .putString("status", status)
             .putString("version", version)
             .putInt("percent", percent)
             .putString("message", message)
-            .apply()
+        if (status in setOf("none", "available", "ready")) editor.putLong("checked_at", System.currentTimeMillis())
+        editor.apply()
     }
 
-    fun setAutomatic(context: Context, enabled: Boolean) {
-        preferences(context).edit().putBoolean("automatic", enabled).apply()
+
+    fun setSearchEnabled(context: Context, enabled: Boolean) {
+        preferences(context).edit().putBoolean("search_enabled", enabled).apply()
         configure(context)
     }
 
     fun configure(context: Context) {
-        val manager = WorkManager.getInstance(context)
-        if (!supported || !preferences(context).getBoolean("automatic", false)) {
-            manager.cancelUniqueWork(PERIODIC)
-            return
-        }
-        val request = PeriodicWorkRequestBuilder<GithubUpdateWorker>(1, TimeUnit.DAYS)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.UNMETERED).build())
-            .build()
-        manager.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request)
+        // Cancel periodic downloads retained by older versions.
+        WorkManager.getInstance(context).cancelUniqueWork(PERIODIC)
+        if (!supported) WorkManager.getInstance(context).cancelUniqueWork(MANUAL)
+        preferences(context).edit().remove("automatic").apply()
     }
 
-    fun checkNow(context: Context) {
+    fun checkNow(context: Context, download: Boolean = false, startup: Boolean = false) {
         if (!supported) return
+        if (startup && !read(context).searchEnabled) return
         val request = OneTimeWorkRequestBuilder<GithubUpdateWorker>()
+            .setInputData(workDataOf("download" to download, "startup" to startup))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(MANUAL, ExistingWorkPolicy.REPLACE, request)
+        WorkManager.getInstance(context).enqueueUniqueWork(MANUAL,
+            if (startup) ExistingWorkPolicy.KEEP else ExistingWorkPolicy.REPLACE, request)
     }
 
     fun install(context: Context) {
@@ -135,9 +147,15 @@ object GithubAppUpdater {
 }
 
 class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    companion object { private val operationMutex = Mutex() }
+    override suspend fun doWork(): Result = operationMutex.withLock { performUpdate() }
+    private suspend fun performUpdate(): Result = withContext(Dispatchers.IO) {
         if (!GithubAppUpdater.supported) return@withContext Result.success()
         val context = applicationContext
+        if (inputData.getBoolean("automatic", false)) return@withContext Result.success()
+        val preferences = GithubAppUpdater.read(context)
+        if (inputData.getBoolean("startup", false) && !preferences.searchEnabled)
+            return@withContext Result.success()
         try {
             GithubAppUpdater.update(context, "checking")
             val client = OkHttpClient.Builder()
@@ -160,7 +178,11 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
             val target = GithubAppUpdater.file(context)
             if (target.isFile && validDownload(target, release)) {
                 GithubAppUpdater.update(context, "ready", release.version, 100)
-                GithubAppUpdater.notifyReady(context, release.version)
+                if (inputData.getBoolean("download", false)) GithubAppUpdater.notifyReady(context, release.version)
+                return@withContext Result.success()
+            }
+            if (!inputData.getBoolean("download", false)) {
+                GithubAppUpdater.update(context, "available", release.version)
                 return@withContext Result.success()
             }
             target.parentFile?.mkdirs()
@@ -199,6 +221,9 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
             GithubAppUpdater.update(context, "ready", release.version, 100)
             GithubAppUpdater.notifyReady(context, release.version)
             Result.success()
+        } catch (cancelled: CancellationException) {
+            GithubAppUpdater.update(context, "idle")
+            throw cancelled
         } catch (error: Exception) {
             GithubAppUpdater.update(context, "error", message = error.message ?: "Ошибка обновления")
             if (runAttemptCount < 2) Result.retry() else Result.failure()

@@ -7,18 +7,24 @@ data class RecurringTemporalResult(val temporal: TemporalResult, val recurrence:
 
 /** Parse repeat language before calendar parsing, so recurring weekdays are not single dates. */
 fun parseRecurringReminder(text: String, now: LocalDateTime, temporal: RussianTemporalParser): RecurringTemporalResult {
-    val repeat = REPEAT_EXPRESSION.find(text) ?: run {
-        if (Regex("(?iu)(?<![\\p{L}])кажд(?:ые|ую|ый)(?![\\p{L}])").containsMatchIn(text)) {
+    val repeats = REPEAT_EXPRESSION.findAll(text).toList()
+    val timeRepeats = repeats.filter { recurringNamedTime(it.value) != null }
+    val calendarRepeats = repeats.filter { recurringNamedTime(it.value) == null }
+    if (timeRepeats.size > 1 || calendarRepeats.size > 1) {
+        throw CommandValidationException("Укажите одно правило повтора. Для утра и вечера создайте два напоминания.")
+    }
+    val repeat = calendarRepeats.firstOrNull() ?: timeRepeats.firstOrNull() ?: run {
+        if (Regex("(?iu)(?<![\\p{L}])кажд(?:ые|ую|ый|ое)(?![\\p{L}])").containsMatchIn(text)) {
             throw CommandValidationException("Не удалось определить повтор. Укажите дни, недели, месяцы или годы; например, «каждые три дня»")
         }
         return RecurringTemporalResult(temporal.parse(text, now), null)
     }
-    val expression = repeat.value.lowercase().replace('ё', 'е')
+    val expression = repeat.value.lowercase().replace('ё', 'е').replace(Regex("\\s+"), " ")
     val days = WEEKDAY_WORD.findAll(expression).map { weekday(it.value) }.toSet()
     val count = REPEAT_COUNT.find(text)
     val until = REPEAT_UNTIL.find(text)
     if (count != null && until != null) throw CommandValidationException("Укажите либо число повторов, либо дату окончания")
-    var clean = text.removeRange(repeat.range)
+    var clean = REPEAT_EXPRESSION.replace(text) { recurringNamedTime(it.value) ?: " " }
     count?.value?.let { clean = clean.replace(it, " ") }
     until?.value?.let { clean = clean.replace(it, " ") }
     val parsed = temporal.parse(clean, now)
@@ -29,7 +35,7 @@ fun parseRecurringReminder(text: String, now: LocalDateTime, temporal: RussianTe
         expression.contains("год") || expression.contains("лет") -> ReminderRecurrenceUnit.YEAR
         else -> ReminderRecurrenceUnit.DAY
     }
-    val weekdays = if (expression.contains("будням") || expression.contains("рабочи")) {
+    val weekdays = if (expression.contains("будн") || expression.contains("рабочи")) {
         DayOfWeek.entries.filter { it.value <= 5 }.toSet()
     } else if (expression.contains("выходным")) setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) else days
     val start = parsed.remindAt?.let { alignRepeatStart(it, weekdays) }
@@ -39,7 +45,7 @@ fun parseRecurringReminder(text: String, now: LocalDateTime, temporal: RussianTe
     if (until != null && end == null) throw CommandValidationException("Не удалось определить дату окончания повторов")
     if (end != null && start != null && end.isBefore(start.toLocalDate())) throw CommandValidationException("Дата окончания раньше первого напоминания")
     val simple = if (interval == 1 && count == null && until == null) when {
-        expression.contains("будням") || expression.contains("рабочи") -> ReminderRecurrence.WEEKDAYS
+        expression.contains("будн") || expression.contains("рабочи") -> ReminderRecurrence.WEEKDAYS
         weekdays.isNotEmpty() -> null
         unit == ReminderRecurrenceUnit.DAY -> ReminderRecurrence.DAILY
         unit == ReminderRecurrenceUnit.WEEK -> ReminderRecurrence.WEEKLY
@@ -62,6 +68,13 @@ fun reanchorSpokenRecurrence(value: String?, start: LocalDateTime): Pair<LocalDa
 private fun alignRepeatStart(start: LocalDateTime, days: Set<DayOfWeek>): LocalDateTime {
     if (days.isEmpty()) return start
     return (0L..6L).map(start::plusDays).first { it.dayOfWeek in days }
+}
+
+private fun recurringNamedTime(expression: String): String? = when (expression.lowercase().replace(Regex("\\s+"), " ")) {
+    "каждое утро", "по утрам" -> "утром"
+    "каждый вечер", "по вечерам" -> "вечером"
+    "каждую ночь", "по ночам" -> "ночью"
+    else -> null
 }
 
 private fun spokenRepeatNumber(text: String): Int {
@@ -93,13 +106,14 @@ private val REPEAT_TAIL = "(?:(?:$REPEAT_TENS)(?:\\s+(?:$REPEAT_UNITS))?|$REPEAT
 private val REPEAT_NUMBER = "\\d{1,3}|(?:(?:$REPEAT_HUNDREDS)(?:\\s+$REPEAT_TAIL)?|$REPEAT_TAIL)"
 private const val REPEAT_DAY = "понедельник(?:ам)?|вторник(?:ам)?|сред(?:у|ам|а)|четверг(?:ам)?|пятниц(?:у|ам|а)|суббот(?:у|ам|а)|воскресень(?:е|ям)"
 private val WEEKDAY_WORD = Regex("(?:$REPEAT_DAY)(?![\\p{L}])")
-private val INTERVAL = Regex("кажд(?:ые|ую|ый)\\s+($REPEAT_NUMBER)\\s+")
+private val INTERVAL = Regex("кажд(?:ые|ую|ый|ое)\\s+($REPEAT_NUMBER)\\s+")
 private val REPEAT_COUNT = Regex("(?iu)(?<![\\p{L}])(?:всего|повтори|повторить)\\s+($REPEAT_NUMBER)\\s+раз(?:а)?(?![\\p{L}])")
 private val REPEAT_UNTIL = Regex("(?iu)(?<![\\p{L}])до\\s+(\\d{1,2}[./]\\d{1,2}(?:[./]\\d{2,4})?|\\d{1,2}\\s+(?:января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?:\\s+\\d{4})?)(?![\\p{L}\\d])")
 private val REPEAT_EXPRESSION = Regex(
     "(?iu)(?<![\\p{L}])(?:" +
-        "(?:кажд(?:ые|ую|ый)\\s+|по\\s+)(?:$REPEAT_DAY)(?:\\s*(?:,|и)\\s*(?:$REPEAT_DAY))*|" +
-        "по\\s+(?:будням|выходным)|каждый\\s+рабочий\\s+день|" +
+        "каждое\\s+утро|каждый\\s+вечер|каждую\\s+ночь|по\\s+(?:утрам|вечерам|ночам)|" +
+        "(?:кажд(?:ые|ую|ый|ое)\\s+|по\\s+)(?:$REPEAT_DAY)(?:\\s*(?:,|и)\\s*(?:$REPEAT_DAY))*|" +
+        "по\\s+(?:будням|выходным|рабочим\\s+дням)|каждый\\s+(?:рабочий|будний)\\s+день|" +
         "ежедневно|еженедельно|ежемесячно|ежегодно|" +
         "раз\\s+в\\s+(?:день|неделю|месяц|год)|" +
         "кажд(?:ые|ую|ый)\\s+(?:(?:$REPEAT_NUMBER)\\s+)?(?:день|дня|дней|неделю|недели|недель|месяц|месяца|месяцев|год|года|лет)" +

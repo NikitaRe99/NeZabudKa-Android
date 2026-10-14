@@ -57,6 +57,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -294,21 +295,20 @@ internal fun AlarmSurface(
                     Text("НеЗабудьКа", style = MaterialTheme.typography.titleMedium)
                     Text(reminderText, style = MaterialTheme.typography.bodyLarge, maxLines = 3)
                     if (!showSnoozeOptions) {
-                        FlowRow(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Button(
                                 onClick = complete,
-                                modifier = Modifier.widthIn(min = 120.dp).heightIn(min = 48.dp),
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                                 shape = RoundedCornerShape(theme.shapes.action),
                             ) {
                                 Text("Выполнено", style = MaterialTheme.typography.labelLarge)
                             }
                             OutlinedButton(
                                 onClick = { showSnoozeOptions = true },
-                                modifier = Modifier.widthIn(min = 120.dp).heightIn(min = 48.dp),
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                                 shape = RoundedCornerShape(theme.shapes.action),
                             ) {
                                 Text("Отложить", style = MaterialTheme.typography.labelLarge)
@@ -470,8 +470,9 @@ private fun SwipeToCompleteButton(complete: () -> Unit) {
         hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
         complete()
     }
-    val thumbSize = 52.dp
-    val horizontalPadding = 6.dp
+    val thumbSize = 64.dp
+    val horizontalPadding = 0.dp
+    val sliderShape = RoundedCornerShape(theme.shapes.action)
     val thumbSizePx = with(density) { thumbSize.toPx() }
     val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
     var trackWidthPx by remember { mutableFloatStateOf(0f) }
@@ -493,10 +494,11 @@ private fun SwipeToCompleteButton(complete: () -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(thumbSize)
+            .clip(sliderShape)
             .onSizeChanged { trackWidthPx = it.width.toFloat() }
-            .background(theme.colors.selected, RoundedCornerShape(theme.shapes.action))
-            .border(1.dp, theme.colors.accent, RoundedCornerShape(theme.shapes.action))
+            .background(theme.colors.selected, sliderShape)
+            .border(1.dp, theme.colors.accent, sliderShape)
             .semantics {
                 contentDescription = "Проведите вправо, чтобы выполнить"
                 onClick(label = "Выполнить напоминание") {
@@ -524,6 +526,8 @@ private fun SwipeToCompleteButton(complete: () -> Unit) {
     ) {
         Text(
             "Проведите, чтобы выполнить",
+            modifier = Modifier.fillMaxWidth().padding(start = thumbSize + 8.dp, end = 12.dp),
+            textAlign = TextAlign.Center,
             color = theme.colors.textPrimary,
             style = MaterialTheme.typography.titleMedium,
         )
@@ -533,7 +537,7 @@ private fun SwipeToCompleteButton(complete: () -> Unit) {
                 .align(Alignment.CenterStart)
                 .graphicsLayer(translationX = displayedOffsetPx)
                 .size(thumbSize)
-                .background(theme.colors.accent, CircleShape),
+                .background(theme.colors.accent, sliderShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

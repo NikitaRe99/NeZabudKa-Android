@@ -141,6 +141,19 @@ class WavAudioRecorder(
         output
     }
 
+    /** Snapshot only completed PCM samples; the live WAV header is patched on stop. */
+    fun previewSamples(): FloatArray? {
+        if (!recording.get() || !::output.isInitialized) return null
+        return RandomAccessFile(output, "r").use { file ->
+            val pcmBytes = ((file.length() - WAV_HEADER_BYTES).coerceAtLeast(0) / 2 * 2).coerceAtMost(20L * 60 * 16000 * 2).toInt()
+            if (pcmBytes < 16000) return@use null
+            val pcm = ByteArray(pcmBytes)
+            file.seek(WAV_HEADER_BYTES.toLong()); file.readFully(pcm)
+            val data = ByteBuffer.wrap(pcm).order(ByteOrder.LITTLE_ENDIAN)
+            FloatArray(pcmBytes / 2) { data.short / 32768f }
+        }
+    }
+
     override fun cancel() {
         if (!recording.getAndSet(false)) return
         runCatching { recorder?.stop() }
@@ -295,10 +308,9 @@ internal fun androidRecognizerMode(
     sdk: Int,
     systemAvailable: Boolean,
     onDeviceAvailable: Boolean,
-    localOnly: Boolean,
 ): AndroidRecognizerMode = when {
     sdk >= 31 && onDeviceAvailable -> AndroidRecognizerMode.ON_DEVICE
-    !localOnly && systemAvailable -> AndroidRecognizerMode.SYSTEM
+    systemAvailable -> AndroidRecognizerMode.SYSTEM
     else -> AndroidRecognizerMode.UNAVAILABLE
 }
 
@@ -308,28 +320,15 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : LiveSpeechTo
     private val main = Handler(Looper.getMainLooper())
     private var liveRecognizer: SpeechRecognizer? = null
 
-    fun isAvailable(localOnly: Boolean = false): Boolean = recognizerMode(localOnly) != AndroidRecognizerMode.UNAVAILABLE
+    fun isAvailable(): Boolean = recognizerMode() != AndroidRecognizerMode.UNAVAILABLE
 
-    fun availabilityDescription(localOnly: Boolean = false): String = when {
-        localOnly && Build.VERSION.SDK_INT < 31 -> "Локальный Android STT доступен начиная с Android 12"
-        localOnly && recognizerMode(true) == AndroidRecognizerMode.UNAVAILABLE -> "На устройстве нет локальной службы распознавания"
-        localOnly -> "Распознавание выполняется локально средствами Android"
-        recognizerMode(false) == AndroidRecognizerMode.ON_DEVICE -> "Доступно локальное распознавание Android"
-        recognizerMode(false) == AndroidRecognizerMode.SYSTEM -> "Системный сервис может использовать интернет"
+    fun availabilityDescription(): String = when {
+        recognizerMode() == AndroidRecognizerMode.ON_DEVICE -> "Доступно локальное распознавание Android"
+        recognizerMode() == AndroidRecognizerMode.SYSTEM -> "Системный сервис может использовать интернет"
         else -> "На устройстве не установлена служба распознавания речи"
     }
 
     override fun start(
-        onResult: (SpeechRecognition) -> Unit,
-        onError: (Throwable) -> Unit,
-    ) = start(
-        localOnly = false,
-        onResult = onResult,
-        onError = onError,
-    )
-
-    fun start(
-        localOnly: Boolean,
         onResult: (SpeechRecognition) -> Unit,
         onError: (Throwable) -> Unit,
     ) {
@@ -337,9 +336,9 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : LiveSpeechTo
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 onError(SecurityException("Разрешите доступ к микрофону")); return@post
             }
-            val mode = recognizerMode(localOnly)
+            val mode = recognizerMode()
             if (mode == AndroidRecognizerMode.UNAVAILABLE) {
-                onError(IllegalStateException(availabilityDescription(localOnly))); return@post
+                onError(IllegalStateException(availabilityDescription())); return@post
             }
             cancelInternal()
             val recognizer = createRecognizer(mode)
@@ -399,7 +398,7 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : LiveSpeechTo
                         continuation.resumeWithException(IllegalStateException("SpeechRecognizer недоступен на устройстве")); return@post
                     }
                     val uri: Uri = FileProvider.getUriForFile(context, "${context.packageName}.files", pcm)
-                    val mode = recognizerMode(localOnly = false)
+                    val mode = recognizerMode()
                     val recognizer = createRecognizer(mode)
                     recognizer.setRecognitionListener(listener(recognizer,
                         { if (continuation.isActive) continuation.resume(it) },
@@ -441,11 +440,10 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : LiveSpeechTo
     private fun onDeviceRecognitionAvailable(): Boolean = Build.VERSION.SDK_INT >= 31 &&
         runCatching { SpeechRecognizer.isOnDeviceRecognitionAvailable(context) }.getOrDefault(false)
 
-    private fun recognizerMode(localOnly: Boolean): AndroidRecognizerMode = androidRecognizerMode(
+    private fun recognizerMode(): AndroidRecognizerMode = androidRecognizerMode(
         sdk = Build.VERSION.SDK_INT,
         systemAvailable = systemRecognitionAvailable(),
         onDeviceAvailable = onDeviceRecognitionAvailable(),
-        localOnly = localOnly,
     )
 
     private fun createRecognizer(mode: AndroidRecognizerMode): SpeechRecognizer =

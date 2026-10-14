@@ -1,0 +1,2554 @@
+[
+    {
+        "case": {
+            "id": 1,
+            "intent": "create_folder",
+            "utterance": "Заведи отдельную папку Лунный архив",
+            "expected": "Папка Лунный архив",
+            "folder": "Лунный архив"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Лунный архив",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998646645968073,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 2,
+            "intent": "create_folder",
+            "utterance": "Хочу новую папку Медные находки",
+            "expected": "Папка Медные находки",
+            "folder": "Медные находки"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Медные находки",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998772087805241,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 3,
+            "intent": "create_folder",
+            "utterance": "Организуй папку Зелёный маяк",
+            "expected": "Папка Зелёный маяк",
+            "folder": "Зелёный маяк"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Зелёный маяк",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998617447348745,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 4,
+            "intent": "create_note",
+            "utterance": "Зафиксируй мысль медный браслет лежит возле глобуса",
+            "expected": "Заметка: Медный браслет лежит возле глобуса",
+            "text": "медный браслет лежит возле глобуса"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "медный браслет лежит возле глобуса",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998440988239522,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 5,
+            "intent": "create_note",
+            "utterance": "Пусть в заметках останется такая мысль запасной ключ находится в синей коробке",
+            "expected": "Заметка: Запасной ключ находится в синей коробке",
+            "text": "запасной ключ находится в синей коробке"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ находится в синей коробке",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999056193464904,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 6,
+            "intent": "create_note",
+            "utterance": "Хочу сохранить заметку о том что крышку контейнера нужно заменить",
+            "expected": "Заметка: Крышку контейнера нужно заменить",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9538927250808393,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 7,
+            "intent": "create_note",
+            "utterance": "Оставь запись в папке Лунный архив о том что запасной ремешок лежит возле часов",
+            "expected": "В папке Лунный архив заметка: Запасной ремешок лежит возле часов",
+            "text": "запасной ремешок лежит возле часов",
+            "folder": "Лунный архив"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ремешок лежит возле часов",
+            "folder": "Лунный архив",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9982576173816873,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 8,
+            "intent": "create_reminder",
+            "utterance": "Не дай мне забыть завтра в семнадцать проверить фонарь у синей калитки",
+            "expected": "Завтра 17:00, задача: Проверить фонарь у синей калитки",
+            "text": "проверить фонарь у синей калитки",
+            "remind_at": "2026-10-15T17:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить фонарь у синей калитки",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T17:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998159399463865,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 9,
+            "intent": "create_reminder",
+            "utterance": "Пусть завтра в десять двадцать пять будет напоминание проверить зарядку датчика",
+            "expected": "Завтра 10:25, задача: Проверить зарядку датчика",
+            "text": "проверить зарядку датчика",
+            "remind_at": "2026-10-15T10:25"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить зарядку датчика",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T10:25",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998842519324495,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 10,
+            "intent": "create_reminder",
+            "utterance": "Сигнализируй каждый вечер что нужно закрыть теплицу",
+            "expected": "Ежедневный повтор вечером, задача: Закрыть теплицу",
+            "text": "закрыть теплицу",
+            "recurrence": "daily"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "закрыть теплицу",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-14T19:00",
+            "recurrence": "daily",
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9988778741518859,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 11,
+            "intent": "create_reminder",
+            "utterance": "Хочу получать напоминание по рабочим дням утром протирать экран прибора",
+            "expected": "Повтор по рабочим дням утром, задача: Протирать экран прибора",
+            "text": "протирать экран прибора",
+            "recurrence": "weekdays"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "протирать экран прибора",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T09:00",
+            "recurrence": "weekdays",
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998057278913666,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 12,
+            "intent": "list_reminders",
+            "utterance": "Дай посмотреть расписание на завтра",
+            "expected": "Напоминания только на завтра",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Отклонено: уверенность ниже порога",
+        "confidence": 0.704328075784561,
+        "passed": false,
+        "differences": [
+            "intent: \"list_reminders\" -> \"unknown\"",
+            "period_start: \"2026-10-15T00:00\" -> null",
+            "period_end: \"2026-10-16T00:00\" -> null"
+        ],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 13,
+            "intent": "list_reminders",
+            "utterance": "Отобрази дела на следующую пятницу",
+            "expected": "Напоминания только на пятницу следующей календарной недели",
+            "period_start": "2026-10-23T00:00",
+            "period_end": "2026-10-24T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-23T00:00",
+            "period_end": "2026-10-24T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.7985609252930459,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 14,
+            "intent": "list_reminders",
+            "utterance": "Мне интересен список напоминаний на следующий месяц",
+            "expected": "Напоминания только за следующий календарный месяц",
+            "period_start": "2026-11-01T00:00",
+            "period_end": "2026-12-01T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-11-01T00:00",
+            "period_end": "2026-12-01T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9970307736110242,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 15,
+            "intent": "delete_reminder",
+            "utterance": "Исключи напоминание проверить фонарь у синей калитки",
+            "expected": "Удалить тестовое напоминание из команды 8",
+            "target": "проверить фонарь у синей калитки"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "проверить фонарь у синей калитки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9997229829297145,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 16,
+            "intent": "delete_folder",
+            "utterance": "Ликвидируй папку Зелёный маяк",
+            "expected": "Удалить тестовую папку из команды 3",
+            "folder": "Зелёный маяк"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_folder",
+            "text": null,
+            "folder": "Зелёный маяк",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998348068160441,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 17,
+            "utterance": "Главное не забыть проверить давление завтра утром",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "проверить давление",
+            "remind_at": "2026-10-15T09:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить давление",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T09:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998754400433625,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 18,
+            "utterance": "Что у меня намечено на завтра?",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": false,
+        "decision": "NLU not called: handled by standard parser",
+        "confidence": null,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": false
+    },
+    {
+        "case": {
+            "id": 19,
+            "utterance": "Зафиксируй мысль: запасной ключ лежит в синем футляре",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "запасной ключ лежит в синем футляре"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ лежит в синем футляре",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999874261941544,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 20,
+            "utterance": "Организуй папку Домашний ремонт",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998733582547763,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 21,
+            "utterance": "В папку Домашний ремонт запиши: заказать новые ручки для шкафа",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "create_note",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": false,
+        "decision": "NLU not called: handled by standard parser",
+        "confidence": null,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": false
+    },
+    {
+        "case": {
+            "id": 22,
+            "utterance": "Больше не напоминай про оплату парковки",
+            "intent": "delete_reminder",
+            "scope": "assistant",
+            "target": "оплату парковки"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "оплату парковки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998250771884385,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 23,
+            "utterance": "Сохрани мысль: запасной ключ лежит в синем футляре",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "запасной ключ лежит в синем футляре"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ лежит в синем футляре",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998498016629099,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 24,
+            "utterance": "Заведи папку Домашний ремонт",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998813866716622,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 25,
+            "utterance": "Хочу новую папку Садовые опыты",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Садовые опыты"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Садовые опыты",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998816757378952,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 26,
+            "utterance": "Зафиксируй: крышку контейнера нужно заменить",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9987830923641865,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 27,
+            "utterance": "Сохрани мысль о том, что крышку контейнера нужно заменить",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9994724932309562,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 28,
+            "utterance": "Положи в папку Садовые опыты мысль высота базилика двенадцать сантиметров",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "высота базилика двенадцать сантиметров",
+            "folder": "Садовые опыты"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "высота базилика двенадцать сантиметров",
+            "folder": "Садовые опыты",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998497119190769,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 29,
+            "utterance": "Не дай мне забыть забрать посылку завтра в 18:00",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "забрать посылку",
+            "remind_at": "2026-10-15T18:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "забрать посылку",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T18:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999910774306185,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 30,
+            "utterance": "Хочу напоминание проверить фильтр завтра в 19:00",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "проверить фильтр",
+            "remind_at": "2026-10-15T19:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить фильтр",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T19:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999832134869065,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 31,
+            "utterance": "Есть ли у меня задачи на завтра",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9996496446374552,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 32,
+            "utterance": "Перечисли запланированные дела на завтра",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9996745447905852,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 33,
+            "utterance": "Папка Старые чеки больше не нужна",
+            "intent": "delete_folder",
+            "scope": "assistant",
+            "folder": "Старые чеки"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_folder",
+            "text": null,
+            "folder": "Старые чеки",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998165058211843,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 34,
+            "utterance": "Мне больше не нужно напоминание про оплату парковки",
+            "intent": "delete_reminder",
+            "scope": "assistant",
+            "target": "оплату парковки"
+        },
+        "model": "v7",
+        "model_sha256": "9f684131355751923109798bcf8ed38927d63a816f366fde9f7c5cfa73d9931a",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "оплату парковки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9997763090842413,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 1,
+            "intent": "create_folder",
+            "utterance": "Заведи отдельную папку Лунный архив",
+            "expected": "Папка Лунный архив",
+            "folder": "Лунный архив"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Лунный архив",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999282263012417,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 2,
+            "intent": "create_folder",
+            "utterance": "Хочу новую папку Медные находки",
+            "expected": "Папка Медные находки",
+            "folder": "Медные находки"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Медные находки",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999340873168189,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 3,
+            "intent": "create_folder",
+            "utterance": "Организуй папку Зелёный маяк",
+            "expected": "Папка Зелёный маяк",
+            "folder": "Зелёный маяк"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Зелёный маяк",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999303510320132,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 4,
+            "intent": "create_note",
+            "utterance": "Зафиксируй мысль медный браслет лежит возле глобуса",
+            "expected": "Заметка: Медный браслет лежит возле глобуса",
+            "text": "медный браслет лежит возле глобуса"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "медный браслет лежит возле глобуса",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999278241841998,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 5,
+            "intent": "create_note",
+            "utterance": "Пусть в заметках останется такая мысль запасной ключ находится в синей коробке",
+            "expected": "Заметка: Запасной ключ находится в синей коробке",
+            "text": "запасной ключ находится в синей коробке"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ находится в синей коробке",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999462361457696,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 6,
+            "intent": "create_note",
+            "utterance": "Хочу сохранить заметку о том что крышку контейнера нужно заменить",
+            "expected": "Заметка: Крышку контейнера нужно заменить",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.99497961199555,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 7,
+            "intent": "create_note",
+            "utterance": "Оставь запись в папке Лунный архив о том что запасной ремешок лежит возле часов",
+            "expected": "В папке Лунный архив заметка: Запасной ремешок лежит возле часов",
+            "text": "запасной ремешок лежит возле часов",
+            "folder": "Лунный архив"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ремешок лежит возле часов",
+            "folder": "Лунный архив",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9997210918580017,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 8,
+            "intent": "create_reminder",
+            "utterance": "Не дай мне забыть завтра в семнадцать проверить фонарь у синей калитки",
+            "expected": "Завтра 17:00, задача: Проверить фонарь у синей калитки",
+            "text": "проверить фонарь у синей калитки",
+            "remind_at": "2026-10-15T17:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить фонарь у синей калитки",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T17:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998989038232826,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 9,
+            "intent": "create_reminder",
+            "utterance": "Пусть завтра в десять двадцать пять будет напоминание проверить зарядку датчика",
+            "expected": "Завтра 10:25, задача: Проверить зарядку датчика",
+            "text": "проверить зарядку датчика",
+            "remind_at": "2026-10-15T10:25"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить зарядку датчика",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T10:25",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999361715189725,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 10,
+            "intent": "create_reminder",
+            "utterance": "Сигнализируй каждый вечер что нужно закрыть теплицу",
+            "expected": "Ежедневный повтор вечером, задача: Закрыть теплицу",
+            "text": "закрыть теплицу",
+            "recurrence": "daily"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "закрыть теплицу",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-14T19:00",
+            "recurrence": "daily",
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9993764160288526,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 11,
+            "intent": "create_reminder",
+            "utterance": "Хочу получать напоминание по рабочим дням утром протирать экран прибора",
+            "expected": "Повтор по рабочим дням утром, задача: Протирать экран прибора",
+            "text": "протирать экран прибора",
+            "recurrence": "weekdays"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "протирать экран прибора",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T09:00",
+            "recurrence": "weekdays",
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999055009817721,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 12,
+            "intent": "list_reminders",
+            "utterance": "Дай посмотреть расписание на завтра",
+            "expected": "Напоминания только на завтра",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9804977354094679,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 13,
+            "intent": "list_reminders",
+            "utterance": "Отобрази дела на следующую пятницу",
+            "expected": "Напоминания только на пятницу следующей календарной недели",
+            "period_start": "2026-10-23T00:00",
+            "period_end": "2026-10-24T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-23T00:00",
+            "period_end": "2026-10-24T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9247213855297239,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 14,
+            "intent": "list_reminders",
+            "utterance": "Мне интересен список напоминаний на следующий месяц",
+            "expected": "Напоминания только за следующий календарный месяц",
+            "period_start": "2026-11-01T00:00",
+            "period_end": "2026-12-01T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-11-01T00:00",
+            "period_end": "2026-12-01T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9995896246351962,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 15,
+            "intent": "delete_reminder",
+            "utterance": "Исключи напоминание проверить фонарь у синей калитки",
+            "expected": "Удалить тестовое напоминание из команды 8",
+            "target": "проверить фонарь у синей калитки"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "проверить фонарь у синей калитки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998432916049365,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 16,
+            "intent": "delete_folder",
+            "utterance": "Ликвидируй папку Зелёный маяк",
+            "expected": "Удалить тестовую папку из команды 3",
+            "folder": "Зелёный маяк"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_folder",
+            "text": null,
+            "folder": "Зелёный маяк",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999230311012248,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 17,
+            "utterance": "Главное не забыть проверить давление завтра утром",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "проверить давление",
+            "remind_at": "2026-10-15T09:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить давление",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T09:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999307418424509,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 18,
+            "utterance": "Что у меня намечено на завтра?",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": false,
+        "decision": "NLU not called: handled by standard parser",
+        "confidence": null,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": false
+    },
+    {
+        "case": {
+            "id": 19,
+            "utterance": "Зафиксируй мысль: запасной ключ лежит в синем футляре",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "запасной ключ лежит в синем футляре"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ лежит в синем футляре",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999934979283537,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 20,
+            "utterance": "Организуй папку Домашний ремонт",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999363546016179,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 21,
+            "utterance": "В папку Домашний ремонт запиши: заказать новые ручки для шкафа",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "create_note",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "заказать новые ручки для шкафа",
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": false,
+        "decision": "NLU not called: handled by standard parser",
+        "confidence": null,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": false
+    },
+    {
+        "case": {
+            "id": 22,
+            "utterance": "Больше не напоминай про оплату парковки",
+            "intent": "delete_reminder",
+            "scope": "assistant",
+            "target": "оплату парковки"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "оплату парковки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999113152122187,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 23,
+            "utterance": "Сохрани мысль: запасной ключ лежит в синем футляре",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "запасной ключ лежит в синем футляре"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "запасной ключ лежит в синем футляре",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999288096931709,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 24,
+            "utterance": "Заведи папку Домашний ремонт",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Домашний ремонт"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Домашний ремонт",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999405608525701,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 25,
+            "utterance": "Хочу новую папку Садовые опыты",
+            "intent": "create_folder",
+            "scope": "assistant",
+            "folder": "Садовые опыты"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_folder",
+            "text": null,
+            "folder": "Садовые опыты",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999938386347736,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 26,
+            "utterance": "Зафиксируй: крышку контейнера нужно заменить",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9993446683485581,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 27,
+            "utterance": "Сохрани мысль о том, что крышку контейнера нужно заменить",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "крышку контейнера нужно заменить"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "крышку контейнера нужно заменить",
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998225742512925,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 28,
+            "utterance": "Положи в папку Садовые опыты мысль высота базилика двенадцать сантиметров",
+            "intent": "create_note",
+            "scope": "assistant",
+            "text": "высота базилика двенадцать сантиметров",
+            "folder": "Садовые опыты"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_note",
+            "text": "высота базилика двенадцать сантиметров",
+            "folder": "Садовые опыты",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999145895369344,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 29,
+            "utterance": "Не дай мне забыть забрать посылку завтра в 18:00",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "забрать посылку",
+            "remind_at": "2026-10-15T18:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "забрать посылку",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T18:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999471993944835,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 30,
+            "utterance": "Хочу напоминание проверить фильтр завтра в 19:00",
+            "intent": "create_reminder",
+            "scope": "assistant",
+            "text": "проверить фильтр",
+            "remind_at": "2026-10-15T19:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "create_reminder",
+            "text": "проверить фильтр",
+            "folder": null,
+            "target": null,
+            "remind_at": "2026-10-15T19:00",
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999225566150549,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 31,
+            "utterance": "Есть ли у меня задачи на завтра",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.999831755336743,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 32,
+            "utterance": "Перечисли запланированные дела на завтра",
+            "intent": "list_reminders",
+            "scope": "assistant",
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "list_reminders",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": "2026-10-15T00:00",
+            "period_end": "2026-10-16T00:00"
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998487388092057,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 33,
+            "utterance": "Папка Старые чеки больше не нужна",
+            "intent": "delete_folder",
+            "scope": "assistant",
+            "folder": "Старые чеки"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_folder",
+            "text": null,
+            "folder": "Старые чеки",
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9999131332109794,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    },
+    {
+        "case": {
+            "id": 34,
+            "utterance": "Мне больше не нужно напоминание про оплату парковки",
+            "intent": "delete_reminder",
+            "scope": "assistant",
+            "target": "оплату парковки"
+        },
+        "model": "v8",
+        "model_sha256": "5de0ba03db948763d5567a278e9cf0843e68c5181160a4cbe35f69926ec8e35f",
+        "baseline": {
+            "intent": "unknown",
+            "text": null,
+            "folder": null,
+            "target": null,
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "actual": {
+            "intent": "delete_reminder",
+            "text": null,
+            "folder": null,
+            "target": "оплату парковки",
+            "remind_at": null,
+            "recurrence": null,
+            "period_start": null,
+            "period_end": null
+        },
+        "modelCalled": true,
+        "decision": "Принято и передано Dispatcher",
+        "confidence": 0.9998827293073441,
+        "passed": true,
+        "differences": [],
+        "requiresNlu": true
+    }
+]

@@ -1,5 +1,7 @@
 package ru.nezabudka.app.domain
 
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -32,7 +34,7 @@ class SettingsRulesTest {
     fun `unknown restored enum values fall back to supported defaults`() {
         assertEquals("light", normalizeTheme("future-theme"))
         assertEquals("whisper", normalizeSttEngine("future-provider"))
-        assertEquals("my_order", normalizeReminderSort("random"))
+        assertEquals("date", normalizeReminderSort("random"))
         assertEquals("updated", normalizeNoteSort("random"))
         assertEquals("carousel", normalizeFolderInterface("random"))
         assertEquals(30, normalizeNoteTrashRetentionDays(14))
@@ -89,5 +91,11 @@ class SettingsRulesTest {
         assertEquals(8, maximumWhisperThreadCount(cpuCores = 8))
         assertEquals(12, maximumWhisperThreadCount(cpuCores = 12))
         assertEquals(1, maximumWhisperThreadCount(cpuCores = 0))
+    }
+    @Test fun `new NLU default does not turn off existing users`() {
+        assertFalse(migratedClassicNluEnabled(null, false))
+        assertTrue(migratedClassicNluEnabled(null, true))
+        assertTrue(migratedClassicNluEnabled(true, false))
+        assertFalse(migratedClassicNluEnabled(false, true))
     }
 }

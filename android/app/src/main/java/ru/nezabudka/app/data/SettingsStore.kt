@@ -41,25 +41,32 @@ data class PortableAppSettings(
     val theme: String = "light",
     val customTheme: CustomThemeSettings = CustomThemeSettings(),
     val popupDurationSeconds: Int = 5,
-    val localOnly: Boolean = false,
+    val hidePopupNotices: Boolean = false,
+    // Backup schema keeps the old default when reading files that omit this field.
     val classicNluEnabled: Boolean = true,
     val timeOfDaySettings: List<TimeOfDaySetting> = DEFAULT_TIME_OF_DAY_SETTINGS,
     val sttEngine: String = "whisper",
     val keepWhisperModelLoaded: Boolean = false,
+    val keepGigaamModelLoaded: Boolean = false,
+    val gigaamThreadCount: Int = 0,
+    val gigaamLivePreview: Boolean = false,
+    val editorFullPunctuation: Boolean = false,
     val whisperThreadCount: Int = 0,
     val whisperAccurateMode: Boolean = false,
+    val whisperRawMode: Boolean = false,
     val notePunctuationModel: String = "whisper",
     val audioPreprocessingEnabled: Boolean = true,
     val showPlaybackButton: Boolean = false,
     val showTechnicalLog: Boolean = false,
     val showAssistantWelcomeCard: Boolean = true,
     val trustStt: Boolean = false,
-    val reminderSort: String = "my_order",
+    val reminderSort: String = "date",
     val noteSort: String = "updated",
     val noteColumns: Int = 1,
     val noteFolderInterface: String = "carousel",
     val noteTrashRetentionDays: Int = DEFAULT_NOTE_TRASH_RETENTION_DAYS,
     val showNavigationLabels: Boolean = true,
+    val uiHapticsEnabled: Boolean = true,
     val uiPerformanceMode: String = UI_PERFORMANCE_AUTO,
     val notificationSound: String = "content://settings/system/notification_sound",
     val notificationVibrationEnabled: Boolean = true,
@@ -96,13 +103,18 @@ fun AppSettings.toPortableSettings(
     theme = theme,
     customTheme = customTheme,
     popupDurationSeconds = popupDurationSeconds,
-    localOnly = localOnly,
+    hidePopupNotices = hidePopupNotices,
     classicNluEnabled = classicNluEnabled,
     timeOfDaySettings = timeOfDaySettings,
     sttEngine = sttEngine,
     keepWhisperModelLoaded = keepWhisperModelLoaded,
+    keepGigaamModelLoaded = keepGigaamModelLoaded,
+    gigaamThreadCount = gigaamThreadCount,
+    gigaamLivePreview = gigaamLivePreview,
+    editorFullPunctuation = editorFullPunctuation,
     whisperThreadCount = whisperThreadCount,
     whisperAccurateMode = whisperAccurateMode,
+    whisperRawMode = whisperRawMode,
     notePunctuationModel = notePunctuationModel,
     audioPreprocessingEnabled = audioPreprocessingEnabled,
     showPlaybackButton = showPlaybackButton,
@@ -115,6 +127,7 @@ fun AppSettings.toPortableSettings(
     noteFolderInterface = noteFolderInterface,
     noteTrashRetentionDays = noteTrashRetentionDays,
     showNavigationLabels = showNavigationLabels,
+    uiHapticsEnabled = uiHapticsEnabled,
     uiPerformanceMode = uiPerformanceMode,
     notificationSound = notificationSound,
     notificationVibrationEnabled = notificationVibrationEnabled,
@@ -133,6 +146,28 @@ fun AppSettings.toPortableSettings(
 
 class SettingsStore(context: Context) : SettingsPort {
     private val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    init {
+        val hadSettings = prefs.all.isNotEmpty()
+        val editor = prefs.edit().remove("local_only").remove("external_data_backup")
+        if (!prefs.getBoolean("nlu_default_migrated", false)) {
+            val existing = prefs.all.keys.any { it !in setOf("local_only", "external_data_backup") } ||
+                context.getSharedPreferences("nlu_models", Context.MODE_PRIVATE).contains("selected_model")
+            val saved = if (prefs.contains("classic_nlu_enabled")) prefs.getBoolean("classic_nlu_enabled", false) else null
+            editor.putBoolean("classic_nlu_enabled", ru.nezabudka.app.domain.migratedClassicNluEnabled(saved, existing))
+                .putBoolean("nlu_default_migrated", true)
+        }
+        // Older installs could use the implicit Whisper default without an stt key.
+        // Persist the initial choice once so later preference writes cannot change it.
+        if (!prefs.contains("stt")) {
+            val updatedInstallation = runCatching {
+                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                info.lastUpdateTime > info.firstInstallTime
+            }.getOrDefault(true)
+            val engine = ru.nezabudka.app.domain.initialSttEngine(hadSettings, updatedInstallation)
+            editor.putString("stt", engine)
+        }
+        editor.apply()
+    }
     private val json = Json { ignoreUnknownKeys = true }
     private val _state = MutableStateFlow(read())
     override val state: StateFlow<AppSettings> = _state
@@ -202,7 +237,6 @@ class SettingsStore(context: Context) : SettingsPort {
             danger = sanitizeThemeColor(value.danger, fallback.danger),
             dangerContainer = sanitizeThemeColor(value.dangerContainer, fallback.dangerContainer),
             onDangerContainer = sanitizeThemeColor(value.onDangerContainer, fallback.onDangerContainer),
-            success = sanitizeThemeColor(value.success, fallback.success),
             warning = sanitizeThemeColor(value.warning, fallback.warning),
             scrim = sanitizeThemeColor(value.scrim, fallback.scrim),
             noteDefault = sanitizeThemeColor(value.noteDefault, fallback.noteDefault),
@@ -219,12 +253,8 @@ class SettingsStore(context: Context) : SettingsPort {
     }
     override fun setShowAssistantWelcomeCard(enabled: Boolean) { prefs.edit().putBoolean("show_assistant_welcome_card", enabled).apply(); _state.value = read() }
     override fun setPopupDurationSeconds(value: Int) { prefs.edit().putInt("popup_duration_seconds", value.coerceIn(0, 60)).apply(); _state.value = read() }
-    override fun setLocalOnly(enabled: Boolean) { prefs.edit().putBoolean("local_only", enabled).apply(); _state.value = read() }
+    override fun setHidePopupNotices(value: Boolean) { prefs.edit().putBoolean("hide_popup_notices", value).apply(); _state.value = read() }
     override fun setClassicNluEnabled(enabled: Boolean) { prefs.edit().putBoolean("classic_nlu_enabled", enabled).apply(); _state.value = read() }
-    override fun setExternalDataBackupEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("external_data_backup", enabled).apply()
-        _state.value = read()
-    }
     override fun setTimeOfDaySettings(values: List<TimeOfDaySetting>) {
         val sanitized = values.mapNotNull { value ->
             val phrase = value.phrase.trim().replace(Regex("\\s+"), " ")
@@ -239,6 +269,20 @@ class SettingsStore(context: Context) : SettingsPort {
         prefs.edit().putString("stt", normalized).apply()
         _state.value = read()
     }
+    override fun setKeepGigaamModelLoaded(value: Boolean) {
+        prefs.edit().putBoolean("keep_gigaam_model_loaded", value).apply()
+        _state.value = read()
+    }
+    override fun setGigaamThreadCount(value: Int) {
+        prefs.edit().putInt("gigaam_thread_count", normalizeWhisperThreadCount(value)).apply()
+        _state.value = read()
+    }
+    override fun setGigaamLivePreview(value: Boolean) {
+        prefs.edit().putBoolean("gigaam_live_preview", value).apply(); _state.value = read()
+    }
+    override fun setEditorFullPunctuation(value: Boolean) {
+        prefs.edit().putBoolean("editor_full_punctuation", value).apply(); _state.value = read()
+    }
     override fun setKeepWhisperModelLoaded(enabled: Boolean) {
         prefs.edit().putBoolean("keep_whisper_model_loaded", enabled).apply()
         _state.value = read()
@@ -249,6 +293,10 @@ class SettingsStore(context: Context) : SettingsPort {
     }
     override fun setWhisperAccurateMode(enabled: Boolean) {
         prefs.edit().putBoolean("whisper_accurate_mode", enabled).apply()
+        _state.value = read()
+    }
+    override fun setWhisperRawMode(enabled: Boolean) {
+        prefs.edit().putBoolean("whisper_raw_mode", enabled).apply()
         _state.value = read()
     }
     override fun setNotePunctuationModel(value: String) {
@@ -273,6 +321,7 @@ class SettingsStore(context: Context) : SettingsPort {
         prefs.edit().putInt("note_trash_retention_days", normalizeNoteTrashRetentionDays(value)).apply()
         _state.value = read()
     }
+    override fun setUiHapticsEnabled(enabled: Boolean) { prefs.edit().putBoolean("ui_haptics", enabled).apply(); _state.value = read() }
     override fun setShowNavigationLabels(enabled: Boolean) { prefs.edit().putBoolean("show_navigation_labels", enabled).apply(); _state.value = read() }
     override fun setUiPerformanceMode(value: String) {
         prefs.edit().putString("ui_performance_mode", normalizeUiPerformanceMode(value)).apply()
@@ -323,18 +372,19 @@ class SettingsStore(context: Context) : SettingsPort {
         setCustomTheme(value.customTheme)
         setTheme(value.theme)
         setPopupDurationSeconds(value.popupDurationSeconds)
+        setHidePopupNotices(value.hidePopupNotices)
         setShowAssistantWelcomeCard(value.showAssistantWelcomeCard)
-        setLocalOnly(value.localOnly)
         setClassicNluEnabled(value.classicNluEnabled)
         setTimeOfDaySettings(value.timeOfDaySettings)
-        setSttEngine(
-            value.sttEngine.takeUnless {
-                value.localOnly && it in setOf("yandex", "google_cloud", "vk_cloud")
-            } ?: "whisper",
-        )
+        setSttEngine(value.sttEngine)
+        setKeepGigaamModelLoaded(value.keepGigaamModelLoaded)
+        setGigaamThreadCount(value.gigaamThreadCount)
+        setGigaamLivePreview(value.gigaamLivePreview)
+        setEditorFullPunctuation(value.editorFullPunctuation)
         setKeepWhisperModelLoaded(value.keepWhisperModelLoaded)
         setWhisperThreadCount(value.whisperThreadCount)
         setWhisperAccurateMode(value.whisperAccurateMode)
+        setWhisperRawMode(value.whisperRawMode)
         setNotePunctuationModel(value.notePunctuationModel)
         setAudioPreprocessing(value.audioPreprocessingEnabled)
         setShowPlaybackButton(value.showPlaybackButton)
@@ -346,6 +396,7 @@ class SettingsStore(context: Context) : SettingsPort {
         setNoteFolderInterface(value.noteFolderInterface)
         setNoteTrashRetentionDays(value.noteTrashRetentionDays)
         setShowNavigationLabels(value.showNavigationLabels)
+        setUiHapticsEnabled(value.uiHapticsEnabled)
         setUiPerformanceMode(value.uiPerformanceMode)
         setNotificationSound(value.notificationSound)
         setNotificationVibrationEnabled(value.notificationVibrationEnabled)
@@ -359,26 +410,30 @@ class SettingsStore(context: Context) : SettingsPort {
     }
     private fun read(): AppSettings {
         val trustStt = prefs.getBoolean("trust_stt", false)
-        val sttEngine = normalizeSttEngine(prefs.getString("stt", "whisper").orEmpty())
+        val sttEngine = normalizeSttEngine(prefs.getString("stt", "gigaam").orEmpty())
         return AppSettings(
         theme = normalizeTheme(prefs.getString("theme", "light").orEmpty()),
         customTheme = readCustomTheme(),
         popupDurationSeconds = prefs.getInt("popup_duration_seconds", 5).coerceIn(0, 60),
-        localOnly = prefs.getBoolean("local_only", false),
-        classicNluEnabled = prefs.getBoolean("classic_nlu_enabled", true),
-        externalDataBackupEnabled = prefs.getBoolean("external_data_backup", false),
+        hidePopupNotices = prefs.getBoolean("hide_popup_notices", false),
+        classicNluEnabled = prefs.getBoolean("classic_nlu_enabled", false),
         timeOfDaySettings = readTimeOfDaySettings(),
         sttEngine = sttEngine,
+        keepGigaamModelLoaded = prefs.getBoolean("keep_gigaam_model_loaded", false),
+        gigaamThreadCount = normalizeWhisperThreadCount(prefs.getInt("gigaam_thread_count", 0)),
+        gigaamLivePreview = prefs.getBoolean("gigaam_live_preview", false),
+        editorFullPunctuation = prefs.getBoolean("editor_full_punctuation", false),
         keepWhisperModelLoaded = prefs.getBoolean("keep_whisper_model_loaded", false),
         whisperThreadCount = normalizeWhisperThreadCount(prefs.getInt("whisper_thread_count", 0)),
         whisperAccurateMode = prefs.getBoolean("whisper_accurate_mode", false),
+        whisperRawMode = prefs.getBoolean("whisper_raw_mode", false),
         notePunctuationModel = normalizeNotePunctuationModel(prefs.getString("note_punctuation_model", "whisper").orEmpty()),
         audioPreprocessingEnabled = prefs.getBoolean("audio_preprocessing", true),
         showPlaybackButton = prefs.getBoolean("show_playback", false),
         showTechnicalLog = prefs.getBoolean("show_technical_log", false),
         showAssistantWelcomeCard = prefs.getBoolean("show_assistant_welcome_card", true),
         trustStt = trustStt,
-        reminderSort = normalizeReminderSort(prefs.getString("reminder_sort", "my_order").orEmpty()),
+        reminderSort = normalizeReminderSort(prefs.getString("reminder_sort", "date").orEmpty()),
         noteSort = normalizeNoteSort(prefs.getString("note_sort", "updated").orEmpty()),
         noteColumns = prefs.getInt("note_columns", 1).coerceIn(1, 2),
         noteFolderInterface = normalizeFolderInterface(prefs.getString("note_folder_interface", "carousel").orEmpty()),
@@ -386,6 +441,7 @@ class SettingsStore(context: Context) : SettingsPort {
             prefs.getInt("note_trash_retention_days", DEFAULT_NOTE_TRASH_RETENTION_DAYS),
         ),
         showNavigationLabels = prefs.getBoolean("show_navigation_labels", true),
+        uiHapticsEnabled = prefs.getBoolean("ui_haptics", true),
         uiPerformanceMode = normalizeUiPerformanceMode(
             prefs.getString("ui_performance_mode", UI_PERFORMANCE_AUTO).orEmpty(),
         ),

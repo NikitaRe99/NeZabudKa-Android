@@ -21,15 +21,15 @@ const val NOTE_PUNCTUATION_RUPUNCT = "rupunct_small"
 fun normalizeNotePunctuationModel(value: String): String =
     if (value == NOTE_PUNCTUATION_RUPUNCT) value else NOTE_PUNCTUATION_WHISPER
 
-/** Optional offline comma restoration; model sessions are released after each note. */
+/** Optional offline comma restoration; model sessions are released after each text. */
 class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsStorage(context)) {
     private val app = context.applicationContext
     val models = RupunctModelManager(app, storage)
 
-    suspend fun restore(text: String, model: String): String = withContext(Dispatchers.Default) {
+    suspend fun restore(text: String, model: String, fullPunctuation: Boolean = false): String = withContext(Dispatchers.Default) {
         if (model != NOTE_PUNCTUATION_RUPUNCT || text.isBlank()) return@withContext text
         val words = punctuationWords(text)
-        if (words.size < 2) return@withContext text
+        if (words.isEmpty() || (!fullPunctuation && words.size < 2)) return@withContext text
         val vocabulary = app.assets.open("punctuation/vocab.txt").bufferedReader().use { it.readLines() }
         val tokenizer = ClassicWordPieceTokenizer(vocabulary, MAX_TOKENS)
         val labelMap = JSONObject(app.assets.open("punctuation/config.json").bufferedReader().use { it.readText() })
@@ -38,6 +38,8 @@ class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsS
         val environment = OrtEnvironment.getEnvironment()
         val modelFile = withContext(Dispatchers.IO) { models.modelFile() }
         val predictions = MutableList<Boolean?>(words.size) { null }
+        val fullPredictions = MutableList<FullPunctuationPrediction?>(words.size) { null }
+        val labels = List(labelMap.length()) { labelMap.getString(it.toString()) }
         OrtSession.SessionOptions().use { options ->
             options.setIntraOpNumThreads((Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4))
             options.setInterOpNumThreads(1)
@@ -78,6 +80,7 @@ class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsS
                                         val weights = scores.map { exp((it - maximum).toDouble()) }
                                         val probability = commaLabels.sumOf { weights[it] } / weights.sum()
                                         predictions[index] = probability >= COMMA_THRESHOLD
+                                        if (fullPunctuation) fullPredictions[index] = fullPunctuationPrediction(scores, labels)
                                     }
                                 }
                             }
@@ -87,7 +90,8 @@ class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsS
                 }
             }
         }
-        applyPredictedCommas(text, words, predictions)
+        if (fullPunctuation) applyFullPunctuation(text, words, fullPredictions)
+        else applyPredictedCommas(text, words, predictions)
     }
 
     private companion object {

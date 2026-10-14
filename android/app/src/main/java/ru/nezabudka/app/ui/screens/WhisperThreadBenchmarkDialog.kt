@@ -24,15 +24,16 @@ internal fun WhisperThreadBenchmarkDialog(
     cancel: () -> Unit,
     apply: () -> Unit,
     dismiss: () -> Unit,
+    gigaam: Boolean = false,
 ) {
     AppAlertDialog(
         onDismissRequest = dismiss,
-        title = { Text("Подбор потоков Whisper") },
+        title = { Text(if (gigaam) "Подбор потоков GigaAM" else "Подбор потоков Whisper") },
         text = {
             Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Проверка использует до 5 секунд последней записи и выбранную модель. Лучше предварительно записать обычную фразу длительностью 3–5 секунд.")
-                Text("Сравним все доступные значения дважды. На слабом телефоне проверка может занять больше нескольких минут. Обычный лимит времени распознавания здесь отключён; остановить проверку можно кнопкой «Остановить».")
+                Text(if (gigaam) "Сравним все доступные значения с прогревом перед каждым замером. На слабом телефоне это может занять несколько минут. Лимит одного прохода — 90 секунд." else "Сравним все доступные значения дважды. На слабом телефоне проверка может занять больше нескольких минут. Обычный лимит времени распознавания здесь отключён; остановить проверку можно кнопкой «Остановить».")
                 if (state.running) {
                     Text(state.stage)
                     if (state.total > 0) LinearProgressIndicator(

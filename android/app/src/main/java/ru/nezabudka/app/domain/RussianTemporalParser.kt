@@ -10,7 +10,9 @@ import kotlin.math.roundToLong
 
 data class DetectedDelay(val expression: String, val value: Double, val unit: DelayUnit)
 data class TemporalResult(val remindAt: LocalDateTime?, val cleanText: String, val expression: String?)
-data class CalendarDateRange(val start: LocalDate, val endExclusive: LocalDate)
+data class CalendarDateRange(val start: LocalDate, val endExclusive: LocalDate) {
+    fun contains(date: LocalDate): Boolean = !date.isBefore(start) && date.isBefore(endExclusive)
+}
 
 class RussianTemporalParser(
     private val configuredNamedTimes: () -> Map<String, LocalTime> = { DEFAULT_NAMED_TIMES },
@@ -32,6 +34,10 @@ class RussianTemporalParser(
     private val delayRegex = Regex("${wordStart}через\\s+(?:([\\d.,]+|[а-яё]+(?:\\s+[а-яё]+){0,2})\\s+)?($unitPattern)$wordEnd", RegexOption.IGNORE_CASE)
     // Match the whole split date before looking for tomorrow inside it.
     private val relativeDayRegex = Regex("$wordStart(послезавтра|после(?:\\s+|\\s*,\\s*)завтра|завтра|сегодня)$wordEnd", RegexOption.IGNORE_CASE)
+    private val nextPeriodRegex = Regex(
+        "${wordStart}(?:(?:в|на|к)\\s+)?(?:следующ(?:ем|ий|его|ему)|будущ(?:ем|ий|его|ему))\\s+(месяц(?:е|а|у)?|год(?:у|а)?)$wordEnd",
+        RegexOption.IGNORE_CASE,
+    )
     private val weekdayRegex = Regex("${wordStart}(?:в\\s+|на\\s+)?(следующ(?:ий|ую|ее))?\\s*(понедельник|вторник|среду|среда|четверг|пятницу|пятница|субботу|суббота|воскресенье)$wordEnd", RegexOption.IGNORE_CASE)
     private val numericDateRegex = Regex("${wordStart}(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?$wordEnd")
     private val namedDateRegex = Regex("${wordStart}(\\d{1,2})\\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?:\\s+(\\d{4}))?$wordEnd", RegexOption.IGNORE_CASE)
@@ -86,11 +92,16 @@ class RussianTemporalParser(
 
     fun parse(userText: String, now: LocalDateTime): TemporalResult {
         val delay = extractDelay(userText)
-        val calendarDate = findCalendarDate(userText, now)
+        val period = nextCalendarPeriod(userText, now)
+        val calendarDate = findCalendarDate(userText, period?.second?.start?.atTime(now.toLocalTime()) ?: now)
+        if (period != null && calendarDate != null && !period.second.contains(calendarDate.date)) {
+            throw CommandValidationException("Указанная дата не входит в ${period.first}. Уточните дату.")
+        }
         val day = relativeDayRegex.find(userText)
         val weekday = weekdayRegex.find(userText)
         val spokenTime = extractTime(userText)
         val remindAt = when {
+            period != null && calendarDate == null -> null
             delay != null -> {
                 val delayed = addDelay(now, delay.value, delay.unit)
                 if (spokenTime != null && delay.unit in CALENDAR_DELAY_UNITS) {
@@ -112,8 +123,11 @@ class RussianTemporalParser(
             )
             else -> null
         }
-        val expression = delay?.expression ?: calendarDate?.expression ?: day?.value ?: weekday?.value ?: findTimeExpression(userText)
-        return TemporalResult(remindAt, cleanReminderText(userText, expression), expression)
+        val expression = calendarDate?.expression ?: period?.first ?: delay?.expression ?: day?.value ?: weekday?.value ?: findTimeExpression(userText)
+        val taskSource = if (period != null) userText.replaceRange(
+            Regex(Regex.escape(period.first), RegexOption.IGNORE_CASE).find(userText)!!.range, " ",
+        ) else userText
+        return TemporalResult(remindAt, cleanReminderText(taskSource, expression), expression)
     }
 
     fun isReminderCreationCommand(text: String): Boolean =
@@ -126,6 +140,9 @@ class RussianTemporalParser(
     }
 
     fun extractDate(text: String, now: LocalDateTime): LocalDate? {
+        nextCalendarPeriod(text, now)?.let { (_, range) ->
+            return findCalendarDate(text, range.start.atTime(now.toLocalTime()))?.date?.takeIf(range::contains)
+        }
         extractDelay(text)?.takeIf { it.unit in CALENDAR_DELAY_UNITS }?.let { delay ->
             return addDelay(now, delay.value, delay.unit).toLocalDate()
         }
@@ -159,7 +176,9 @@ class RussianTemporalParser(
             }
             return monthPartRange(month, match.groupValues[1])
         }
-        return null
+        return nextCalendarPeriod(text, now)?.let { (_, range) ->
+            if (findCalendarDate(text, range.start.atTime(now.toLocalTime())) == null) range else null
+        }
     }
 
     fun extractTime(text: String): LocalTime? {
@@ -175,6 +194,38 @@ class RussianTemporalParser(
             if (hour in 0..23 && minute in 0..59) return LocalTime.of(applyPeriod(hour, it.groupValues[3]), minute)
         }
         return findNamedTime(text)?.second
+    }
+
+    fun pendingCalendarRange(text: String, now: LocalDateTime): CalendarDateRange? =
+        nextCalendarPeriod(text, now)?.second
+
+    /** Bare calendar dates inherit the requested period; relative dates keep their usual meaning. */
+    fun parseDateAnswer(text: String, now: LocalDateTime, range: CalendarDateRange?, preferredTime: LocalTime?): TemporalResult {
+        val anchor = if (range != null && relativeDayRegex.find(text) == null && weekdayRegex.find(text) == null &&
+            extractDelay(text) == null && nextCalendarPeriod(text, now) == null) range.start.atTime(now.toLocalTime()) else now
+        if (range != null && findCalendarDate(text, anchor) == null && relativeDayRegex.find(text) == null &&
+            weekdayRegex.find(text) == null && extractDelay(text) == null) return TemporalResult(null, text, findTimeExpression(text))
+        val parsed = parse(text, anchor)
+        return if (parsed.remindAt != null && preferredTime != null && extractTime(text) == null && extractDelay(text) == null)
+            parsed.copy(remindAt = parsed.remindAt.toLocalDate().atTime(preferredTime)) else parsed
+    }
+
+    private fun nextCalendarPeriod(text: String, now: LocalDateTime): Pair<String, CalendarDateRange>? {
+        relativeMonthPartRegex.find(text)?.let { part ->
+            if (part.groupValues[2].lowercase() in setOf("следующего", "будущего")) {
+                return part.value to monthPartRange(YearMonth.from(now).plusMonths(1), part.groupValues[1])
+            }
+            return null
+        }
+        val match = nextPeriodRegex.find(text) ?: return null
+        // A later period can belong to the task itself: "завтра обсудить планы на следующий год".
+        if (listOfNotNull(relativeDayRegex.find(text), weekdayRegex.find(text), delayRegex.find(text))
+                .any { it.range.first < match.range.first }) return null
+        val range = if (match.groupValues[1].lowercase().startsWith("месяц")) {
+            val month = YearMonth.from(now).plusMonths(1)
+            CalendarDateRange(month.atDay(1), month.plusMonths(1).atDay(1))
+        } else CalendarDateRange(LocalDate.of(now.year + 1, 1, 1), LocalDate.of(now.year + 2, 1, 1))
+        return match.value to range
     }
 
     /** The vague phrase actually supplying the time, rather than an explicit clock or delay. */
@@ -315,7 +366,13 @@ class RussianTemporalParser(
             configured.firstOrNull { it.first.trim().lowercase().replace('ё', 'е') == "днем" }
                 ?.let { listOf("после обеда" to it.second) }.orEmpty()
         } else emptyList()
-        val entries = (configured + afternoonAlias).sortedByDescending { it.first.length }
+        val recurringAliases = mapOf("утром" to listOf("каждое утро", "по утрам"),
+            "вечером" to listOf("каждый вечер", "по вечерам"), "ночью" to listOf("каждую ночь", "по ночам"))
+            .flatMap { (canonical, aliases) ->
+                configured.firstOrNull { it.first.trim().lowercase().replace('ё', 'е') == canonical }
+                    ?.let { (_, time) -> aliases.map { it to time } }.orEmpty()
+            }
+        val entries = (configured + afternoonAlias + recurringAliases).sortedByDescending { it.first.length }
         entries.forEach { (phrase, time) ->
             val normalizedPhrase = phrase.trim().lowercase().replace('ё', 'е')
             val phrasePattern = normalizedPhrase.split(Regex("\\s+")).joinToString("\\s+") { Regex.escape(it) }

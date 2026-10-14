@@ -6,6 +6,7 @@ data class UserModelsStorageState(
     val configured: Boolean = false,
     val location: String = "Каталог пользователя не выбран",
     val cache: ModelCacheStats = ModelCacheStats(),
+    val userSelectedDirectory: Boolean = false,
 )
 
 data class ModelCacheStats(

@@ -6,6 +6,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WhisperInferencePolicyTest {
+    @Test fun `raw decoding uses native window and a single greedy pass with a device deadline`() {
+        val normal = rawWhisperInferencePolicy(wavBytes(seconds = 3))
+        assertEquals(0, normal.audioContext)
+        assertEquals(0, normal.maxTokens)
+        assertEquals(1, normal.beamSize)
+        assertFalse(normal.singleSegment)
+        assertTrue(normal.timeLimitMs > 0)
+        val slow = rawWhisperInferencePolicy(wavBytes(seconds = 3), limitedResources = true)
+        assertEquals(normal.copy(timeLimitMs = slow.timeLimitMs), slow)
+        assertTrue(slow.timeLimitMs > normal.timeLimitMs)
+    }
     @Test fun `limited resources allow slow inference without changing decoding accuracy`() {
         val normal = whisperInferencePolicy(wavBytes(seconds = 3), accurateMode = false)
         val slow = whisperInferencePolicy(wavBytes(seconds = 3), accurateMode = false, limitedResources = true)

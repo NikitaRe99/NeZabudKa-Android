@@ -54,6 +54,13 @@ private val NOTIFICATION_VIBRATION = longArrayOf(0L, 250L, 150L, 250L)
 internal val ALARM_VIBRATION = longArrayOf(0L, 800L, 400L, 800L, 400L, 800L)
 
 object NotificationChannels {
+    fun enabledForMode(context: Context, alarmMode: Boolean): Boolean {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val prefix = if (alarmMode) "${REMINDER_CHANNEL_PREFIX}_alarm_" else "${REMINDER_CHANNEL_PREFIX}_notification_"
+        return manager.notificationChannels.filter { it.id.startsWith(prefix) }
+            .all { it.importance != NotificationManager.IMPORTANCE_NONE }
+    }
+
     fun create(context: Context) {
         val settings = SettingsStore.currentReminderNotificationSettings(context)
         val currentChannelIds = setOf(
@@ -269,7 +276,7 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             normalizeReminderRecurrence(intent.getStringExtra(EXTRA_RECURRENCE)) == null
         ) {
             if (settings.reminderAlarmMode) {
-                AlarmRetryScheduler.scheduleNext(
+                if (reminderId != ReminderDisplayTest.ID) AlarmRetryScheduler.scheduleNext(
                     context,
                     intent,
                     intent.getIntExtra(EXTRA_ALARM_ATTEMPT, 0).coerceAtLeast(0),
@@ -466,6 +473,7 @@ internal object ReminderNotificationFactory {
         // their independent timeout/retry lifecycle; ordinary reminder notifications
         // use the delete action to interpret an explicit shade swipe as completion.
         if (!alarmMode) builder.setDeleteIntent(complete)
+        if (id == ReminderDisplayTest.ID && !alarmMode) builder.setTimeoutAfter(60_000L)
         if (alarmMode) {
             builder.setTimeoutAfter(settings.reminderAlarmRingSeconds * 1_000L)
             if (alarmScreenRequested) {
@@ -488,6 +496,10 @@ class ReminderActionReceiver : BroadcastReceiver() {
         val id = intent.getLongExtra(EXTRA_ID, -1L).takeIf { it > 0L } ?: return
         // Silence the active alarm immediately. Persistence remains asynchronous so
         // a slow Room write can never leave sound, vibration or the overlay running.
+        if (id == ReminderDisplayTest.ID) {
+            ReminderDisplayTest.cancel(context)
+            return
+        }
         dismissReminderNotification(context, id)
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
@@ -610,10 +622,12 @@ private object AlarmRetryScheduler {
 }
 
 /** Serializes simultaneous alarm-mode reminders without keeping a process or service alive. */
-private object AlarmSessionCoordinator {
+internal object AlarmSessionCoordinator {
     private const val PREFS = "alarm_session"
     private const val ACTIVE_ID = "active_id"
     private const val ACTIVE_UNTIL = "active_until"
+    fun isActive(context: Context, reminderId: Long): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(ACTIVE_ID, -1L) == reminderId
 
     @Synchronized
     fun claim(context: Context, reminderId: Long, durationMillis: Long): Long? {

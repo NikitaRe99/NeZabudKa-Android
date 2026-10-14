@@ -58,7 +58,6 @@ data class AppSemanticColors(
     val danger: Color,
     val dangerContainer: Color,
     val onDangerContainer: Color,
-    val success: Color,
     val warning: Color,
     val scrim: Color,
     val noteDefault: Color,
@@ -91,6 +90,8 @@ object AppTheme {
     val tokens: AppThemeTokenSet
         @Composable get() = LocalAppThemeTokens.current
 }
+
+internal val LocalPopupNoticesEnabled = staticCompositionLocalOf { true }
 
 @Composable
 fun appShadowElevation(defaultElevation: Dp): Dp =
@@ -154,7 +155,10 @@ fun LocalAssistantTheme(
             shadowsEnabled = shadowsEnabled,
         )
     }
+    val uiHaptic = rememberUiHapticFeedback(settings.uiHapticsEnabled)
     androidx.compose.runtime.CompositionLocalProvider(
+        LocalPopupNoticesEnabled provides !settings.hidePopupNotices,
+        androidx.compose.ui.platform.LocalHapticFeedback provides uiHaptic,
         LocalAppThemeTokens provides tokens,
     ) {
         MaterialTheme(
@@ -201,7 +205,6 @@ private fun CustomThemeSettings.toSemanticColors() = AppSemanticColors(
     danger = danger.themeColor(),
     dangerContainer = dangerContainer.themeColor(),
     onDangerContainer = onDangerContainer.themeColor(),
-    success = success.themeColor(),
     warning = warning.themeColor(),
     scrim = scrim.themeColor(),
     noteDefault = noteDefault.themeColor(),

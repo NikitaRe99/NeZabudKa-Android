@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application android:name=".DemoApplication" android:label="НеЗабудьКа — демо"
+        android:allowBackup="false" tools:replace="android:name,android:label,android:allowBackup">
+        <activity-alias android:name=".LauncherNoteCheck" android:label="НеЗабудьКа — демо" tools:replace="android:label" />
+        <activity-alias android:name=".LauncherFlower" android:label="НеЗабудьКа — демо" tools:replace="android:label" />
+        <activity-alias android:name=".LauncherNoteClock" android:label="НеЗабудьКа — демо" tools:replace="android:label" />
+    </application>
+</manifest>

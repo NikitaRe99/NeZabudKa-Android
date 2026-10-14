@@ -6,6 +6,46 @@ import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 class SpokenReminderRecurrenceTest {
+    @Test fun `neuter weekdays and working day variants follow calendar rules`() {
+        for (phrase in listOf("по рабочим дням", "каждый будний день")) {
+            val result = parseRecurringReminder("Напомни $phrase утром проверить замок", now, parser)
+            assertEquals("weekdays", result.recurrence)
+            assertEquals(now.toLocalDate().plusDays(1).atTime(9, 0), result.temporal.remindAt)
+            assertEquals("проверить замок", result.temporal.cleanText)
+        }
+        val sunday = parseRecurringReminder("Напомни каждое воскресенье утром проверить замок", now, parser)
+        assertEquals(setOf(DayOfWeek.SUNDAY), CustomReminderRecurrence.fromStored(sunday.recurrence)!!.weekdays)
+        val weekdaysMorning = parseRecurringReminder("Напомни по рабочим дням по утрам проверить замок", now, parser)
+        assertEquals("weekdays", weekdaysMorning.recurrence)
+        assertEquals("проверить замок", weekdaysMorning.temporal.cleanText)
+        val dailyMorning = parseRecurringReminder("Напомни каждый день по утрам проверить замок", now, parser)
+        assertEquals("daily", dailyMorning.recurrence)
+        assertEquals("проверить замок", dailyMorning.temporal.cleanText)
+    }
+
+    @Test fun `daily time of day families use configured times and preserve payload`() {
+        val configured = RussianTemporalParser { mapOf("утром" to java.time.LocalTime.of(7, 15),
+            "вечером" to java.time.LocalTime.of(21, 10), "ночью" to java.time.LocalTime.of(0, 30)) }
+        mapOf("каждое утро" to java.time.LocalTime.of(7, 15), "по утрам" to java.time.LocalTime.of(7, 15),
+            "каждый вечер" to java.time.LocalTime.of(21, 10), "по вечерам" to java.time.LocalTime.of(21, 10),
+            "каждую ночь" to java.time.LocalTime.of(0, 30), "по ночам" to java.time.LocalTime.of(0, 30)).forEach { (phrase, time) ->
+            val result = parseRecurringReminder("Напомни $phrase осмотреть аквариум", now, configured)
+            assertEquals("daily", result.recurrence)
+            assertEquals("осмотреть аквариум", result.temporal.cleanText)
+            val day = if (time > now.toLocalTime()) now.toLocalDate() else now.toLocalDate().plusDays(1)
+            assertEquals(day.atTime(time), result.temporal.remindAt)
+            assertNotNull(configured.namedTimePhraseUsed("Напомни $phrase осмотреть аквариум"))
+        }
+    }
+
+    @Test fun `explicit clock overrides daily named time and repeated rules are not silently dropped`() {
+        val result = parseRecurringReminder("Напомни каждое   утро в шесть двадцать осмотреть аквариум", now, parser)
+        assertEquals(now.toLocalDate().plusDays(1).atTime(6, 20), result.temporal.remindAt)
+        assertEquals("осмотреть аквариум", result.temporal.cleanText)
+        assertTrue(runCatching { parseRecurringReminder("Напомни каждое утро и каждый вечер осмотреть аквариум", now, parser) }
+            .exceptionOrNull() is CommandValidationException)
+    }
+
     @Test fun `compound spoken intervals work and hourly repetition is not silently dropped`() {
         val rule = CustomReminderRecurrence.fromStored(parseRecurringReminder("Напомни каждые двадцать три дня завтра в девять проверить фильтр", now, parser).recurrence)!!
         assertEquals(23, rule.interval)

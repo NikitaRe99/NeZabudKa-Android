@@ -1,7 +1,7 @@
 package ru.nezabudka.app.domain
 
 private val THEMES = setOf("light", "dark", "custom")
-private val STT_ENGINES = setOf("android", "whisper", "yandex", "google_cloud", "vk_cloud")
+private val STT_ENGINES = setOf("android", "whisper", "gigaam", "yandex", "google_cloud", "vk_cloud")
 private val REMINDER_SORTS = setOf("my_order", "date", "recently_marked", "title")
 private val NOTE_SORTS = setOf("created", "updated", "manual")
 private val FOLDER_INTERFACES = setOf("carousel", "drawer")
@@ -12,7 +12,10 @@ const val AUTOMATIC_WHISPER_THREAD_COUNT = 0
 
 fun normalizeTheme(value: String): String = value.takeIf(THEMES::contains) ?: "light"
 fun normalizeSttEngine(value: String): String = value.takeIf(STT_ENGINES::contains) ?: "whisper"
-fun normalizeReminderSort(value: String): String = value.takeIf(REMINDER_SORTS::contains) ?: "my_order"
+
+fun initialSttEngine(hasExistingSettings: Boolean, updatedInstallation: Boolean): String =
+    if (hasExistingSettings || updatedInstallation) "whisper" else "gigaam"
+fun normalizeReminderSort(value: String): String = value.takeIf(REMINDER_SORTS::contains) ?: "date"
 fun normalizeNoteSort(value: String): String = value.takeIf(NOTE_SORTS::contains) ?: "updated"
 fun normalizeFolderInterface(value: String): String = value.takeIf(FOLDER_INTERFACES::contains) ?: "carousel"
 fun normalizeAlarmPresentation(value: String): String =
@@ -59,3 +62,6 @@ fun normalizeNotificationSound(value: String, fallback: String): String {
             it.startsWith("android.resource://", ignoreCase = true)
     } ?: fallback
 }
+
+/** Fresh installs opt in by choosing a model; existing installations retain their prior default. */
+fun migratedClassicNluEnabled(saved: Boolean?, existingInstallation: Boolean): Boolean = saved ?: existingInstallation

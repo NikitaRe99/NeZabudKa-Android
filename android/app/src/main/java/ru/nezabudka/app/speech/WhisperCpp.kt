@@ -136,6 +136,8 @@ class WhisperModelManager(
         refresh()
     }
 
+    fun delete(fileName: String) { library.delete(fileName); refresh() }
+
     override fun currentSelectedModelName(): String? = state.value.selectedName
 
     override fun selectIfAvailable(fileName: String) = select(fileName)
@@ -297,6 +299,11 @@ internal fun whisperInferencePolicy(
     )
 }
 
+/** Native greedy decoding without adaptive windows, segmentation or textual hints. */
+internal fun rawWhisperInferencePolicy(wavBytes: Long, limitedResources: Boolean = false) =
+    WhisperInferencePolicy(audioContext = 0, maxTokens = 0, singleSegment = false,
+        beamSize = 1, timeLimitMs = whisperDeviceTimeLimitMs(wavBytes, false, limitedResources))
+
 internal fun whisperAccurateRetryPolicy(
     policy: WhisperInferencePolicy,
     confidence: Float?,
@@ -341,6 +348,8 @@ class WhisperCppSttEngine(
     private val keepModelLoaded: () -> Boolean = { false },
     private val configuredThreadCount: () -> Int = { 0 },
     private val accurateMode: () -> Boolean = { false },
+    private val rawMode: () -> Boolean = { false },
+    private val isAppVisible: () -> Boolean = { true },
 ) : SpeechToTextEngine, ContextualSpeechToTextEngine {
     data class RuntimeState(
         val stage: String = "Whisper не загружен в память",
@@ -391,9 +400,10 @@ class WhisperCppSttEngine(
             try {
                 val model = withContext(Dispatchers.IO) { models.selectedModel(retainedModelPath, sample.length()) }
                 retainedModelPath = model.absolutePath
-                val requestAccurateMode = accurateMode()
-                val policy = whisperInferencePolicy(sample.length(), isTinyWhisperModel(model), requestAccurateMode)
-                val prompt = whisperRequestPrompt(emptyList(), if (commandVocabularyEnabled) WhisperRequestContext.COMMAND
+                val requestRawMode = rawMode()
+                val requestAccurateMode = !requestRawMode && accurateMode()
+                val policy = if (requestRawMode) rawWhisperInferencePolicy(sample.length()) else whisperInferencePolicy(sample.length(), isTinyWhisperModel(model), requestAccurateMode)
+                val prompt = if (requestRawMode) "" else whisperRequestPrompt(emptyList(), if (commandVocabularyEnabled) WhisperRequestContext.COMMAND
                     else WhisperRequestContext.DICTATION, policy.audioContext)
                 suspend fun measure(threads: Int): Long {
                     coroutineContext.ensureActive()
@@ -453,10 +463,11 @@ class WhisperCppSttEngine(
             val requestStarted = SystemClock.elapsedRealtime()
             idleReleaseJob?.cancel()
             nativeMutex.withLock {
-                val requestAccurateMode = accurateMode()
-                val requestCommandMode = commandVocabularyEnabled
+                val requestRawMode = rawMode()
+                val requestAccurateMode = !requestRawMode && accurateMode()
+                val requestCommandMode = !requestRawMode && commandVocabularyEnabled
                 val requestLimitedResources = models.needsLongerInferenceBudget()
-                val requestHints = contextHints.toList()
+                val requestHints = if (requestRawMode) emptyList() else contextHints.toList()
                 val requestContext = when {
                     !requestCommandMode -> WhisperRequestContext.DICTATION
                     awaitingDateResponse -> WhisperRequestContext.DATE_REPLY
@@ -466,7 +477,8 @@ class WhisperCppSttEngine(
                 }
                 val threads = models.recommendedThreadCount(configuredThreadCount())
                 val vadStarted = SystemClock.elapsedRealtime()
-                val speechBoundaries = try {
+                val speechBoundaries = if (requestRawMode) longArrayOf(0L,
+                    (processedWav.length() - 44L).coerceAtLeast(0L) / 2L) else try {
                     check(shouldAnalyzeWhisperVad(processedWav.length())) { "Речь не обнаружена. Запись пуста." }
                     val vadModelPath = withContext(Dispatchers.IO) { vadModels.modelFile().absolutePath }
                     _runtime.value = _runtime.value.copy(stage = "Silero VAD анализирует запись…")
@@ -496,7 +508,7 @@ class WhisperCppSttEngine(
                 }
                 val vadDuration = SystemClock.elapsedRealtime() - vadStarted
                 val preparationStarted = SystemClock.elapsedRealtime()
-                val segments = withContext(Dispatchers.IO) {
+                val segments = if (requestRawMode) listOf(processedWav) else withContext(Dispatchers.IO) {
                     PcmWavSegmenter.splitForWhisper(
                         processedWav, temporaryDirectory, speechBoundaries, DYNAMIC_SPEECH_SEGMENT_SECONDS,
                     )
@@ -539,7 +551,7 @@ class WhisperCppSttEngine(
                             stage = if (segments.size == 1) "Whisper распознаёт запись…"
                             else "Whisper: часть ${index + 1} из ${segments.size}",
                         )
-                        val policy = whisperPolicyForRequest(
+                        val policy = if (requestRawMode) rawWhisperInferencePolicy(segment.length(), requestLimitedResources) else whisperPolicyForRequest(
                             whisperInferencePolicy(segment.length(), tinyModel, requestAccurateMode,
                                 limitedResources = requestLimitedResources), requestContext)
                         val segmentStarted = SystemClock.elapsedRealtime()
@@ -556,7 +568,7 @@ class WhisperCppSttEngine(
                                     segment.absolutePath,
                                     "", // VAD has already selected and padded the speech ranges.
                                     "ru",
-                                    whisperRequestPrompt(requestHints, requestContext, audioContext),
+                                    if (requestRawMode) "" else whisperRequestPrompt(requestHints, requestContext, audioContext),
                                     threads,
                                     audioContext,
                                     policy.maxTokens,
@@ -567,7 +579,7 @@ class WhisperCppSttEngine(
                                 )
                                 val contextual = if (requestContext == WhisperRequestContext.DATE_REPLY) normalizeExpectedDateReply(raw) else raw
                                 contextCorrected = contextCorrected || contextual != raw
-                                val value = contextual.collapseWhisperRepetition().normalizeWhisperTranscript(commandMode = requestCommandMode)
+                                val value = if (requestRawMode) raw.trim() else contextual.collapseWhisperRepetition().normalizeWhisperTranscript(commandMode = requestCommandMode)
                                 incompleteDateReply = incompleteDateReply || (requestContext == WhisperRequestContext.DATE_REPLY && !isCompleteExpectedDateReply(value))
                                 Result(value, WhisperDecodeQuality.from(WhisperNative.lastMetrics()),
                                     raw.hasWhisperDecoderLoop((segment.length() - 44L).coerceAtLeast(0L) / 32_000.0))
@@ -578,6 +590,7 @@ class WhisperCppSttEngine(
                         var segmentResult = try {
                             decode(policy.audioContext, policy.beamSize, policy.timeLimitMs)
                         } catch (timeout: TimeoutException) {
+                            if (requestRawMode) throw timeout
                             coroutineContext.ensureActive()
                             retried = true
                             if (requestAccurateMode) usedFastFallback = true else usedStableFallback = true
@@ -585,7 +598,7 @@ class WhisperCppSttEngine(
                             val context = if (policy.audioContext == 0) 0 else maxOf(512, policy.audioContext)
                             decode(context, 1, remaining())
                         }
-                        if (!retried) {
+                        if (!requestRawMode && !retried) {
                             val retryPolicy = if (requestAccurateMode) whisperAccurateRetryPolicy(
                                 policy, segmentResult.quality.meanProbability, segmentResult.text.isBlank(), segmentResult.quality,
                             ) else if (segmentResult.text.isBlank()) {
@@ -622,7 +635,7 @@ class WhisperCppSttEngine(
                             confidenceTotal += it
                             confidenceCount++
                         }
-                        text = mergeWhisperSegments(text, segmentText, commandMode = requestCommandMode)
+                        text = if (requestRawMode) segmentText else mergeWhisperSegments(text, segmentText, commandMode = requestCommandMode)
                     }
                     if (text.isBlank()) throw IllegalStateException("Whisper.cpp не распознал речь")
                     val elapsed = SystemClock.elapsedRealtime() - requestStarted
@@ -673,7 +686,7 @@ class WhisperCppSttEngine(
                 } finally {
                     withContext(Dispatchers.IO) { PcmWavSegmenter.cleanup(segments, processedWav) }
                     if (!keepModelLoaded()) {
-                        val retention = models.idleRetentionMillis()
+                        val retention = if (isAppVisible()) models.idleRetentionMillis() else 0L
                         if (retention == 0L) {
                             releaseWhisperNativeSafely()
                             retainedModelPath = null
@@ -698,6 +711,17 @@ class WhisperCppSttEngine(
         idleReleaseJob?.cancel()
         cancelWhisperNativeSafely()
         nativeMutex.withLock {
+            releaseWhisperNativeSafely()
+            retainedModelPath = null
+            _runtime.value = _runtime.value.copy(modelLoaded = false)
+        }
+    }
+
+    /** Backgrounding must not cancel an in-flight transcription. */
+    suspend fun releaseWhenIdle(shouldRelease: () -> Boolean) = withContext(Dispatchers.Default) {
+        nativeMutex.withLock {
+            if (!shouldRelease()) return@withLock
+            idleReleaseJob?.cancel()
             releaseWhisperNativeSafely()
             retainedModelPath = null
             _runtime.value = _runtime.value.copy(modelLoaded = false)

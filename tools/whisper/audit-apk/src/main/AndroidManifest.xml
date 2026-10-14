@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="НеЗабудьКа — проверка речи" android:allowBackup="false">
+        <activity android:name=".BenchmarkActivity" android:exported="true" />
+    </application>
+    <instrumentation android:name=".GigaamBenchmark" android:targetPackage="ru.nezabudka.speechaudit" android:label="Локальная проверка GigaAM" />
+</manifest>

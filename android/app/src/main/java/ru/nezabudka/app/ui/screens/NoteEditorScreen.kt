@@ -269,6 +269,7 @@ internal fun NoteEditorScreen(
     endDictation: () -> Unit,
     consumeDictation: () -> Unit,
     cancelDictation: () -> Unit,
+    dictationPreview: String? = null,
 ) {
     val theme = AppTheme.tokens
     var titleValue by remember(note?.id, editorSessionId) { mutableStateOf(TextFieldValue(note?.title.orEmpty())) }
@@ -360,7 +361,7 @@ internal fun NoteEditorScreen(
     }
     LaunchedEffect(reminderCreated) {
         if (reminderCreated) {
-            snackbarHostState.showSnackbar("Напоминание создано")
+            snackbarHostState.showSnackbar("Напоминание создано", withDismissAction = true)
             reminderCreated = false
         }
     }
@@ -420,6 +421,8 @@ internal fun NoteEditorScreen(
             )
         },
         bottomBar = {
+            Column {
+            dictationPreview?.let { RecordingPreviewCard(it) }
             Row(
                 Modifier.fillMaxWidth()
                     .navigationBarsPadding()
@@ -467,6 +470,7 @@ internal fun NoteEditorScreen(
                         }
                     }
                 }
+            }
             }
         },
     ) { inner ->

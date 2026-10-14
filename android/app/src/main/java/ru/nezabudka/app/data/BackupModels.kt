@@ -15,7 +15,12 @@ internal data class UserDataBackupDto(
     val folders: List<BackupFolderDto>,
     val notes: List<BackupNoteDto>,
     val settings: PortableAppSettings? = null,
+    val content: String? = null,
 )
+
+enum class BackupContent(val key: String, val title: String) {
+    NOTES("notes", "Заметки"), REMINDERS("reminders", "Напоминания"),
+}
 
 @Serializable
 internal data class BackupReminderDto(
@@ -66,6 +71,16 @@ internal object UserDataBackupCodec {
     fun decode(raw: String): UserDataBackupDto = json.decodeFromString<UserDataBackupDto>(raw).also { backup ->
         require(backup.version in MIN_SUPPORTED_BACKUP_VERSION..CURRENT_BACKUP_VERSION) {
             "Неподдерживаемая версия резервной копии: ${backup.version}"
+        }
+    }
+
+    fun forContent(backup: UserDataBackupDto, content: BackupContent): UserDataBackupDto {
+        require(backup.content == null || backup.content == content.key) {
+            "В файле сохранён другой тип данных. Выберите файл «${content.title}»"
+        }
+        return when (content) {
+            BackupContent.NOTES -> backup.copy(reminders = emptyList(), settings = null, content = content.key)
+            BackupContent.REMINDERS -> backup.copy(notes = emptyList(), folders = emptyList(), settings = null, content = content.key)
         }
     }
 }

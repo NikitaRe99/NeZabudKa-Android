@@ -22,13 +22,14 @@ class PortableAppSettingsTest {
             theme = "custom",
             customTheme = defaultCustomTheme("dark"),
             popupDurationSeconds = 9,
-            localOnly = true,
             classicNluEnabled = false,
             keepWhisperModelLoaded = true,
             whisperThreadCount = 6,
+            gigaamLivePreview = true,
+            editorFullPunctuation = true,
             whisperAccurateMode = true,
+            whisperRawMode = true,
             notePunctuationModel = "rupunct_small",
-            externalDataBackupEnabled = true,
             timeOfDaySettings = listOf(TimeOfDaySetting("после работы", "18:30")),
             sttEngine = "whisper",
             audioPreprocessingEnabled = false,
@@ -65,7 +66,11 @@ class PortableAppSettingsTest {
         assertFalse(portable.classicNluEnabled)
         assertTrue(portable.keepWhisperModelLoaded)
         assertEquals(6, portable.whisperThreadCount)
+        assertTrue(portable.gigaamLivePreview)
+        assertTrue(portable.editorFullPunctuation)
         assertTrue(portable.whisperAccurateMode)
+        assertTrue(portable.whisperRawMode)
+        assertFalse(portable.audioPreprocessingEnabled)
         assertEquals("rupunct_small", portable.notePunctuationModel)
         assertEquals("folder-id", portable.yandexFolderId)
         assertEquals("https://voice.example.test", portable.vkEndpoint)
@@ -95,16 +100,19 @@ class PortableAppSettingsTest {
         assertFalse("credentials must not be exported", "credential" in normalized)
         assertFalse("removed realtime STT setting must not be exported", "realtimestt" in normalized)
         assertTrue("\"theme\"" in encoded)
+        assertEquals("date", defaults.reminderSort)
         assertFalse(defaults.showPlaybackButton)
-        assertFalse(defaults.localOnly)
         assertFalse(defaults.reminderAlarmMode)
         assertTrue(defaults.showNavigationLabels)
+        assertTrue(defaults.uiHapticsEnabled)
+        assertFalse(defaults.hidePopupNotices)
+        assertTrue(defaults.classicNluEnabled) // Legacy backup schema default; fresh SettingsStore uses false.
     }
 
     @Test
     fun `backup containing removed realtime STT setting remains readable`() {
         val restored = Json { ignoreUnknownKeys = true }
-            .decodeFromString<PortableAppSettings>("""{"theme":"dark","trustStt":false,"realtimeStt":true}""")
+            .decodeFromString<PortableAppSettings>("""{"theme":"dark","trustStt":false,"realtimeStt":true,"localOnly":true}""")
 
         assertEquals("dark", restored.theme)
         assertTrue(restored.classicNluEnabled)
@@ -121,5 +129,25 @@ class PortableAppSettingsTest {
         assertTrue(restored.notificationVibrationEnabled)
         assertTrue(restored.reminderAlarmVibrationEnabled)
         assertEquals(UI_PERFORMANCE_AUTO, restored.uiPerformanceMode)
+    }
+
+    @Test
+    fun `removed local-only flag does not hide a restored cloud engine`() {
+        val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val restored = json.decodeFromString<PortableAppSettings>(
+            """{"sttEngine":"yandex","localOnly":true}""",
+        )
+        assertEquals("yandex", restored.sttEngine)
+        assertFalse("localOnly" in json.encodeToString(restored))
+    }
+    @Test fun `haptic setting survives backup and older backups enable it by default`() {
+        val json = Json { encodeDefaults = true }
+        val silent = PortableAppSettings(uiHapticsEnabled = false, classicNluEnabled = false, hidePopupNotices = true)
+        val restored = json.decodeFromString<PortableAppSettings>(json.encodeToString(silent))
+        assertFalse(restored.uiHapticsEnabled)
+        assertFalse(restored.classicNluEnabled)
+        assertTrue(restored.hidePopupNotices)
+        assertFalse(json.decodeFromString<PortableAppSettings>("{}").hidePopupNotices)
+        assertTrue(json.decodeFromString<PortableAppSettings>("{}").uiHapticsEnabled)
     }
 }

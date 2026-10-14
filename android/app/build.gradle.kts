@@ -31,8 +31,10 @@ android {
         // compileSdk stays current so modern Compose/Room APIs can compile.
         minSdk = 29
         targetSdk = 36
-        versionCode = 80
-        versionName = "0.2.57"
+        versionCode = 107
+        versionName = "0.2.84"
+        // Store builds: pass -PgithubUpdatesEnabled=false to remove GitHub updates.
+        buildConfigField("boolean", "GITHUB_UPDATES_ENABLED", providers.gradleProperty("githubUpdatesEnabled").orElse("true").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(
@@ -96,6 +98,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+        create("demo") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField("boolean", "GITHUB_UPDATES_ENABLED", "false")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }

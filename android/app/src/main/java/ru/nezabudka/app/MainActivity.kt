@@ -37,17 +37,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -81,12 +78,12 @@ import ru.nezabudka.app.ui.screens.NoteEditorScreen
 import ru.nezabudka.app.ui.screens.NotesScreen
 import ru.nezabudka.app.ui.screens.ReminderEditorScreen
 import ru.nezabudka.app.ui.screens.ReminderSnoozeDialog
+import ru.nezabudka.app.domain.AssistantTipKind
+import ru.nezabudka.app.domain.AssistantSettingsTarget
 import ru.nezabudka.app.ui.screens.AppAlertDialog
 import ru.nezabudka.app.ui.screens.RemindersScreen
 import ru.nezabudka.app.ui.screens.SettingsScreen
 import ru.nezabudka.app.ui.screens.WhisperModelsMenu
-import ru.nezabudka.app.ui.screens.FirstUseSetupDialogs
-import ru.nezabudka.app.domain.FirstUseSetupKind
 import androidx.activity.compose.rememberLauncherForActivityResult
 import ru.nezabudka.app.notifications.EXTRA_OPEN_REMINDER_ID
 import ru.nezabudka.app.notifications.EXTRA_SNOOZE_REMINDER_ID
@@ -134,6 +131,19 @@ class MainActivity : ComponentActivity() {
         requestedWidgetLaunch.value = WidgetLaunchIntent.consume(intent)
         setContent {
             val appSettings by viewModel.settings.collectAsStateWithLifecycle()
+            LaunchedEffect(notificationsEnabled.value, exactAlarmsAllowed.value, backgroundRunAllowed.value,
+                fullScreenAlarmsAllowed.value, overlayWindowsAllowed.value, appSettings.reminderAlarmMode,
+                appSettings.reminderAlarmPresentation) {
+                notificationsEnabled.value = NotificationManagerCompat.from(this@MainActivity).areNotificationsEnabled() &&
+                    ru.nezabudka.app.notifications.NotificationChannels.enabledForMode(this@MainActivity, appSettings.reminderAlarmMode)
+                viewModel.refreshPermissionTips(ru.nezabudka.app.domain.ReminderPermissionStatus(
+                    notificationsEnabled.value, exactAlarmsAllowed.value, backgroundRunAllowed.value,
+                    fullScreenAlarmsAllowed.value, overlayWindowsAllowed.value),
+                    appSettings.reminderAlarmMode && appSettings.reminderAlarmPresentation == ALARM_PRESENTATION_SCREEN,
+                    DeviceAutoStartSettings.destination(this@MainActivity) != null ||
+                        DeviceAutoStartSettings.alarmPermissionDestination(this@MainActivity) != null)
+            }
+
             val alarmVendorSettingsTitle = remember {
                 DeviceAutoStartSettings.alarmPermissionDestination(this)?.title
             }
@@ -180,6 +190,9 @@ class MainActivity : ComponentActivity() {
                 consumeWidgetIntent = { requestedWidgetLaunch.value = null },
                 returnToWidget = { finish() },
                 openNotificationSettings = ::openNotificationSettings,
+                openAppPermissionSettings = ::openAppDetailsSettings,
+                permissionDialogVisible = microphoneEducationVisible.value || notificationEducationVisible.value ||
+                    exactAlarmEducationVisible.value || fullScreenEducationVisible.value || overlayEducationVisible.value,
                 openExactAlarmSettings = ::openExactAlarmSettings,
                 openFullScreenAlarmSettings = ::openFullScreenAlarmSettings,
                 openOverlaySettings = ::openOverlaySettings,
@@ -226,7 +239,11 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshAppIcon()
-        notificationsEnabled.value = NotificationManagerCompat.from(this).areNotificationsEnabled()
+        if (viewModel.assistantUi.value.errorSettingsTarget == AssistantSettingsTarget.MICROPHONE &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+            viewModel.dismissError()
+        notificationsEnabled.value = NotificationManagerCompat.from(this).areNotificationsEnabled() &&
+            ru.nezabudka.app.notifications.NotificationChannels.enabledForMode(this, viewModel.settings.value.reminderAlarmMode)
         exactAlarmsAllowed.value = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
         fullScreenAlarmsAllowed.value = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
@@ -321,21 +338,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestReminderAccess(requiresExactTime: Boolean) {
-        // The first reminder has a single contextual setup window, not stacked
-        // notification/exact-alarm education dialogs.
-        if (viewModel.hasPendingReminderSetup()) return
-        val notificationsAllowed = NotificationManagerCompat.from(this).areNotificationsEnabled() &&
-            (Build.VERSION.SDK_INT < 33 ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
-        if (!notificationsAllowed) {
-            if (!permissionPreferences.getBoolean(KEY_NOTIFICATION_REQUESTED, false) &&
-                !permissionPreferences.getBoolean(KEY_NOTIFICATION_EXPLAINED, false)) {
-                requestExactAfterNotifications = requiresExactTime
-                notificationEducationVisible.value = true
-            }
-            return
-        }
-        if (requiresExactTime) requestExactAlarmAccessIfNeeded()
+        val notificationsAllowed = NotificationManagerCompat.from(this).areNotificationsEnabled()
+        val exactAllowed = Build.VERSION.SDK_INT < 31 || getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+        val backgroundAllowed = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+        if (!notificationsAllowed || !ru.nezabudka.app.notifications.NotificationChannels.enabledForMode(this, viewModel.settings.value.reminderAlarmMode) ||
+            (requiresExactTime && !exactAllowed) || !backgroundAllowed) viewModel.offerTip(AssistantTipKind.REMINDER_DELIVERY)
+        if (DeviceAutoStartSettings.destination(this) != null || DeviceAutoStartSettings.alarmPermissionDestination(this) != null)
+            viewModel.offerTip(AssistantTipKind.REMINDER_DELIVERY)
     }
 
     private fun dismissNotificationEducation() {
@@ -481,6 +490,8 @@ private fun AssistantApp(
     consumeWidgetIntent: () -> Unit,
     returnToWidget: () -> Unit,
     openNotificationSettings: () -> Unit,
+    openAppPermissionSettings: () -> Unit,
+    permissionDialogVisible: Boolean,
     openExactAlarmSettings: () -> Unit,
     openFullScreenAlarmSettings: () -> Unit,
     openOverlaySettings: () -> Unit,
@@ -506,14 +517,49 @@ private fun AssistantApp(
     var editorFolderId by remember { mutableStateOf<Long?>(null) }
     var editorSessionId by remember { mutableLongStateOf(0L) }
     var settingsSearchRequest by remember { mutableStateOf<String?>(null) }
+    var assistantSettingsRequest by remember { mutableStateOf<AssistantSettingsTarget?>(null) }
     var returnToWidgetOnExit by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var widgetReminderCreator by remember { mutableStateOf(false) }
     val widgetContext = androidx.compose.ui.platform.LocalContext.current
+    val whisperModelsMenu by vm.whisperModelsMenu.collectAsStateWithLifecycle()
+    val voiceState by vm.voiceActionUi.collectAsStateWithLifecycle()
+    ru.nezabudka.app.ui.RecordingHapticEffect(voiceState.isRecording)
+    val updateState by remember(widgetContext) { ru.nezabudka.app.updates.GithubAppUpdater.observe(widgetContext) }
+        .collectAsStateWithLifecycle(initialValue = ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext))
+    var startupUpdatePending by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
+    val startupCheckBaseline = androidx.compose.runtime.saveable.rememberSaveable { ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext).checkedAt }
+    var startupCheckRequested by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (startupCheckRequested) return@LaunchedEffect
+        startupCheckRequested = true
+        if (requestedWidgetLaunch == null && requestedReminderId == null && requestedSnoozeId == null)
+            ru.nezabudka.app.updates.GithubAppUpdater.checkNow(widgetContext, startup = true)
+        else startupUpdatePending = false
+    }
+    LaunchedEffect(updateState.checkedAt) {
+        if (updateState.checkedAt != 0L && updateState.checkedAt != startupCheckBaseline && updateState.status == "none") startupUpdatePending = false
+    }
+    if (startupUpdatePending && currentRoute == "assistant" && !permissionDialogVisible && !whisperModelsMenu &&
+        !voiceState.isRecording && !voiceState.isProcessing && voiceState.recognizedText.isBlank() &&
+        updateState.searchEnabled && updateState.checkedAt != 0L && updateState.checkedAt != startupCheckBaseline &&
+        updateState.status in setOf("available", "ready")) {
+        AppAlertDialog(
+            onDismissRequest = { startupUpdatePending = false },
+            title = { Text("Доступно обновление") },
+            text = { Text("Найдена версия ${updateState.version}. Перейдите в настройки обновлений, чтобы скачать и установить её.") },
+            confirmButton = { TextButton(onClick = {
+                startupUpdatePending = false
+                settingsSearchRequest = "обновления"
+                nav.navigate("settings") { launchSingleTop = true }
+            }) { Text("К обновлению") } },
+            dismissButton = { TextButton(onClick = { startupUpdatePending = false }) { Text("Отмена") } },
+        )
+    }
     val destinations = remember { listOf(
-        Triple("assistant", "Помощник", Icons.Default.Mic),
-        Triple("reminders", "Напоминания", Icons.Default.Notifications),
-        Triple("notes", "Заметки", Icons.Default.Description),
-        Triple("settings", "Настройки", Icons.Default.Settings),
+        Triple("assistant", "Помощник", Icons.Outlined.Mic),
+        Triple("reminders", "Напоминания", Icons.Outlined.Notifications),
+        Triple("notes", "Заметки", Icons.Outlined.Description),
+        Triple("settings", "Настройки", Icons.Outlined.Settings),
     ) }
     BackHandler(enabled = destinations.any { it.first == currentRoute }) {
         if (returnToWidgetOnExit) returnToWidget()
@@ -578,28 +624,11 @@ private fun AssistantApp(
                     .background(themeTokens.colors.navigation)
                     .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
             ) {
-                NavigationBar(
-                    modifier = Modifier.height(72.dp),
-                    containerColor = themeTokens.colors.navigation,
-                    windowInsets = WindowInsets(0, 0, 0, 0),
-                ) {
-                    destinations.forEach { (route, label, icon) ->
-                        NavigationBarItem(
-                            selected = currentRoute == route,
-                            onClick = { openTopLevelDestination(route) },
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = if (appSettings.showNavigationLabels) ({ Text(label, maxLines = 1) }) else null,
-                            alwaysShowLabel = appSettings.showNavigationLabels,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = themeTokens.colors.accent,
-                                selectedTextColor = themeTokens.colors.accent,
-                                indicatorColor = themeTokens.colors.selected,
-                                unselectedIconColor = themeTokens.colors.textSecondary,
-                                unselectedTextColor = themeTokens.colors.textSecondary,
-                            ),
-                        )
-                    }
-                }
+                ru.nezabudka.app.ui.screens.FullWidthNavigation(
+                    destinations = destinations, currentRoute = currentRoute,
+                    showLabels = appSettings.showNavigationLabels,
+                    open = openTopLevelDestination,
+                )
             }
         }
     }) { padding ->
@@ -616,6 +645,7 @@ private fun AssistantApp(
             composable("assistant") {
                 val ui by vm.assistantUi.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
+                val tips by vm.assistantTips.collectAsStateWithLifecycle()
                 AssistantScreen(
                     ui, actionNotice, settings, vm::editText,
                     { vm.primaryAction(CommandScope.ASSISTANT) },
@@ -632,31 +662,40 @@ private fun AssistantApp(
                     dismissNotice = vm::dismissActionNotice,
                     answerReminderDateClarification = vm::answerReminderDateClarification,
                     openWhisperModels = vm::openWhisperModelsMenu,
-                    hideWelcomeCard = { vm.setShowAssistantWelcomeCard(false) },
+                    hideWelcomeCard = vm::hideAssistantWelcomeCard,
+                    tips = tips,
+                    acknowledgeTip = vm::acknowledgeTip,
+                    openSettings = { target ->
+                        if (target == AssistantSettingsTarget.MICROPHONE) openAppPermissionSettings()
+                        else {
+                            assistantSettingsRequest = target
+                            settingsSearchRequest = null
+                            nav.navigate("settings") { launchSingleTop = true }
+                        }
+                    },
                 )
             }
             composable("settings") {
                 LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
-                val appUpdateState by remember(widgetContext) { ru.nezabudka.app.updates.GithubAppUpdater.observe(widgetContext) }
-                    .collectAsStateWithLifecycle(initialValue = ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext))
                 val appIcon by vm.appIcon.collectAsStateWithLifecycle()
                 val settings by vm.settings.collectAsStateWithLifecycle()
-                val whisperModels by vm.whisperModels.collectAsStateWithLifecycle()
-                val whisperRuntime by vm.whisperRuntime.collectAsStateWithLifecycle()
+                val whisperModels by (if (settings.sttEngine == "gigaam") vm.gigaamModels else vm.whisperModels).collectAsStateWithLifecycle()
                 val modelStorage by vm.modelStorage.collectAsStateWithLifecycle()
                 val classicNluModel by vm.classicNluModel.collectAsStateWithLifecycle()
                 val cloudSttCredentials by vm.cloudSttCredentials.collectAsStateWithLifecycle()
                 val threadBenchmark by vm.whisperThreadBenchmark.collectAsStateWithLifecycle()
                 val punctuationModel by vm.punctuationModel.collectAsStateWithLifecycle()
+                val dataTransfer by vm.dataTransfer.collectAsStateWithLifecycle()
+                val speechState by vm.ui.collectAsStateWithLifecycle()
                 SettingsScreen(
-                    settings, vm.engines, modelStorage, whisperModels, whisperRuntime, vm.whisperDownloads,
+                    settings, vm.engines, modelStorage, whisperModels, if (settings.sttEngine == "gigaam") ru.nezabudka.app.speech.GigaamCatalog.downloads else vm.whisperDownloads,
                     classicNluModel, vm.classicNluDownloadAvailable, cloudSttCredentials, vm.deviceCapabilities,
                     vm::selectSttEngine, vm::setKeepWhisperModelLoaded, vm::setWhisperThreadCount,
                     vm::setAudioPreprocessing, vm::setShowPlaybackButton, vm::setShowTechnicalLog, vm::setShowAssistantWelcomeCard,
                     vm::setTrustStt, vm::setTheme, vm::setCustomTheme,
                     vm::setPopupDurationSeconds,
-                    vm::setLocalOnly, vm::setClassicNluEnabled,
-                    vm::setExternalDataBackupEnabled, vm::setTimeOfDaySettings,
+                    vm::setClassicNluEnabled,
+                    vm::setTimeOfDaySettings,
                     vm::setNoteTrashRetentionDays, vm::setNoteFolderInterface,
                     vm::setShowNavigationLabels, vm::setUiPerformanceMode,
                     vm::setNotificationSound, vm::setNotificationVibrationEnabled,
@@ -688,16 +727,38 @@ private fun AssistantApp(
                     resetFirstUseSetup,
                     threadBenchmark, vm::startWhisperThreadBenchmark, vm::cancelWhisperThreadBenchmark, vm::applyBestWhisperThreadCount,
                     vm::setWhisperAccurateMode,
+                    vm::setWhisperRawMode,
                     vm::setNotePunctuationModel,
                     punctuationModel, vm::downloadPunctuationModel, vm::cancelPunctuationDownload,
                     requestedSearch = settingsSearchRequest,
+                    setGigaamLivePreview = vm::setGigaamLivePreview,
+                    setEditorFullPunctuation = vm::setEditorFullPunctuation,
                     consumeRequestedSearch = { settingsSearchRequest = null },
                     appIcon = appIcon,
                     selectAppIcon = vm::setAppIcon,
-                    appUpdateState = appUpdateState,
-                    setAutomaticUpdates = { ru.nezabudka.app.updates.GithubAppUpdater.setAutomatic(widgetContext, it) },
+                    appUpdateState = updateState,
                     checkForUpdate = { ru.nezabudka.app.updates.GithubAppUpdater.checkNow(widgetContext) },
                     installUpdate = { ru.nezabudka.app.updates.GithubAppUpdater.install(widgetContext) },
+                    loadCloudCredential = vm::loadCloudCredential,
+                    importPunctuation = vm::importPunctuationModel,
+                    selectPunctuationFile = vm::selectPunctuationModel,
+                    runReminderTest = vm::runReminderDisplayTest,
+                    cancelReminderTest = vm::cancelReminderDisplayTest,
+                    dataTransfer = dataTransfer,
+                    exportData = vm::exportDataFile,
+                    prepareDataRestore = vm::prepareDataRestore,
+                    confirmDataRestore = vm::confirmDataRestore,
+                    cancelDataRestore = vm::cancelDataRestore,
+                    setUpdateSearchEnabled = { ru.nezabudka.app.updates.GithubAppUpdater.setSearchEnabled(widgetContext, it) },
+                    downloadUpdate = { ru.nezabudka.app.updates.GithubAppUpdater.checkNow(widgetContext, download = true) },
+                    deleteModel = vm::deleteDownloadedModel,
+                    canDeleteModels = !speechState.isRecording && !speechState.isProcessing && !threadBenchmark.running,
+                    requestedTarget = assistantSettingsRequest,
+                    consumeRequestedTarget = { assistantSettingsRequest = null },
+                    onWhisperModelsOpened = vm::whisperModelsOpened,
+                    setUiHapticsEnabled = vm::setUiHapticsEnabled,
+                    setHidePopupNotices = vm::setHidePopupNotices,
+                    returnToAssistant = { nav.popBackStack() },
                 )
             }
             composable("reminders") {
@@ -778,6 +839,7 @@ private fun AssistantApp(
                 },
                 reducedUiEffects = reducedUiEffects,
                 isLoading = notesUi.isLoading,
+                openTrashSettings = { assistantSettingsRequest = AssistantSettingsTarget.TRASH; nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
             composable("reminderEditor/{id}/{changeTime}") { entry ->
@@ -841,6 +903,7 @@ private fun AssistantApp(
                     ?.text,
                 dictationActive = dictationUi.active,
                 dictationRecording = dictationUi.recording,
+                dictationPreview = dictationUi.preview,
                 beginDictation = { withMicrophonePermission { vm.beginNoteDictation(dictationSessionId) } },
                 endDictation = { vm.endNoteDictation(dictationSessionId) },
                 consumeDictation = { vm.consumeNoteDictation(dictationSessionId) },
@@ -850,53 +913,26 @@ private fun AssistantApp(
         }
         }
     }
-    val whisperModelsMenu by vm.whisperModelsMenu.collectAsStateWithLifecycle()
-    val setupPrompts by vm.setupPrompts.collectAsStateWithLifecycle()
-    val nluSetupModel by vm.classicNluModel.collectAsStateWithLifecycle()
-    if (!whisperModelsMenu) {
-        FirstUseSetupDialogs(
-            prompt = setupPrompts.firstOrNull(),
-            settings = appSettings,
-            notificationsEnabled = notificationsEnabled,
-            exactAlarmsAllowed = exactAlarmsAllowed,
-            backgroundRunAllowed = backgroundRunAllowed,
-            overlayWindowsAllowed = overlayWindowsAllowed,
-            alarmVendorSettingsTitle = alarmVendorSettingsTitle,
-            autoStartSettingsTitle = autoStartSettingsTitle,
-            confirmTimes = vm::confirmTimeOfDaySetup,
-            confirmFolderInterface = vm::confirmFolderInterfaceSetup,
-            finish = { id, proceed ->
-                if (setupPrompts.firstOrNull()?.let { it.id == id && it.kind == FirstUseSetupKind.REMINDER_DELIVERY } == true) {
-                    reminderSetupExplained(setupPrompts.first().requiresExactTime)
-                }
-                vm.finishSetupPrompt(id, proceed)
-            },
-            openNotifications = requestNotificationFromSetup,
-            openExactAlarms = openExactAlarmSettings,
-            openAutoStart = openAutoStartSettings,
-            openBackground = openBackgroundRunSettings,
-            openOverlay = openOverlaySettings,
-            openAlarmVendor = openAlarmVendorSettings,
-            nluModelInstalled = nluSetupModel.installed,
-            enableNlu = vm::confirmNluSetup,
-            openNluSettings = { settingsSearchRequest = "NLU"; nav.navigate("settings") { launchSingleTop = true } },
-        )
-    }
     if (whisperModelsMenu) {
         LaunchedEffect(Unit) { vm.refreshModelCacheStats() }
-        val models by vm.whisperModels.collectAsStateWithLifecycle()
+        val activeSettings by vm.settings.collectAsStateWithLifecycle()
+        val isGigaam = activeSettings.sttEngine == "gigaam"
+        val models by (if (isGigaam) vm.gigaamModels else vm.whisperModels).collectAsStateWithLifecycle()
         val storage by vm.modelStorage.collectAsStateWithLifecycle()
         val chooseStorage = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             uri?.let(vm::selectModelsDirectory)
         }
         WhisperModelsMenu(
             models = models,
-            downloads = vm.whisperDownloads,
+            downloads = if (isGigaam) ru.nezabudka.app.speech.GigaamCatalog.downloads else vm.whisperDownloads,
             storageConfigured = storage.configured,
             chooseStorage = { chooseStorage.launch(null) },
             select = vm::selectWhisperModel,
             download = vm::downloadWhisperModel,
+            delete = { vm.deleteDownloadedModel(if (isGigaam) "gigaam" else "whisper", it) },
+            gigaam = isGigaam,
             dismiss = vm::dismissWhisperModelsMenu,
+            import = vm::importWhisperModel,
         )
     }
     if (requestedSnoozeId != null) {

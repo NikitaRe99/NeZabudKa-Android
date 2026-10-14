@@ -47,6 +47,13 @@ class AndroidModelLibrary(
         return true
     }
 
+    fun delete(fileName: String) {
+        require(isSafeFileName(fileName)) { "Недопустимое имя файла модели" }
+        val wasSelected = snapshot().selectedName == fileName
+        storage.deleteModel(kind, fileName)
+        if (wasSelected) preferences.edit().remove(KEY_SELECTED).apply()
+    }
+
     fun import(uri: Uri): String {
         val displayName = context.contentResolver
             .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
