@@ -231,7 +231,7 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
                     }
                 }
             }
-            if (!validDownload(partial, release)) error("APK не прошёл проверку размера, хеша или подписи")
+            downloadValidationError(partial, release)?.let { error(it) }
             target.delete()
             if (!partial.renameTo(target)) error("Не удалось сохранить APK")
             GithubAppUpdater.update(context, "ready", release.version, 100)
@@ -246,8 +246,10 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
         }
     }
 
-    private fun validDownload(file: File, release: GithubRelease): Boolean {
-        if (file.length() != release.size) return false
+    private fun validDownload(file: File, release: GithubRelease): Boolean = downloadValidationError(file, release) == null
+
+    private fun downloadValidationError(file: File, release: GithubRelease): String? {
+        if (file.length() != release.size) return "Размер APK не совпадает с указанным в релизе. Повторите загрузку"
         val hash = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
             val buffer = ByteArray(64 * 1024)
@@ -257,8 +259,9 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
                 hash.update(buffer, 0, count)
             }
         }
-        if (!hash.digest().joinToString("") { "%02x".format(it) }.equals(release.sha256, true)) return false
-        return UpdateInstallActivity.isValidApk(applicationContext, file)
+        if (!hash.digest().joinToString("") { "%02x".format(it) }.equals(release.sha256, true))
+            return "Хеш APK не совпадает с указанным в релизе. Повторите загрузку"
+        return UpdateInstallActivity.apkValidationError(applicationContext, file)
     }
 
     private fun downloadForegroundInfo(version: String): ForegroundInfo {
