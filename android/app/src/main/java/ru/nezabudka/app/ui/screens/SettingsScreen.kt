@@ -452,7 +452,7 @@ internal fun SettingsScreen(
         }
     }
     LaunchedEffect(selectedCategory, searchQuery, targetSettingsKey) {
-        val displayedKeys = listOf("data-files", "Данные и хранилище", "storage-cache", "Интерфейс", "interface-behavior", "folder-interface", "reminder-mode", "Уведомления", "alarm-mode", "alarm-timing", "notification-permissions", "Время суток", "Корзина заметок", "Распознавание речи", "yandex", "google_cloud", "vk_cloud", "Модель Whisper.cpp", "Модель GigaAM", "Распознавание команд", "Пунктуация голосового ввода", "github-updates", "О приложении").filter { it in matchingKeys }
+        val displayedKeys = listOf("data-files", "Данные и хранилище", "storage-cache", "Интерфейс", "interface-behavior", "folder-interface", "reminder-mode", "Уведомления", "alarm-mode", "alarm-timing", "notification-permissions", "Время суток", "Корзина заметок", "Распознавание речи", "yandex", "google_cloud", "vk_cloud", "Модель Whisper.cpp", "Модель GigaAM", "Распознавание команд", "Пунктуация голосового ввода", "spoken-symbols", "github-updates", "О приложении").filter { it in matchingKeys }
         val index = displayedKeys.indexOf(targetSettingsKey).coerceAtLeast(0)
         settingsListState.scrollToItem(index)
     }
@@ -992,13 +992,6 @@ internal fun SettingsScreen(
                 )
             }
         }
-        if (showSection("spoken-symbols")) item(key = "spoken-symbols", contentType = "settings-section") {
-            SettingsSection("Слова в символы") {
-                SettingsToggleRow(title = "Заменять названия знаков", checked = settings.spokenSymbolsEnabled, onCheckedChange = setSpokenSymbolsEnabled,
-                    description = "Например, «двоеточие» → «:». Применяется к голосовому вводу после распознавания.")
-                SettingsActionRow(title = "Слова и символы", value = "Замен: ${settings.spokenSymbols.size}", onClick = { spokenSymbolsDialog = true })
-            }
-        }
         if (showSection("Распознавание речи")) item(key = "Распознавание речи", contentType = "settings-section") {
             SettingsSection("Распознавание речи") {
                 SettingsSupportingText("Распознавание превращает голос в текст. Выполнение команд настраивается отдельно.")
@@ -1304,6 +1297,13 @@ internal fun SettingsScreen(
                 if (settings.sttEngine == "whisper" && settings.whisperRawMode) SettingsSupportingText(
                     "Дополнительная пунктуация временно отключена режимом «Чистый Whisper».")
                 punctuationModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        }
+        if (showSection("spoken-symbols")) item(key = "spoken-symbols", contentType = "settings-section") {
+            SettingsSection("Слова в символы") {
+                SettingsToggleRow(title = "Заменять названия знаков", checked = settings.spokenSymbolsEnabled, onCheckedChange = setSpokenSymbolsEnabled,
+                    description = "Например, «двоеточие» → «:». Применяется к голосовому вводу после распознавания.")
+                SettingsActionRow(title = "Слова и символы", value = "Замен: ${settings.spokenSymbols.size}", onClick = { spokenSymbolsDialog = true })
             }
         }
         if (showSection("github-updates")) item(key = "github-updates", contentType = "settings-section") {

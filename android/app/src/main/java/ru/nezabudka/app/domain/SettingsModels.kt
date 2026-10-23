@@ -6,12 +6,8 @@ import kotlinx.serialization.Serializable
 data class SpokenSymbol(val phrase: String, val symbol: String)
 
 val DEFAULT_SPOKEN_SYMBOLS = listOf(
-    SpokenSymbol("двоеточие", ":"), SpokenSymbol("тире", "—"),
-    SpokenSymbol("точка с запятой", ";"), SpokenSymbol("запятая", ","),
-    SpokenSymbol("точка", "."), SpokenSymbol("вопросительный знак", "?"),
-    SpokenSymbol("восклицательный знак", "!"), SpokenSymbol("многоточие", "…"),
-    SpokenSymbol("открывающая скобка", "("), SpokenSymbol("закрывающая скобка", ")"),
-    SpokenSymbol("новая строка", "\n"), SpokenSymbol("новый абзац", "\n\n"),
+    SpokenSymbol("двоеточие", ":"),
+    SpokenSymbol("тире", "—"),
 )
 
 @Serializable
