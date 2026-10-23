@@ -173,7 +173,7 @@ internal fun AppNoticeCard(
         modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
         shape = RoundedCornerShape(theme.shapes.card),
         colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.card, contentColor = if (isError) theme.colors.danger else theme.colors.textPrimary),
-        border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.talkButton),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isError) theme.colors.danger else theme.colors.talkButton),
         elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
     ) {
         if (inlineClose) {
@@ -235,7 +235,7 @@ internal fun AppSnackbarHost(state: SnackbarHostState) {
             Modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
             shape = RoundedCornerShape(theme.shapes.card),
             colors = CardDefaults.cardColors(containerColor = theme.colors.card, contentColor = theme.colors.textPrimary),
-            border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.outline),
+            border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.talkButton),
             elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
         ) {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),

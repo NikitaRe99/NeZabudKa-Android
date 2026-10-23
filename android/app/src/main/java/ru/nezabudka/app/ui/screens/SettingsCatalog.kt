@@ -21,6 +21,7 @@ internal val SETTINGS_CATALOG = listOf(
     SettingsEntry("Данные и хранилище", SettingsCategory.STORAGE, "Каталог данных и моделей", "каталог папка файлы модели данные переустановка хранение whisper nlu пунктуация"),
     SettingsEntry("storage-cache", SettingsCategory.STORAGE, "Временные файлы", "кэш кеш память очистить удалить загрузки аудио"),
     SettingsEntry("Интерфейс", SettingsCategory.APPEARANCE, "Оформление", "тема светлая темная цвет тени навигация подписи значок иконка приложения незабудка галочка часы"),
+    SettingsEntry("app-screens", SettingsCategory.APPEARANCE, "Экраны приложения", "вкладки помощник заметки напоминания настройки скрыть показать нижняя панель навигация"),
     SettingsEntry("interface-behavior", SettingsCategory.APPEARANCE, "Поведение интерфейса", "производительность плавность скорость облегченный лог журнал время всплывающих уведомлений помощник начальная подсказка карточка запомните голосом примеры примеры команды"),
     SettingsEntry("Уведомления", SettingsCategory.REMINDERS, "Уведомления", "звук мелодия экран пробуждение"),
     SettingsEntry("folder-interface", SettingsCategory.NOTES, "Интерфейс папок", "заметки карусель боковая панель вид переключение папок"),

@@ -98,6 +98,7 @@ interface SettingsPort {
     fun setCustomTheme(value: CustomThemeSettings)
     fun setPopupDurationSeconds(value: Int)
     fun setHidePopupNotices(value: Boolean)
+    fun setVisibleScreens(screens: List<String>) {}
     fun setClassicNluEnabled(enabled: Boolean)
     fun setTimeOfDaySettings(values: List<TimeOfDaySetting>)
     fun setSttEngine(value: String)

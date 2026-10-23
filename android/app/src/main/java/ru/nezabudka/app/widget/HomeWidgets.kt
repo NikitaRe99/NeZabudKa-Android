@@ -53,7 +53,7 @@ object HomeWidgets {
         if (observation?.isActive == true) return
         settingsPrefs = app.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "theme" || key == "custom_theme") requestRefresh(app)
+            if (key == "theme" || key == "custom_theme" || key == "visible_screens") requestRefresh(app)
         }.also { settingsPrefs?.registerOnSharedPreferenceChangeListener(it) }
         observation = scope.launch {
             AppDatabase.get(app).invalidationTracker.createFlow("reminders", "notes", "note_folders", "note_folder_refs")
@@ -166,6 +166,8 @@ class WidgetActionReceiver : BroadcastReceiver() {
         val app = context.applicationContext
         val pending = goAsync()
         HomeWidgets.receive(app, block = {
+            if (intent.action in setOf(ACTION_WIDGET_COMPLETE, ACTION_WIDGET_UNDO, ACTION_WIDGET_RESTORE) &&
+                !widgetFeatureEnabled(app, WidgetKind.REMINDERS)) return@receive
             if (intent.action == ACTION_WIDGET_COMPLETE) {
                 val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
                 if (HomeWidgets.kind(app, widgetId) != WidgetKind.REMINDERS) return@receive

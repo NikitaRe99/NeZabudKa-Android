@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
@@ -174,6 +175,7 @@ internal fun RemindersScreen(
     answerReminderDateClarification: (String) -> Unit,
     requestCreate: Boolean = false,
     consumeCreateRequest: () -> Unit = {},
+    openSettings: (() -> Unit)? = null,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -620,6 +622,10 @@ internal fun RemindersScreen(
                 Box {
                     IconButton(onClick = { moreMenu = true }) { Icon(Icons.Default.MoreVert, "Другие действия") }
                     AppDropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                            openSettings?.let { open ->
+                                AppMenuItem(text = "Настройки", icon = androidx.compose.material.icons.Icons.Outlined.Settings,
+                                    onClick = { moreMenu = false; open() })
+                            }
                         AppMenuItem(
                             text = "Удалить все просроченные",
                             icon = Icons.Default.DeleteSweep,

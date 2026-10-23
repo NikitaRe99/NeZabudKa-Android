@@ -241,6 +241,9 @@ internal fun SettingsScreen(
     onWhisperModelsOpened: () -> Unit = {},
     setUiHapticsEnabled: (Boolean) -> Unit = {},
     setHidePopupNotices: (Boolean) -> Unit = {},
+    setVisibleScreens: (List<String>) -> Unit = {},
+    singleScreenMode: Boolean = false,
+    returnToMainScreen: () -> Unit = {},
     returnToAssistant: () -> Unit = {},
     setGigaamLivePreview: (Boolean) -> Unit = {},
     setEditorFullPunctuation: (Boolean) -> Unit = {},
@@ -264,8 +267,15 @@ internal fun SettingsScreen(
             consumeRequestedSearch()
         }
     }
-    val entries = remember(settings.sttEngine, settings.reminderAlarmMode) {
-        availableSettingsEntries(settings.sttEngine, settings.reminderAlarmMode)
+    val visibleCategories = SettingsCategory.entries.filter {
+        when (it) {
+            SettingsCategory.NOTES -> "notes" in settings.visibleScreens
+            SettingsCategory.REMINDERS -> "reminders" in settings.visibleScreens
+            else -> true
+        }
+    }
+    val entries = remember(settings.sttEngine, settings.reminderAlarmMode, settings.visibleScreens) {
+        availableSettingsEntries(settings.sttEngine, settings.reminderAlarmMode).filter { it.category in visibleCategories }
     }
     val matchingEntries = remember(entries, selectedCategory, searchQuery) {
         entries.filter { if (searchQuery.isNotBlank()) it.matches(searchQuery) else it.category == selectedCategory }
@@ -452,15 +462,17 @@ internal fun SettingsScreen(
         }
     }
     LaunchedEffect(selectedCategory, searchQuery, targetSettingsKey) {
-        val displayedKeys = listOf("data-files", "Данные и хранилище", "storage-cache", "Интерфейс", "interface-behavior", "folder-interface", "reminder-mode", "Уведомления", "alarm-mode", "alarm-timing", "notification-permissions", "Время суток", "Корзина заметок", "Распознавание речи", "yandex", "google_cloud", "vk_cloud", "Модель Whisper.cpp", "Модель GigaAM", "Распознавание команд", "Пунктуация голосового ввода", "spoken-symbols", "github-updates", "О приложении").filter { it in matchingKeys }
+        val displayedKeys = listOf("data-files", "Данные и хранилище", "storage-cache", "Интерфейс", "app-screens", "interface-behavior", "folder-interface", "reminder-mode", "Уведомления", "alarm-mode", "alarm-timing", "notification-permissions", "Время суток", "Корзина заметок", "Распознавание речи", "yandex", "google_cloud", "vk_cloud", "Модель Whisper.cpp", "Модель GigaAM", "Распознавание команд", "Пунктуация голосового ввода", "spoken-symbols", "github-updates", "О приложении").filter { it in matchingKeys }
         val index = displayedKeys.indexOf(targetSettingsKey).coerceAtLeast(0)
         settingsListState.scrollToItem(index)
     }
     Column(Modifier.fillMaxSize().padding(horizontal = AppLayout.horizontalPadding)) {
         Row(Modifier.fillMaxWidth().padding(top = AppLayout.contentTopPadding, bottom = AppLayout.sectionSpacing), verticalAlignment = Alignment.CenterVertically) {
-            if (selectedCategory != null || searchQuery.isNotBlank()) IconButton(onClick = {
+            if (singleScreenMode || selectedCategory != null || searchQuery.isNotBlank()) IconButton(onClick = {
+                if (selectedCategory == null && searchQuery.isBlank()) returnToMainScreen()
+                else
                 if (openedFromAssistant) returnToAssistant() else { searchQuery = ""; selectedCategory = null; targetSettingsKey = null }
-            }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, if (openedFromNotes) "Вернуться к заметкам" else if (openedFromAssistant) "Вернуться к подсказке" else "Все настройки") }
+            }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, if (openedFromNotes) "Вернуться к заметкам" else if (openedFromAssistant) "Вернуться к подсказке" else if (selectedCategory != null || searchQuery.isNotBlank()) "Все настройки" else "Вернуться") }
         AppSearchField(
             value = searchQuery, onValueChange = { targetSettingsKey = null; searchQuery = it },
             placeholder = "Найти настройку",
@@ -476,7 +488,7 @@ internal fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (selectedCategory == null && searchQuery.isBlank()) {
-            items(SettingsCategory.entries, key = { it.name }, contentType = { "category" }) { category ->
+            items(visibleCategories, key = { it.name }, contentType = { "category" }) { category ->
                 Card(onClick = { selectedCategory = category }, modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(theme.shapes.card),
                     colors = CardDefaults.cardColors(containerColor = theme.colors.card),
@@ -598,6 +610,18 @@ internal fun SettingsScreen(
                     )
             }
         }
+        if (showSection("app-screens")) item(key = "app-screens", contentType = "settings-section") {
+            SettingsSection("Экраны приложения") {
+                listOf("assistant" to "Помощник", "reminders" to "Напоминания", "notes" to "Заметки").forEach { (route, title) ->
+                    val checked = route in settings.visibleScreens
+                    val proposed = if (checked) settings.visibleScreens - route else settings.visibleScreens + route
+                    SettingsToggleRow(title = title, checked = checked,
+                        enabled = ru.nezabudka.app.domain.validAppScreens(proposed),
+                        onCheckedChange = { setVisibleScreens(proposed) })
+                }
+                SettingsSupportingText("Оставьте хотя бы заметки или напоминания. Если выбран один экран, настройки доступны через его меню «…», а нижняя панель скрыта.")
+            }
+        }
         if (showSection("interface-behavior")) item(key = "interface-behavior", contentType = "settings-section") {
             SettingsSection("Поведение интерфейса") {
                     SettingsToggleRow(
@@ -684,6 +708,7 @@ internal fun SettingsScreen(
                     SettingsSupportingText(
                         "Автоматический режим включает облегчённый интерфейс на слабых устройствах. Облегчённый режим уменьшает тени и постепенно выводит длинные списки.",
                     )
+                    if ("assistant" in settings.visibleScreens) {
                     SettingsToggleRow(
                         title = "Начальная подсказка",
                         description = "Примеры команд на экране помощника",
@@ -696,6 +721,7 @@ internal fun SettingsScreen(
                         checked = settings.showTechnicalLog,
                         onCheckedChange = setShowTechnicalLog,
                     )
+                    }
             }
         }
         if (showSection("folder-interface")) item(key = "folder-interface", contentType = "settings-section") {

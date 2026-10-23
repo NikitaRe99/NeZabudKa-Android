@@ -48,6 +48,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items as staggeredItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -229,6 +230,7 @@ internal fun NotesScreen(
     openTrashSettings: () -> Unit = {},
     trashRetentionDays: Int = 30,
     setTrashRetentionDays: (Int) -> Unit = {},
+    openSettings: (() -> Unit)? = null,
 ) {
     val selectedFolder = selectedFolderId
     val columns = noteColumns.coerceIn(1, 2)
@@ -741,6 +743,10 @@ internal fun NotesScreen(
                     Box {
                         IconButton(onClick = { moreMenu = true }) { Icon(Icons.Default.MoreVert, "Меню") }
                         AppDropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                            openSettings?.let { open ->
+                                AppMenuItem(text = "Настройки", icon = androidx.compose.material.icons.Icons.Outlined.Settings,
+                                    onClick = { moreMenu = false; open() })
+                            }
                             AppMenuItem(
                                 text = "Редактировать папки",
                                 icon = Icons.Default.Edit,

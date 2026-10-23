@@ -39,6 +39,7 @@ data class AppSettings(
     val customTheme: CustomThemeSettings,
     val popupDurationSeconds: Int,
     val hidePopupNotices: Boolean = false,
+    val visibleScreens: List<String> = DEFAULT_APP_SCREENS,
     val timeOfDaySettings: List<TimeOfDaySetting>,
     val sttEngine: String,
     val keepWhisperModelLoaded: Boolean = false,

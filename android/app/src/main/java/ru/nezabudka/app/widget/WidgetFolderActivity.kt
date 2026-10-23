@@ -44,6 +44,10 @@ class WidgetFolderActivity : ComponentActivity() {
         setResult(RESULT_CANCELED)
         val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
         if (HomeWidgets.kind(this, id) != WidgetKind.NOTES) { finish(); return }
+        if (!widgetFeatureEnabled(this, WidgetKind.NOTES)) {
+            startActivity(WidgetLaunchIntent.create(this, WidgetLaunch(WidgetDestination.SETTINGS), "$id/disabled"))
+            finish(); return
+        }
         val prefs = WidgetPreferences(this)
         val selected = prefs.folder(id)
         val settings = SettingsStore(this).state.value

@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.SystemClock
 import ru.nezabudka.app.MainActivity
 
-enum class WidgetDestination { REMINDERS, NOTES, NOTE, REMINDER, NEW_NOTE, NEW_REMINDER }
+enum class WidgetDestination { REMINDERS, NOTES, NOTE, REMINDER, NEW_NOTE, NEW_REMINDER, SETTINGS }
 
 data class WidgetLaunch(
     val destination: WidgetDestination,

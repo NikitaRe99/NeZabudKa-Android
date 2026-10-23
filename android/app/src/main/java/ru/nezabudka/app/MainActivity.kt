@@ -513,6 +513,10 @@ private fun AssistantApp(
 ) {
     val nav = rememberNavController()
     val appSettings by vm.settings.collectAsStateWithLifecycle()
+    val visibleScreens = ru.nezabudka.app.domain.normalizeAppScreens(appSettings.visibleScreens)
+    val singleScreenMode = visibleScreens.size == 1
+    val homeRoute = visibleScreens.first()
+    val initialHomeRoute = remember { homeRoute }
     val event by vm.event.collectAsStateWithLifecycle()
     val actionNotice = (event as? AssistantUiEvent.Action)?.notice
     val themeTokens = AppTheme.tokens
@@ -552,7 +556,7 @@ private fun AssistantApp(
     LaunchedEffect(updateState.checkedAt) {
         if (updateState.checkedAt != 0L && updateState.checkedAt != startupCheckBaseline && updateState.status == "none") startupUpdatePending = false
     }
-    if (startupUpdatePending && currentRoute == "assistant" && !permissionDialogVisible && !whisperModelsMenu &&
+    if (startupUpdatePending && currentRoute == homeRoute && !permissionDialogVisible && !whisperModelsMenu &&
         !voiceState.isRecording && !voiceState.isProcessing && voiceState.recognizedText.isBlank() &&
         updateState.searchEnabled && updateState.checkedAt != 0L && updateState.checkedAt != startupCheckBaseline &&
         (updateState.status in setOf("available", "ready") || installWhenDownloaded)) {
@@ -582,14 +586,21 @@ private fun AssistantApp(
             dismissButton = { TextButton(onClick = { startupUpdatePending = false; installWhenDownloaded = false }) { Text("Отмена") } },
         )
     }
-    val destinations = remember { listOf(
+    val destinations = remember(visibleScreens) { listOf(
         Triple("assistant", "Помощник", Icons.Outlined.Mic),
         Triple("reminders", "Напоминания", Icons.Outlined.Notifications),
         Triple("notes", "Заметки", Icons.Outlined.Description),
         Triple("settings", "Настройки", Icons.Outlined.Settings),
-    ) }
-    BackHandler(enabled = destinations.any { it.first == currentRoute }) {
+    ).filter { it.first == "settings" || it.first in visibleScreens } }
+    LaunchedEffect(currentRoute, visibleScreens) {
+        if (currentRoute in ru.nezabudka.app.domain.DEFAULT_APP_SCREENS && currentRoute !in visibleScreens) {
+            nav.navigate(homeRoute) { popUpTo(nav.graph.id); launchSingleTop = true }
+        }
+    }
+    BackHandler(enabled = (returnToWidgetOnExit && destinations.any { it.first == currentRoute }) ||
+        (singleScreenMode && currentRoute == "settings")) {
         if (returnToWidgetOnExit) returnToWidget()
+        else nav.navigate(homeRoute) { popUpTo(nav.graph.id); launchSingleTop = true }
     }
     val openTopLevelDestination: (String) -> Unit = { route ->
         returnToWidgetOnExit = false
@@ -613,6 +624,11 @@ private fun AssistantApp(
         try {
             val notesDestination = launch.destination in setOf(WidgetDestination.NOTES, WidgetDestination.NOTE, WidgetDestination.NEW_NOTE)
             val route = if (notesDestination) "notes" else "reminders"
+            if (launch.destination == WidgetDestination.SETTINGS || route !in visibleScreens) {
+                settingsSearchRequest = "Экраны приложения"
+                nav.navigate("settings") { popUpTo(nav.graph.id); launchSingleTop = true }
+                return@LaunchedEffect
+            }
             val folder = if (notesDestination) vm.folderForWidget(launch.folderId) else null
             if (notesDestination) vm.selectFolder(folder)
             nav.navigate(route) { popUpTo(nav.graph.id); launchSingleTop = true }
@@ -644,7 +660,7 @@ private fun AssistantApp(
         if (created != null) requestReminderAccess(created.reminder.remindAt != null)
     }
     Scaffold(bottomBar = {
-        if (!imeVisible && currentRoute != "noteEditor" && currentRoute != "reminderEditor/{id}/{changeTime}") {
+        if (!singleScreenMode && !imeVisible && currentRoute != "noteEditor" && currentRoute != "reminderEditor/{id}/{changeTime}") {
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -662,7 +678,7 @@ private fun AssistantApp(
         Box(Modifier.fillMaxSize()) {
         NavHost(
             navController = nav,
-            startDestination = "assistant",
+            startDestination = initialHomeRoute,
             modifier = Modifier.padding(padding),
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
@@ -788,6 +804,9 @@ private fun AssistantApp(
                     onWhisperModelsOpened = vm::whisperModelsOpened,
                     setUiHapticsEnabled = vm::setUiHapticsEnabled,
                     setHidePopupNotices = vm::setHidePopupNotices,
+                    setVisibleScreens = vm::setVisibleScreens,
+                    singleScreenMode = singleScreenMode,
+                    returnToMainScreen = { openTopLevelDestination(homeRoute) },
                     returnToAssistant = { nav.popBackStack() },
                 )
             }
@@ -798,6 +817,7 @@ private fun AssistantApp(
                 RemindersScreen(
                     requestCreate = widgetReminderCreator,
                     consumeCreateRequest = { widgetReminderCreator = false },
+                    openSettings = if (singleScreenMode) ({ nav.navigate("settings") { launchSingleTop = true } }) else null,
                     reminders = reminders,
                     ui = ui,
                     actionNotice = actionNotice,
@@ -871,6 +891,7 @@ private fun AssistantApp(
                 isLoading = notesUi.isLoading,
                 trashRetentionDays = settings.noteTrashRetentionDays,
                 setTrashRetentionDays = vm::setNoteTrashRetentionDays,
+                openSettings = if (singleScreenMode) ({ nav.navigate("settings") { launchSingleTop = true } }) else null,
                 openTrashSettings = { assistantSettingsRequest = AssistantSettingsTarget.TRASH; nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
@@ -940,6 +961,14 @@ private fun AssistantApp(
                 endDictation = { vm.endNoteDictation(dictationSessionId) },
                 consumeDictation = { vm.consumeNoteDictation(dictationSessionId) },
                 cancelDictation = { vm.cancelNoteDictation(dictationSessionId) },
+                )
+            }
+        }
+        if (currentRoute != null && currentRoute !in ru.nezabudka.app.domain.DEFAULT_APP_SCREENS) {
+            actionNotice?.let { notice ->
+                ru.nezabudka.app.ui.screens.AppNoticeCard(
+                    notice.message, vm::dismissActionNotice, isError = notice.isError,
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter).padding(bottom = padding.calculateBottomPadding()),
                 )
             }
         }

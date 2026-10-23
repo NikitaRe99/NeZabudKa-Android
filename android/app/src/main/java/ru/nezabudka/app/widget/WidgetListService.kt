@@ -30,6 +30,10 @@ internal class WidgetRowsFactory(private val context: Context, intent: Intent) :
         palette = WidgetPalette.read(context)
         compact = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
             .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 180) < 230
+        if (!widgetFeatureEnabled(context, kind)) {
+            reminders = emptyList(); notes = emptyList()
+            return@runBlocking
+        }
         val database = AppDatabase.get(context)
         if (kind == WidgetKind.REMINDERS) reminders = widgetReminderRows(database, WidgetPreferences(context), today).rows
         else {

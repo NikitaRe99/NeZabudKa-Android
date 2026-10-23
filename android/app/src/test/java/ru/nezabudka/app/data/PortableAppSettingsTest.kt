@@ -16,6 +16,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PortableAppSettingsTest {
+    @Test fun `screen selection survives backup and old backups retain every screen`() {
+        val settings = PortableAppSettings(visibleScreens = listOf("notes"))
+        assertEquals(listOf("notes"), Json.decodeFromString<PortableAppSettings>(Json.encodeToString(settings)).visibleScreens)
+        assertEquals(ru.nezabudka.app.domain.DEFAULT_APP_SCREENS, Json.decodeFromString<PortableAppSettings>("{}").visibleScreens)
+    }
+
     @Test
     fun `portable settings include application preferences and model selection`() {
         val settings = AppSettings(

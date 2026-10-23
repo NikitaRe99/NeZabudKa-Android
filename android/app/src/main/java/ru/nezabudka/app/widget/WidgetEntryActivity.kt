@@ -12,6 +12,10 @@ class WidgetEntryActivity : Activity() {
         try {
             val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
             val kind = HomeWidgets.kind(this, widgetId) ?: return
+            if (!widgetFeatureEnabled(this, kind)) {
+                startActivity(WidgetLaunchIntent.create(this, WidgetLaunch(WidgetDestination.SETTINGS), "$widgetId/disabled"))
+                return
+            }
             val item = intent.getLongExtra(EXTRA_ITEM_ID, 0).takeIf { it > 0 } ?: return
             when (intent.getStringExtra(EXTRA_ROW_ACTION)) {
                 ROW_COMPLETE -> if (kind == WidgetKind.REMINDERS) {

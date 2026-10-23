@@ -42,6 +42,7 @@ data class PortableAppSettings(
     val customTheme: CustomThemeSettings = CustomThemeSettings(),
     val popupDurationSeconds: Int = 5,
     val hidePopupNotices: Boolean = false,
+    val visibleScreens: List<String> = ru.nezabudka.app.domain.DEFAULT_APP_SCREENS,
     // Backup schema keeps the old default when reading files that omit this field.
     val classicNluEnabled: Boolean = true,
     val timeOfDaySettings: List<TimeOfDaySetting> = DEFAULT_TIME_OF_DAY_SETTINGS,
@@ -106,6 +107,7 @@ fun AppSettings.toPortableSettings(
     customTheme = customTheme,
     popupDurationSeconds = popupDurationSeconds,
     hidePopupNotices = hidePopupNotices,
+    visibleScreens = visibleScreens,
     classicNluEnabled = classicNluEnabled,
     timeOfDaySettings = timeOfDaySettings,
     sttEngine = sttEngine,
@@ -257,6 +259,11 @@ class SettingsStore(context: Context) : SettingsPort {
     }
     override fun setShowAssistantWelcomeCard(enabled: Boolean) { prefs.edit().putBoolean("show_assistant_welcome_card", enabled).apply(); _state.value = read() }
     override fun setPopupDurationSeconds(value: Int) { prefs.edit().putInt("popup_duration_seconds", value.coerceIn(0, 60)).apply(); _state.value = read() }
+    override fun setVisibleScreens(screens: List<String>) {
+        if (!ru.nezabudka.app.domain.validAppScreens(screens)) return
+        prefs.edit().putStringSet("visible_screens", screens.toSet()).apply()
+        _state.value = read()
+    }
     override fun setHidePopupNotices(value: Boolean) { prefs.edit().putBoolean("hide_popup_notices", value).apply(); _state.value = read() }
     override fun setClassicNluEnabled(enabled: Boolean) { prefs.edit().putBoolean("classic_nlu_enabled", enabled).apply(); _state.value = read() }
     override fun setTimeOfDaySettings(values: List<TimeOfDaySetting>) {
@@ -387,6 +394,7 @@ class SettingsStore(context: Context) : SettingsPort {
         setTheme(value.theme)
         setPopupDurationSeconds(value.popupDurationSeconds)
         setHidePopupNotices(value.hidePopupNotices)
+        setVisibleScreens(ru.nezabudka.app.domain.normalizeAppScreens(value.visibleScreens))
         setShowAssistantWelcomeCard(value.showAssistantWelcomeCard)
         setClassicNluEnabled(value.classicNluEnabled)
         setTimeOfDaySettings(value.timeOfDaySettings)
@@ -432,6 +440,7 @@ class SettingsStore(context: Context) : SettingsPort {
         customTheme = readCustomTheme(),
         popupDurationSeconds = prefs.getInt("popup_duration_seconds", 5).coerceIn(0, 60),
         hidePopupNotices = prefs.getBoolean("hide_popup_notices", false),
+        visibleScreens = ru.nezabudka.app.domain.normalizeAppScreens(prefs.getStringSet("visible_screens", null) ?: ru.nezabudka.app.domain.DEFAULT_APP_SCREENS.toSet()),
         classicNluEnabled = prefs.getBoolean("classic_nlu_enabled", false),
         timeOfDaySettings = readTimeOfDaySettings(),
         sttEngine = sttEngine,

@@ -23,6 +23,9 @@ import java.time.format.DateTimeFormatter
 
 enum class WidgetKind { REMINDERS, NOTES }
 
+internal fun widgetFeatureEnabled(context: Context, kind: WidgetKind): Boolean =
+    (if (kind == WidgetKind.NOTES) "notes" else "reminders") in SettingsStore(context).state.value.visibleScreens
+
 internal data class WidgetPalette(
     val card: Int, val text: Int, val secondary: Int, val accent: Int, val outline: Int, val selected: Int,
     val dark: Boolean, val scale: Float,
@@ -66,6 +69,28 @@ internal object WidgetRenderer {
         result.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, 14 * palette.scale)
         result.setTextViewTextSize(R.id.widget_count, TypedValue.COMPLEX_UNIT_SP, 11 * palette.scale)
         result.setTextViewTextSize(R.id.widget_empty, TypedValue.COMPLEX_UNIT_SP, 11 * palette.scale)
+        if (!widgetFeatureEnabled(context, kind)) {
+            result.setTextViewText(R.id.widget_title, if (notes) "Заметки" else "Напоминания")
+            result.setTextViewText(R.id.widget_disabled_message, if (notes) "Заметки отключены" else "Напоминания отключены")
+            result.setTextColor(R.id.widget_disabled_message, palette.secondary)
+            result.setTextColor(R.id.widget_enable, palette.accent)
+            result.setInt(R.id.widget_enable, "setBackgroundResource", if (palette.dark) R.drawable.widget_count_dark else R.drawable.widget_count_light)
+            if (Build.VERSION.SDK_INT >= 31) result.setColorStateList(R.id.widget_enable, "setBackgroundTintList", ColorStateList.valueOf(palette.selected))
+            // Replace the previous adapter's empty view too: a late collection refresh
+            // must not reveal the old "no items" message beside this placeholder.
+            result.setEmptyView(R.id.widget_list, R.id.widget_disabled)
+            result.setViewVisibility(R.id.widget_disabled, View.VISIBLE)
+            listOf(R.id.widget_list, R.id.widget_empty, R.id.widget_add, R.id.widget_count,
+                R.id.widget_folder_chevron, R.id.widget_undo).forEach { result.setViewVisibility(it, View.GONE) }
+            val settings = mainPendingIntent(context, id, "enable", WidgetLaunch(WidgetDestination.SETTINGS))
+            result.setOnClickPendingIntent(R.id.widget_enable, settings)
+            result.setOnClickPendingIntent(R.id.widget_folder_picker, settings)
+            result.setOnClickPendingIntent(R.id.widget_kind_icon, settings)
+            return result
+        }
+        result.setViewVisibility(R.id.widget_disabled, View.GONE)
+        result.setViewVisibility(R.id.widget_list, View.VISIBLE)
+        result.setViewVisibility(R.id.widget_add, View.VISIBLE)
         result.setViewVisibility(R.id.widget_undo, if (!notes && undo != null) View.VISIBLE else View.GONE)
         if (!notes && undo != null) result.setOnClickPendingIntent(R.id.widget_undo, PendingIntent.getBroadcast(context, id,
             Intent(context, WidgetActionReceiver::class.java).setAction(ACTION_WIDGET_UNDO)

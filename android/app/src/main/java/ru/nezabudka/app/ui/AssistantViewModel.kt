@@ -370,6 +370,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     fun setTheme(value: String) = container.settings.setTheme(value)
     fun setCustomTheme(value: CustomThemeSettings) = container.settings.setCustomTheme(value)
     fun setPopupDurationSeconds(value: Int) = container.settings.setPopupDurationSeconds(value)
+    fun setVisibleScreens(screens: List<String>) = container.settings.setVisibleScreens(screens)
     fun setHidePopupNotices(value: Boolean) = container.settings.setHidePopupNotices(value)
     fun setClassicNluEnabled(enabled: Boolean) {
         container.settings.setClassicNluEnabled(enabled)
