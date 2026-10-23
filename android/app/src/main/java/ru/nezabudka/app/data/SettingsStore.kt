@@ -151,6 +151,7 @@ fun AppSettings.toPortableSettings(
 )
 
 class SettingsStore(context: Context) : SettingsPort {
+    private val appContext = context.applicationContext
     private val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     init {
         val hadSettings = prefs.all.isNotEmpty()
@@ -179,6 +180,11 @@ class SettingsStore(context: Context) : SettingsPort {
     override val state: StateFlow<AppSettings> = _state
 
     companion object {
+        fun remindersEnabled(context: Context): Boolean =
+            "reminders" in ru.nezabudka.app.domain.normalizeAppScreens(
+                context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+                    .getStringSet("visible_screens", null) ?: ru.nezabudka.app.domain.DEFAULT_APP_SCREENS.toSet())
+
         fun currentReminderAlarmMode(context: Context): Boolean =
             context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
                 .getBoolean("reminder_alarm_mode", false)
@@ -261,8 +267,13 @@ class SettingsStore(context: Context) : SettingsPort {
     override fun setPopupDurationSeconds(value: Int) { prefs.edit().putInt("popup_duration_seconds", value.coerceIn(0, 60)).apply(); _state.value = read() }
     override fun setVisibleScreens(screens: List<String>) {
         if (!ru.nezabudka.app.domain.validAppScreens(screens)) return
+        val wasEnabled = remindersEnabled(appContext)
         prefs.edit().putStringSet("visible_screens", screens.toSet()).apply()
         _state.value = read()
+        if (wasEnabled != ("reminders" in screens)) {
+            if ("reminders" !in screens) ru.nezabudka.app.notifications.NotificationChannels.cancelAllReminders(appContext)
+            ru.nezabudka.app.notifications.ReminderFeatureAvailability.refresh(appContext)
+        }
     }
     override fun setHidePopupNotices(value: Boolean) { prefs.edit().putBoolean("hide_popup_notices", value).apply(); _state.value = read() }
     override fun setClassicNluEnabled(enabled: Boolean) { prefs.edit().putBoolean("classic_nlu_enabled", enabled).apply(); _state.value = read() }

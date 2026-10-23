@@ -165,17 +165,22 @@ class RestoreReminderSchedules(
         val now = LocalDateTime.now(clock)
         val activeReminders = reminders.list()
 
-        activeReminders.forEach { reminder ->
-            val date = reminder.remindAt ?: return@forEach
-            if (!date.isAfter(now)) {
-                nextReminderOccurrence(date, reminder.recurrence, now)?.let { next ->
-                    reminders.reschedule(reminder.id, reminder.text, next).also(scheduler::schedule)
-                }
-            }
+        if (!scheduler.isEnabled()) {
+            activeReminders.forEach { scheduler.cancel(it.id) }
+            return
         }
 
-        val futureReminders = activeReminders.filter { reminder -> reminder.remindAt?.isAfter(now) == true }
-        if (skipIfSchedulesIntact && futureReminders.firstOrNull()?.let { scheduler.isScheduled(it.id) } == true) {
+        // Keep the missed date in the repository so it remains in "Overdue".
+        // A repeating reminder can still have its next future signal scheduled.
+        val futureReminders = activeReminders.mapNotNull { reminder ->
+            val date = reminder.remindAt ?: return@mapNotNull null
+            if (date.isAfter(now)) reminder
+            else nextReminderOccurrence(date, reminder.recurrence, now)?.let { reminder.copy(remindAt = it) }
+        }
+        val originalDates = activeReminders.associate { it.id to it.remindAt }
+        if (skipIfSchedulesIntact && futureReminders.isNotEmpty() && futureReminders.all {
+                originalDates[it.id] == it.remindAt && scheduler.isScheduled(it.id)
+            }) {
             return
         }
         futureReminders.forEach(scheduler::schedule)

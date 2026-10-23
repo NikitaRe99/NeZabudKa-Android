@@ -71,7 +71,7 @@ internal object WidgetRenderer {
         result.setTextViewTextSize(R.id.widget_empty, TypedValue.COMPLEX_UNIT_SP, 11 * palette.scale)
         if (!widgetFeatureEnabled(context, kind)) {
             result.setTextViewText(R.id.widget_title, if (notes) "Заметки" else "Напоминания")
-            result.setTextViewText(R.id.widget_disabled_message, if (notes) "Экран заметок отключён" else "Экран напоминаний отключён")
+            result.setTextViewText(R.id.widget_disabled_message, if (notes) "Экран заметок отключён" else "Напоминания отключены. Сигналы приостановлены.")
             result.setTextColor(R.id.widget_disabled_message, palette.secondary)
             result.setTextColor(R.id.widget_enable, palette.accent)
             result.setInt(R.id.widget_enable, "setBackgroundResource", if (palette.dark) R.drawable.widget_count_dark else R.drawable.widget_count_light)

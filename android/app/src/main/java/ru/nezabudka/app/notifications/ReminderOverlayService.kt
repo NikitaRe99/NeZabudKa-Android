@@ -64,6 +64,10 @@ class ReminderOverlayService : LifecycleService(), SavedStateRegistryOwner, View
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        if (!SettingsStore.remindersEnabled(this)) {
+            stopSelf()
+            return Service.START_NOT_STICKY
+        }
         val reminderId = intent?.getLongExtra(EXTRA_ID, -1L)?.takeIf { it > 0L }
         if (
             intent?.action == ACTION_REVEAL_EXISTING_OVERLAY &&

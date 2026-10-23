@@ -160,6 +160,13 @@ object NotificationChannels {
         create(context)
     }
 
+    fun cancelAllReminders(context: Context) {
+        ReminderOverlayService.dismiss(context)
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.activeNotifications.filter { it.notification.channelId.startsWith(REMINDER_CHANNEL_PREFIX) }
+            .forEach { manager.cancel(it.tag, it.id) }
+    }
+
     fun cancelActiveAlarms(context: Context) {
         ReminderOverlayService.dismiss(context)
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -196,9 +203,12 @@ class AndroidReminderScheduler(
 ) : ReminderScheduler {
     private val alarms = context.getSystemService(AlarmManager::class.java)
 
+    override fun isEnabled(): Boolean = SettingsStore.remindersEnabled(context)
+
     override fun schedule(reminder: Reminder) {
-        val date = reminder.remindAt ?: return
         cancel(reminder.id)
+        if (!isEnabled()) return
+        val date = reminder.remindAt ?: return
         val trigger = date.atZone(zoneId).toInstant().toEpochMilli()
         if (trigger <= System.currentTimeMillis()) return
         val operation = requireNotNull(
@@ -259,6 +269,10 @@ class AndroidReminderScheduler(
 class ReminderAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val reminderId = intent.getLongExtra(EXTRA_ID, -1L)
+        if (!SettingsStore.remindersEnabled(context)) {
+            AndroidReminderScheduler(context).cancel(reminderId)
+            return
+        }
         val settings = SettingsStore.currentReminderNotificationSettings(context)
         if (settings.reminderAlarmMode) {
             val attempt = intent.getIntExtra(EXTRA_ALARM_ATTEMPT, 0).coerceAtLeast(0)
@@ -289,6 +303,7 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                if (!SettingsStore.remindersEnabled(context)) return@launch
                 val repository = RoomReminderRepository(AppDatabase.get(context).reminderDao())
                 runCatching {
                     ReminderActions(repository, AndroidReminderScheduler(context)).advanceRecurring(reminderId)
@@ -319,6 +334,7 @@ private fun presentReminder(
     built: Pair<Int, Notification>,
     settings: ru.nezabudka.app.data.ReminderNotificationSettingsSnapshot,
 ) {
+    if (!SettingsStore.remindersEnabled(context)) return
     // Every alarm has a notification. On an unlocked device the optional compact
     // overlay is added on top, using capability checks rather than an OEM name.
     notifyIfAllowed(context, built)
@@ -340,6 +356,7 @@ private fun presentReminder(
 }
 
 private fun notifyIfAllowed(context: Context, built: Pair<Int, Notification>) {
+    if (!SettingsStore.remindersEnabled(context)) return
     if (
         Build.VERSION.SDK_INT < 33 ||
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
@@ -576,6 +593,7 @@ private object AlarmRetryScheduler {
     }
 
     fun scheduleAt(context: Context, source: Intent, triggerAtMillis: Long, attempt: Int) {
+        if (!SettingsStore.remindersEnabled(context)) return
         val id = source.getLongExtra(EXTRA_ID, -1L).takeIf { it > 0L } ?: return
         val operation = PendingIntent.getBroadcast(
             context,

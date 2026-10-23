@@ -90,6 +90,10 @@ import kotlinx.coroutines.launch
 /** Alarm surface shown above the keyguard until the user chooses an action. */
 open class ReminderAlertActivity : ComponentActivity() {
     protected open val compactPresentation: Boolean = false
+    private val availabilityPreferences by lazy { getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE) }
+    private val availabilityListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "visible_screens" && !SettingsStore.remindersEnabled(this)) dismissToOverdue()
+    }
     private var reminderId: Long? = null
     private var reminderText: String = ""
     private var keyguardDismissRequested = false
@@ -103,6 +107,8 @@ open class ReminderAlertActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!SettingsStore.remindersEnabled(this)) { finish(); return }
+        availabilityPreferences.registerOnSharedPreferenceChangeListener(availabilityListener)
         val compact = compactPresentation &&
             !getSystemService(KeyguardManager::class.java).isKeyguardLocked
         if (compact) {
@@ -179,6 +185,7 @@ open class ReminderAlertActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        availabilityPreferences.unregisterOnSharedPreferenceChangeListener(availabilityListener)
         if (screenOffReceiverRegistered) {
             unregisterReceiver(screenOffReceiver)
             screenOffReceiverRegistered = false

@@ -869,9 +869,14 @@ private class FakeNotesRepository : NotesRepository {
 }
 
 internal class FakeScheduler : ReminderScheduler {
+    var enabled = true
+    override fun isEnabled() = enabled
     val scheduled = mutableListOf<Long>()
+    val scheduledReminders = mutableListOf<Reminder>()
     val cancelled = mutableListOf<Long>()
-    override fun schedule(reminder: Reminder) { if (reminder.remindAt != null) scheduled += reminder.id }
+    override fun schedule(reminder: Reminder) {
+        if (enabled && reminder.remindAt != null) { scheduled += reminder.id; scheduledReminders += reminder }
+    }
     override fun cancel(reminderId: Long) { cancelled += reminderId }
     override fun isScheduled(reminderId: Long): Boolean = reminderId in scheduled
 }

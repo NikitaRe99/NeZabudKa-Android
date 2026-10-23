@@ -622,7 +622,7 @@ internal fun SettingsScreen(
                         onCheckedChange = { setVisibleScreens(proposed) })
                 }
                 SettingsSupportingText("Оставьте хотя бы заметки или напоминания. Если выбран один экран, настройки доступны через его меню «…», а нижняя панель скрыта.")
-                SettingsSupportingText("Скрытие экранов не удаляет записи. Созданные напоминания продолжают срабатывать.")
+                SettingsSupportingText("Отключение экранов не удаляет записи. Если напоминания отключены, сигналы и повторы будильника не срабатывают. После включения пропущенные останутся в «Просроченных». Будущие сигналы восстановятся, повторяющиеся продолжатся с ближайшей даты.")
             }
         }
         if (showSection("interface-behavior")) item(key = "interface-behavior", contentType = "settings-section") {

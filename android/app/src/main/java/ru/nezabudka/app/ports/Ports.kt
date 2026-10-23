@@ -87,6 +87,7 @@ interface NotesRepository {
 }
 
 interface ReminderScheduler {
+    fun isEnabled(): Boolean = true
     fun schedule(reminder: Reminder)
     fun cancel(reminderId: Long)
     fun isScheduled(reminderId: Long): Boolean = false

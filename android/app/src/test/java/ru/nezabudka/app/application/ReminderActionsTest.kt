@@ -11,6 +11,30 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class ReminderActionsTest {
+    @Test fun `disabled reminders cancel schedules and keep dates until reenabled`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-07-26T10:00:00Z"), ZoneOffset.UTC)
+        val repeatingDate = LocalDateTime.of(2026, 7, 25, 8, 0)
+        val repeating = repository.create("Ежедневное", repeatingDate, "daily")
+        val overdue = repository.create("Пропущенное", LocalDateTime.of(2026, 7, 25, 9, 0), null)
+        val future = repository.create("Будущее", LocalDateTime.of(2026, 7, 27, 10, 0), null)
+        val original = repository.values.toList()
+        scheduler.enabled = false
+
+        RestoreReminderSchedules(repository, scheduler, clock)(skipIfSchedulesIntact = true)
+
+        assertTrue(scheduler.scheduled.isEmpty())
+        assertEquals(listOf(repeating.id, overdue.id, future.id), scheduler.cancelled)
+        assertEquals(original, repository.values)
+
+        scheduler.enabled = true
+        RestoreReminderSchedules(repository, scheduler, clock)()
+
+        assertEquals(listOf(repeating.id, future.id), scheduler.scheduled)
+        assertEquals(repeatingDate, repository.values.first { it.id == repeating.id }.remindAt)
+        assertEquals(LocalDateTime.of(2026, 7, 27, 8, 0), scheduler.scheduledReminders.first { it.id == repeating.id }.remindAt)
+        assertEquals(overdue.remindAt, repository.values.first { it.id == overdue.id }.remindAt)
+    }
+
     @Test fun `completing a future monthly occurrence keeps the reminder active`() = runBlocking {
         val clock = Clock.fixed(Instant.parse("2026-10-11T10:00:00Z"), ZoneOffset.UTC)
         val actions = ReminderActions(repository, scheduler, clock)
@@ -130,7 +154,8 @@ class ReminderActionsTest {
         RestoreReminderSchedules(repository, scheduler, clock)()
 
         assertEquals(listOf(repeating.id, future.id), scheduler.scheduled)
-        assertEquals(LocalDateTime.of(2026, 7, 27, 8, 0), repository.values.first { it.id == repeating.id }.remindAt)
+        assertEquals(repeating.remindAt, repository.values.first { it.id == repeating.id }.remindAt)
+        assertEquals(LocalDateTime.of(2026, 7, 27, 8, 0), scheduler.scheduledReminders.first { it.id == repeating.id }.remindAt)
     }
 
     @Test
@@ -142,6 +167,28 @@ class ReminderActionsTest {
         RestoreReminderSchedules(repository, scheduler, clock)(skipIfSchedulesIntact = true)
 
         assertEquals(listOf(future.id), scheduler.scheduled)
+    }
+
+    @Test fun `partial schedule restoration does not skip remaining reminders`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-07-26T10:00:00Z"), ZoneOffset.UTC)
+        val first = repository.create("Первое", LocalDateTime.of(2026, 7, 27, 10, 0), null)
+        val second = repository.create("Второе", LocalDateTime.of(2026, 7, 27, 11, 0), null)
+        scheduler.schedule(first)
+
+        RestoreReminderSchedules(repository, scheduler, clock)(skipIfSchedulesIntact = true)
+
+        assertEquals(listOf(first.id, first.id, second.id), scheduler.scheduled)
+    }
+
+    @Test fun `missed recurring date is retained and stale pending intent does not skip next signal`() = runBlocking {
+        val clock = Clock.fixed(Instant.parse("2026-07-26T10:00:00Z"), ZoneOffset.UTC)
+        val missed = repository.create("Повтор", LocalDateTime.of(2026, 7, 25, 8, 0), "daily")
+        scheduler.scheduled += missed.id
+
+        RestoreReminderSchedules(repository, scheduler, clock)(skipIfSchedulesIntact = true)
+
+        assertEquals(missed, repository.values.single())
+        assertEquals(LocalDateTime.of(2026, 7, 27, 8, 0), scheduler.scheduledReminders.single().remindAt)
     }
 
     @Test
