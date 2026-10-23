@@ -7,6 +7,21 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class GithubReleaseTest {
+    @Test fun startupChecksRespectSuccessfulCheckAgeAndClockRollback() {
+        val now = 100_000_000L
+        assertTrue(shouldCheckOnStartup(now, 0))
+        assertFalse(shouldCheckOnStartup(now, now - 1))
+        assertFalse(shouldCheckOnStartup(now, now - 12 * 60 * 60 * 1000L + 1))
+        assertTrue(shouldCheckOnStartup(now, now - 12 * 60 * 60 * 1000L))
+        assertTrue(shouldCheckOnStartup(now, now + 1))
+    }
+
+    @Test fun historyIsFetchedForMissedReleasesButNotForAnUpToDateInstallation() {
+        val installed = release("v0.2.86", "app-arm64-v8a-release.apk")
+        assertFalse(needsOlderReleasePages("[$installed]", "0.2.86", listOf("arm64-v8a")))
+        assertTrue(needsOlderReleasePages("[${release("v0.2.87", "app-arm64-v8a-release.apk")},$installed]", "0.2.86", listOf("arm64-v8a")))
+        assertTrue(needsOlderReleasePages("[${release("models-v3", "model.onnx")}]", "0.2.86", listOf("arm64-v8a")))
+    }
     @Test fun includesEveryMissedAppReleaseButNotInstalledOrModelReleases() {
         fun withBody(tag: String, body: String) = release(tag, "app-arm64-v8a-release.apk").dropLast(1) + ",\"body\":\"$body\"}"
         val json = "[${withBody("v0.2.85", "New fix")},${withBody("v0.2.84", "Previous fix")},${withBody("v0.2.83", "Installed fix")},${withBody("models-v3", "Model")}]"

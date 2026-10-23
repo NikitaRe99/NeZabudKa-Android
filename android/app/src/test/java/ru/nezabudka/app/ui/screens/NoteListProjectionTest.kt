@@ -7,6 +7,14 @@ import org.junit.Test
 import ru.nezabudka.app.domain.Note
 
 class NoteListProjectionTest {
+    @Test fun cachedProjectionTracksSearchFolderAndSourceChanges() {
+        val projector = NoteListProjector()
+        val notes = listOf(note(2).copy(folderIds = listOf(7)), note(1).copy(title = "Поездка"))
+        assertEquals(listOf(1L, 2L), projector.project(notes, NoteSort.MANUAL, null, NoteSection.ACTIVE, "").map { it.id })
+        assertEquals(listOf(1L), projector.project(notes, NoteSort.MANUAL, null, NoteSection.ACTIVE, "поезд").map { it.id })
+        assertEquals(listOf(2L), projector.project(notes, NoteSort.MANUAL, 7, NoteSection.ACTIVE, "").map { it.id })
+        assertEquals(emptyList<Long>(), projector.project(notes.map { it.copy(trashed = true) }, NoteSort.MANUAL, null, NoteSection.ACTIVE, "").map { it.id })
+    }
     private fun note(id: Long) = Note(id, null, null, "Заметка $id", LocalDateTime.of(2026, 10, 11, 12, 0))
 
     @Test fun sections_preserve_archive_trash_and_folder_rules() {

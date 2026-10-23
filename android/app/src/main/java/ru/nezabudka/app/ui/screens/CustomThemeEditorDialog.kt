@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +54,8 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
@@ -283,10 +286,21 @@ internal fun CustomThemeEditorDialog(
                                                 if (i == index) selected else previous
                                             })
                                         }
-                                    }, modifier = Modifier.size(48.dp), shape = RoundedCornerShape(12.dp),
+                                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = "Цвет заметки ${index + 1}" }, shape = CircleShape,
                                         color = color.themeColor(), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text("${index + 1}", color = automaticContentColorHex(color).themeColor())
+                                        Box(Modifier.fillMaxSize())
+                                    }
+                                }
+                                if (draft.notePalette.size < ru.nezabudka.app.domain.MAX_NOTE_PALETTE_SIZE) {
+                                    Surface(onClick = {
+                                        editedColor = ThemeColorBinding("Новый цвет заметки", draft.noteDefault) { selected ->
+                                            draft = draft.copy(notePalette = draft.notePalette + selected)
+                                        }
+                                    }, modifier = Modifier.size(48.dp), shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.secondaryContainer,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+                                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Default.Add, "Добавить цвет заметки")
                                         }
                                     }
                                 }
@@ -446,7 +460,7 @@ private fun ThemePreview(theme: CustomThemeSettings, expanded: Boolean, toggleEx
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 theme.notePalette.forEach { color ->
-                    Box(Modifier.size(28.dp).background(color.themeColor(), RoundedCornerShape(8.dp * theme.cornerScale)))
+                    Box(Modifier.size(28.dp).background(color.themeColor(), CircleShape))
                 }
             }
             }

@@ -252,9 +252,7 @@ class SettingsStore(context: Context) : SettingsPort {
             warning = sanitizeThemeColor(value.warning, fallback.warning),
             scrim = sanitizeThemeColor(value.scrim, fallback.scrim),
             noteDefault = sanitizeThemeColor(value.noteDefault, fallback.noteDefault),
-            notePalette = value.notePalette.take(11).mapIndexed { index, color ->
-                sanitizeThemeColor(color, fallback.notePalette.getOrElse(index) { fallback.noteDefault })
-            }.let { colors -> colors + fallback.notePalette.drop(colors.size) },
+            notePalette = ru.nezabudka.app.domain.normalizeNotePalette(value.notePalette, fallback.notePalette, fallback.noteDefault),
             fontFamily = value.fontFamily.takeIf { it in setOf("sans", "serif", "monospace") } ?: "sans",
             fontScale = value.fontScale.coerceIn(0.8f, 1.4f),
             cornerScale = value.cornerScale.coerceIn(0.5f, 1.5f),

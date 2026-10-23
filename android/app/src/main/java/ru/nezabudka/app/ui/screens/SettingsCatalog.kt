@@ -38,7 +38,7 @@ internal val SETTINGS_CATALOG = listOf(
     SettingsEntry("Пунктуация голосового ввода", SettingsCategory.SPEECH, "Пунктуация голосового ввода", "запятые знаки препинания rupunc модель скачать помощник напоминания заметки редактор голос"),
     SettingsEntry("spoken-symbols", SettingsCategory.SPEECH, "Слова в символы", "двоеточие тире скобка запятая замена символы произнести вставить словарь"),
     SettingsEntry("Модель Whisper.cpp", SettingsCategory.SPEECH, "Whisper", "виспер чистый без словарей подсказок исправлений потоки обработка точность точный режим скорость тест оптимальное количество скачать импорт память base q5 small ru"),
-    SettingsEntry("Модель GigaAM", SettingsCategory.SPEECH, "GigaAM", "гигаам модель v1 v2 v3 int8 потоки память оптимальное количество скачать импорт офлайн"),
+    SettingsEntry("Модель GigaAM", SettingsCategory.SPEECH, "GigaAM", "гигаам модель v3 lite облегченная int8 потоки память оптимальное количество скачать импорт офлайн"),
     SettingsEntry("Распознавание команд", SettingsCategory.SPEECH, "Распознавание команд", "nlu ntu модель расширенное скачать импорт"),
     SettingsEntry("О приложении", SettingsCategory.ABOUT, "О приложении", "версия автор связь сброс первый запуск обучение предложения"),
     SettingsEntry("github-updates", SettingsCategory.ABOUT, "Обновления", "github релиз скачать установить новая версия автоматически поиск запуск wifi wi-fi"),

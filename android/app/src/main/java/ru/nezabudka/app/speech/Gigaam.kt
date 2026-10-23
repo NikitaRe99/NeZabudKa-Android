@@ -80,31 +80,46 @@ class GigaamSttEngine(
     private val models: GigaamModelManager,
     private val threads: () -> Int,
     private val keepLoaded: () -> Boolean,
+    private val canRetain: () -> Boolean = { false },
 ) : SpeechToTextEngine {
     override val id = "gigaam"
     override val displayName = "GigaAM"
     private val mutex = Mutex()
     private var session: OrtSession? = null
     private var loadedPath: String? = null
+    private var loadedStamp: Pair<Long, Long>? = null
     private var loadedThreads = 0
     private var vocabulary = emptyList<String>()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var idleRelease: Job? = null
     private val deadlines = Executors.newSingleThreadScheduledExecutor()
     private val env get() = OrtEnvironment.getEnvironment()
     fun effectiveThreads(configured: Int = threads()): Int = if (configured > 0) configured.coerceIn(1, Runtime.getRuntime().availableProcessors()) else minOf(4, Runtime.getRuntime().availableProcessors())
-    suspend fun release() = mutex.withLock { close() }
-    private fun close() { session?.close(); session = null; loadedPath = null; vocabulary = emptyList() }
+    suspend fun release() = mutex.withLock { idleRelease?.cancel(); close() }
+    private fun retainOrRelease() {
+        idleRelease?.cancel()
+        if (session == null) return
+        if (keepLoaded()) return
+        if (!canRetain()) { close(); return }
+        idleRelease = scope.launch { delay(60_000); mutex.withLock { close() } }
+    }
+    private fun close() { session?.close(); session = null; loadedPath = null; loadedStamp = null; vocabulary = emptyList() }
     private fun load(count: Int): OrtSession {
+        idleRelease?.cancel()
         val file = models.selectedModel()
-        if (loadedPath == file.path && loadedThreads == count) return requireNotNull(session)
+        val stamp = file.length() to file.lastModified()
+        if (loadedPath == file.path && loadedThreads == count && loadedStamp == stamp) return requireNotNull(session)
         close()
         val info = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
         require(info.availMem > file.length() * 2 + 100L * 1024 * 1024) { "Недостаточно свободной памяти для GigaAM. Освободите память или выберите Whisper Base Q5." }
         val opened = OrtSession.SessionOptions().use { options ->
             options.setIntraOpNumThreads(count); options.setInterOpNumThreads(1)
+            options.addConfigEntry("session.intra_op.allow_spinning", "0")
+            options.addConfigEntry("session.inter_op.allow_spinning", "0")
             env.createSession(file.path, options)
         }
         try { vocabulary = validateGigaam(opened) } catch (error: Throwable) { opened.close(); throw error }
-        session = opened; loadedPath = file.path; loadedThreads = count
+        session = opened; loadedPath = file.path; loadedThreads = count; loadedStamp = stamp
         return opened
     }
     override suspend fun transcribe(processedWav: File): SpeechRecognition = withContext(Dispatchers.IO) {
@@ -118,7 +133,10 @@ class GigaamSttEngine(
                     infer(active, samples.copyOfRange(range.first, range.last + 1))
                 }
                 SpeechRecognition(texts.filter(String::isNotBlank).joinToString(" ").trim())
-            } finally { if (!keepLoaded()) close() }
+            } catch (error: Throwable) {
+                close()
+                throw error
+            } finally { retainOrRelease() }
         }
     }
     /** Preview is disposable; final transcription always re-reads the full stopped WAV. */

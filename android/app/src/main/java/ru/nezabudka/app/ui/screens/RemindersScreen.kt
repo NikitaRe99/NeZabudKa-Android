@@ -81,6 +81,7 @@ import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -292,35 +293,24 @@ internal fun RemindersScreen(
     val stableFavorite: (Reminder) -> Unit = remember { { reminder -> currentFavorite.value(reminder) } }
     val currentOpenReminder = rememberUpdatedState(openReminder)
     val stableOpenReminder: (Reminder) -> Unit = remember { { reminder -> currentOpenReminder.value(reminder) } }
-    val comparator = remember(sort) { when (sort) {
-        ReminderSort.MY_ORDER -> compareBy<Reminder> { it.manualOrder }
-        ReminderSort.DATE -> compareBy<Reminder> { it.remindAt == null }.thenBy { it.remindAt }
-        ReminderSort.RECENTLY_MARKED -> compareByDescending<Reminder> { it.favorite }.thenBy { it.manualOrder }
-        ReminderSort.TITLE -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.text }
-    } }
-    val allActive = remember(reminders, comparator, dismissedSnapshot) {
-        reminders.filter { it.status != "completed" && it.id !in dismissedSnapshot }.sortedWith(comparator)
+    val listProjector = remember { ReminderListProjector() }
+    val projection by produceState(ReminderListProjection(), reminders, sort, dismissedSnapshot, query, currentTime) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            listProjector.project(reminders, sort, dismissedSnapshot, query, currentTime)
+        }
     }
-    val allCompleted = remember(reminders, dismissedSnapshot) {
-        reminders.filter { it.status == "completed" && it.id !in dismissedSnapshot }.sortedByDescending { it.completedAt }
-    }
-    val filteredActive = remember(allActive, query) {
-        allActive.filter { query.isBlank() || it.text.contains(query, ignoreCase = true) }
-    }
-    val activeByDeadline = remember(filteredActive, currentTime) {
-        filteredActive.partition { it.isOverdueAt(currentTime) }
-    }
-    val overdue = activeByDeadline.first
-    val active = activeByDeadline.second
+    val allActive = projection.allActive
+    val allCompleted = projection.allCompleted
+    val filteredActive = projection.filteredActive
+    val overdue = projection.overdue
+    val active = projection.active
     val activeDateGroups = remember(active, currentTime.toLocalDate()) {
         val today = currentTime.toLocalDate()
         active.groupBy { it.remindAt?.toLocalDate() }
             .map { (date, values) -> Triple(date, dateSectionTitle(date, today), values) }
     }
     val favoriteGroups = remember(active) { active.partition(Reminder::favorite) }
-    val completed = remember(allCompleted, query) {
-        allCompleted.filter { query.isBlank() || it.text.contains(query, ignoreCase = true) }
-    }
+    val completed = projection.completed
     val manualSortingEnabled = sort == ReminderSort.MY_ORDER && query.isBlank()
     val displayedOverdue = if (manualSortingEnabled && manualOverdue.isNotEmpty()) manualOverdue else overdue
     val displayedActive = if (manualSortingEnabled && manualActive.isNotEmpty()) manualActive else active

@@ -31,10 +31,12 @@ android {
         // compileSdk stays current so modern Compose/Room APIs can compile.
         minSdk = 29
         targetSdk = 36
-        versionCode = 109
-        versionName = "0.2.86"
+        versionCode = 110
+        versionName = "0.2.87"
         // Store builds: pass -PgithubUpdatesEnabled=false to remove GitHub updates.
         buildConfigField("boolean", "GITHUB_UPDATES_ENABLED", providers.gradleProperty("githubUpdatesEnabled").orElse("true").get())
+        // Reserved for the assistant promotion slot. No advertising SDK is included.
+        buildConfigField("boolean", "ASSISTANT_PROMOTIONS_ENABLED", providers.gradleProperty("assistantPromotionsEnabled").orElse("false").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(

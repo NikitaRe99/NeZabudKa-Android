@@ -64,6 +64,7 @@ class WavAudioRecorder(
     private val recording = AtomicBoolean(false)
     @Volatile private var recordingFailure: Throwable? = null
     private lateinit var output: File
+    private val previewReader = PcmPreviewReader()
     @Volatile var lastCaptureInfo: String = ""
         private set
     override val isRecording: Boolean get() = recording.get()
@@ -74,6 +75,7 @@ class WavAudioRecorder(
             throw SecurityException("Разрешите доступ к микрофону")
         }
         recordingFailure = null
+        previewReader.reset()
         val capture = startCapture(findBuiltInMicrophone())
         output = (outputFile ?: File(context.filesDir, "recordings/last_raw.wav")).apply { parentFile?.mkdirs() }
         try {
@@ -144,14 +146,7 @@ class WavAudioRecorder(
     /** Snapshot only completed PCM samples; the live WAV header is patched on stop. */
     fun previewSamples(): FloatArray? {
         if (!recording.get() || !::output.isInitialized) return null
-        return RandomAccessFile(output, "r").use { file ->
-            val pcmBytes = ((file.length() - WAV_HEADER_BYTES).coerceAtLeast(0) / 2 * 2).coerceAtMost(20L * 60 * 16000 * 2).toInt()
-            if (pcmBytes < 16000) return@use null
-            val pcm = ByteArray(pcmBytes)
-            file.seek(WAV_HEADER_BYTES.toLong()); file.readFully(pcm)
-            val data = ByteBuffer.wrap(pcm).order(ByteOrder.LITTLE_ENDIAN)
-            FloatArray(pcmBytes / 2) { data.short / 32768f }
-        }
+        return previewReader.snapshot(output)
     }
 
     override fun cancel() {
@@ -161,6 +156,7 @@ class WavAudioRecorder(
     }
 
     private fun releaseAudioResources() {
+        previewReader.reset()
         releaseAudioEffects()
         recorder?.release(); recorder = null; thread = null
     }

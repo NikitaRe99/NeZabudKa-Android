@@ -302,6 +302,8 @@ class ClassicNluClient(
         val options = OrtSession.SessionOptions().apply {
             setIntraOpNumThreads((Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4))
             setInterOpNumThreads(1)
+            addConfigEntry("session.intra_op.allow_spinning", "0")
+            addConfigEntry("session.inter_op.allow_spinning", "0")
             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
         }
         return try {

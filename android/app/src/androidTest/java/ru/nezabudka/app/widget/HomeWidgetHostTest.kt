@@ -69,7 +69,7 @@ class HomeWidgetHostTest {
                 for ((headerIndex, searchText) in listOf(0 to "Поиск напоминаний", 1 to "Поиск заметок")) {
                     scenario.onActivity { activity -> allViews(activity.root).filter { it.id == R.id.widget_folder_picker }[headerIndex].performClick() }
                     Thread.sleep(1_000)
-                    instrumentation.uiAutomation.clearCache()
+                    runCatching { instrumentation.uiAutomation.clearCache() } // Unavailable on Android 10.
                     assertTrue("Header opens correct tab", accessibleText(instrumentation.uiAutomation.rootInActiveWindow).contains(searchText))
                     instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
                     Thread.sleep(700)

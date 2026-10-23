@@ -72,6 +72,21 @@ internal fun isNewerAppVersion(candidate: String?, current: String): Boolean {
     return compareVersions(next, installed) > 0
 }
 
+/** Published app versions in this repository increase in release order. Model tags do not count. */
+internal fun needsOlderReleasePages(firstPage: String, currentVersion: String, supportedAbis: List<String>): Boolean {
+    if (findAppRelease(firstPage, currentVersion, supportedAbis) != null) return true
+    val releases = Json.parseToJsonElement(firstPage) as? JsonArray ?: return true
+    return releases.filterIsInstance<JsonObject>().none {
+        it.string("tag_name")?.removePrefix("v") == currentVersion &&
+            it["draft"]?.jsonPrimitive?.booleanOrNull == false && it["prerelease"]?.jsonPrimitive?.booleanOrNull == false
+    }
+}
+
+internal fun shouldCheckOnStartup(now: Long, checkedAt: Long): Boolean =
+    checkedAt <= 0L || now < checkedAt || now - checkedAt >= TimeUnitHours12
+
+private const val TimeUnitHours12 = 12 * 60 * 60 * 1000L
+
 private fun compareVersions(left: List<Int>, right: List<Int>): Int {
     for (index in 0..2) {
         val comparison = left[index].compareTo(right[index])

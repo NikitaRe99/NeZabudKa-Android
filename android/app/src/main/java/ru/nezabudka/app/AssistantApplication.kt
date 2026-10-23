@@ -104,6 +104,7 @@ class AppContainer(val app: Application) {
         if (!visible) applicationScope.launch {
             whisper.releaseWhenIdle { !appVisible.get() }
             gigaam.release()
+            notePunctuation.release()
         }
     }
     val appIcons = ru.nezabudka.app.data.AppIconManager(app)
@@ -137,17 +138,18 @@ class AppContainer(val app: Application) {
     )
     val recorder = WavAudioRecorder(app, recordingTailMs = 180) { settings.state.value.audioPreprocessingEnabled }
     val preprocessor = PcmAudioPreprocessor(app)
-    val notePunctuation = ru.nezabudka.app.speech.NotePunctuation(app, modelStorage)
+    val notePunctuation = ru.nezabudka.app.speech.NotePunctuation(app, modelStorage) { appVisible.get() }
     val whisperModels = WhisperModelManager(app, modelStorage)
     val gigaamModels = ru.nezabudka.app.speech.GigaamModelManager(app, modelStorage)
     val gigaam = ru.nezabudka.app.speech.GigaamSttEngine(app, gigaamModels,
         threads = { settings.state.value.gigaamThreadCount },
         keepLoaded = { appVisible.get() && settings.state.value.sttEngine == "gigaam" && settings.state.value.keepGigaamModelLoaded },
+        canRetain = { appVisible.get() && settings.state.value.sttEngine == "gigaam" },
     )
     private val whisperVadModel = WhisperVadModelProvider(app)
     val cloudSttCredentials = CloudSttCredentials(app)
     val dataBackup = UserDataBackupManager(
-        modelStorage, database, reminders, notes, settingsStore, whisperModels, cloudSttCredentials,
+        modelStorage, database, settingsStore, whisperModels, cloudSttCredentials,
         onRestoreCompleted = {
             restoreReminderSchedules()
             NoteTrashCleanupWorker.configure(app, settings.state.value.noteTrashRetentionDays, runImmediately = true)
@@ -230,6 +232,7 @@ class AppContainer(val app: Application) {
             classicNlu.release()
             whisper.release()
             gigaam.release()
+            notePunctuation.release()
         }
     }
 

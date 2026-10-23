@@ -2,6 +2,7 @@ package ru.nezabudka.app.data
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -38,10 +39,11 @@ class NoteTrashCleanupWorker(
                 workManager.cancelUniqueWork(IMMEDIATE_WORK_NAME)
                 return
             }
-            val periodic = PeriodicWorkRequestBuilder<NoteTrashCleanupWorker>(1, TimeUnit.DAYS).build()
+            val periodic = PeriodicWorkRequestBuilder<NoteTrashCleanupWorker>(1, TimeUnit.DAYS, 6, TimeUnit.HOURS)
+                .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build()).build()
             workManager.enqueueUniquePeriodicWork(
                 PERIODIC_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 periodic,
             )
             if (!runImmediately) return

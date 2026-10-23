@@ -5,6 +5,13 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -21,29 +28,59 @@ const val NOTE_PUNCTUATION_RUPUNCT = "rupunct_small"
 fun normalizeNotePunctuationModel(value: String): String =
     if (value == NOTE_PUNCTUATION_RUPUNCT) value else NOTE_PUNCTUATION_WHISPER
 
-/** Optional offline comma restoration; model sessions are released after each text. */
-class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsStorage(context)) {
+/** Reuse a session briefly between foreground requests, without changing inference. */
+class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsStorage(context),
+                      private val canRetain: () -> Boolean = { false }) {
     private val app = context.applicationContext
     val models = RupunctModelManager(app, storage)
+    private val mutex = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var idleRelease: Job? = null
+    private var session: OrtSession? = null
+    private var modelIdentity: String? = null
+    private val tokenizer by lazy {
+        val vocabulary = app.assets.open("punctuation/vocab.txt").bufferedReader().use { it.readLines() }
+        ClassicWordPieceTokenizer(vocabulary, MAX_TOKENS)
+    }
+    private val labels by lazy {
+        val map = JSONObject(app.assets.open("punctuation/config.json").bufferedReader().use { it.readText() }).getJSONObject("id2label")
+        List(map.length()) { map.getString(it.toString()) }
+    }
+    private val commaLabels by lazy { labels.indices.filter { labels[it].endsWith("_COMMA") } }
+
+    suspend fun release() = mutex.withLock { idleRelease?.cancel(); close() }
+    private fun close() { session?.close(); session = null; modelIdentity = null }
+
+    private fun retainOrRelease() {
+        idleRelease?.cancel()
+        if (session == null || !canRetain()) { close(); return }
+        idleRelease = scope.launch { delay(60_000); mutex.withLock { close() } }
+    }
 
     suspend fun restore(text: String, model: String, fullPunctuation: Boolean = false): String = withContext(Dispatchers.Default) {
         if (model != NOTE_PUNCTUATION_RUPUNCT || text.isBlank()) return@withContext text
         val words = punctuationWords(text)
         if (words.isEmpty() || (!fullPunctuation && words.size < 2)) return@withContext text
-        val vocabulary = app.assets.open("punctuation/vocab.txt").bufferedReader().use { it.readLines() }
-        val tokenizer = ClassicWordPieceTokenizer(vocabulary, MAX_TOKENS)
-        val labelMap = JSONObject(app.assets.open("punctuation/config.json").bufferedReader().use { it.readText() })
-            .getJSONObject("id2label")
-        val commaLabels = (0 until labelMap.length()).filter { labelMap.getString(it.toString()).endsWith("_COMMA") }
-        val environment = OrtEnvironment.getEnvironment()
-        val modelFile = withContext(Dispatchers.IO) { models.modelFile() }
-        val predictions = MutableList<Boolean?>(words.size) { null }
-        val fullPredictions = MutableList<FullPunctuationPrediction?>(words.size) { null }
-        val labels = List(labelMap.length()) { labelMap.getString(it.toString()) }
-        OrtSession.SessionOptions().use { options ->
-            options.setIntraOpNumThreads((Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4))
-            options.setInterOpNumThreads(1)
-            environment.createSession(modelFile.absolutePath, options).use { session ->
+        mutex.withLock {
+            idleRelease?.cancel()
+            try {
+                val environment = OrtEnvironment.getEnvironment()
+                val modelFile = withContext(Dispatchers.IO) { models.modelFile() }
+                val predictions = MutableList<Boolean?>(words.size) { null }
+                val fullPredictions = MutableList<FullPunctuationPrediction?>(words.size) { null }
+                val identity = "${modelFile.absolutePath}:${modelFile.length()}:${modelFile.lastModified()}"
+                if (modelIdentity != identity) {
+                    close()
+                    session = OrtSession.SessionOptions().use { options ->
+                        options.setIntraOpNumThreads((Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4))
+                        options.setInterOpNumThreads(1)
+                        options.addConfigEntry("session.intra_op.allow_spinning", "0")
+                        options.addConfigEntry("session.inter_op.allow_spinning", "0")
+                        environment.createSession(modelFile.absolutePath, options)
+                    }
+                    modelIdentity = identity
+                }
+                val active = requireNotNull(session)
                 var firstUnprocessed = 0
                 while (firstUnprocessed < words.size) {
                     coroutineContext.ensureActive()
@@ -69,7 +106,7 @@ class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsS
                     OnnxTensor.createTensor(environment, LongBuffer.wrap(tokens.inputIds), shape).use { ids ->
                         OnnxTensor.createTensor(environment, LongBuffer.wrap(tokens.attentionMask), shape).use { mask ->
                             OnnxTensor.createTensor(environment, LongBuffer.wrap(tokens.tokenTypeIds), shape).use { types ->
-                                session.run(mapOf("input_ids" to ids, "attention_mask" to mask, "token_type_ids" to types)).use { result ->
+                                active.run(mapOf("input_ids" to ids, "attention_mask" to mask, "token_type_ids" to types)).use { result ->
                                     @Suppress("UNCHECKED_CAST")
                                     val logits = (result[0].value as Array<Array<FloatArray>>)[0]
                                     for (index in firstUnprocessed until processUntil) {
@@ -88,10 +125,13 @@ class NotePunctuation(context: Context, storage: UserModelsStorage = UserModelsS
                     }
                     firstUnprocessed = processUntil
                 }
-            }
+                if (fullPunctuation) applyFullPunctuation(text, words, fullPredictions)
+                else applyPredictedCommas(text, words, predictions)
+            } catch (error: Throwable) {
+                close()
+                throw error
+            } finally { retainOrRelease() }
         }
-        if (fullPunctuation) applyFullPunctuation(text, words, fullPredictions)
-        else applyPredictedCommas(text, words, predictions)
     }
 
     private companion object {

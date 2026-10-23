@@ -1,0 +1,152 @@
+{
+  "accuracy": {
+    "baseline": {
+      "sha256": "c2ce0e59e528dd6ee566ad0e7375711bbfed30f116879d27a5bf207b026e7683",
+      "bytes": 320717056,
+      "groups": {
+        "fleurs-development": {
+          "recordings": 48,
+          "words": 926,
+          "errors": 78,
+          "werPercent": 8.423326133909287,
+          "medianMs": 202.29055000527296
+        },
+        "primary": {
+          "recordings": 9,
+          "words": 57,
+          "errors": 1,
+          "werPercent": 1.7543859649122806,
+          "medianMs": 70.98560000304133
+        },
+        "raw-control": {
+          "recordings": 2,
+          "words": 16,
+          "errors": 1,
+          "werPercent": 6.25,
+          "medianMs": 75.47660000273027
+        },
+        "synthetic": {
+          "recordings": 19,
+          "words": 114,
+          "errors": 3,
+          "werPercent": 2.6315789473684212,
+          "medianMs": null
+        },
+        "fleurs-heldout": {
+          "recordings": 48,
+          "words": 845,
+          "errors": 52,
+          "werPercent": 6.153846153846154,
+          "medianMs": 182.1339000016451
+        }
+      },
+      "fleursTotalWords": 1771,
+      "fleursTotalErrors": 130,
+      "fleursWerPercent": 7.340485601355167
+    },
+    "lite": {
+      "sha256": "187509b2f8c21a1306ff2baad8d0347364f1fb3de97e06d268d5927019744ddc",
+      "bytes": 236036281,
+      "groups": {
+        "fleurs-development": {
+          "recordings": 48,
+          "words": 926,
+          "errors": 78,
+          "werPercent": 8.423326133909287,
+          "medianMs": 169.95404999761377
+        },
+        "primary": {
+          "recordings": 9,
+          "words": 57,
+          "errors": 1,
+          "werPercent": 1.7543859649122806,
+          "medianMs": 56.88219997682609
+        },
+        "raw-control": {
+          "recordings": 2,
+          "words": 16,
+          "errors": 1,
+          "werPercent": 6.25,
+          "medianMs": 62.19654998858459
+        },
+        "synthetic": {
+          "recordings": 19,
+          "words": 114,
+          "errors": 3,
+          "werPercent": 2.6315789473684212,
+          "medianMs": null
+        },
+        "fleurs-heldout": {
+          "recordings": 48,
+          "words": 845,
+          "errors": 53,
+          "werPercent": 6.272189349112426,
+          "medianMs": 153.38735001569148
+        }
+      },
+      "fleursTotalWords": 1771,
+      "fleursTotalErrors": 131,
+      "fleursWerPercent": 7.396950875211745
+    }
+  },
+  "device": {
+    "baseline": {
+      "device": "SM-G960U1",
+      "hardware": "qcom",
+      "inferences": 76,
+      "medianMs": 634.2396349999999,
+      "sumMs": 62824.188308,
+      "sumCpuMs": 229917,
+      "meanLoadMs": 1894.1305465,
+      "meanPssAfterInferenceMiB": 411.76611328125,
+      "maxPeakRssMiB": 484.86328125,
+      "accuracy": {
+        "primary": {
+          "words": 57,
+          "errors": 1
+        },
+        "raw-control": {
+          "words": 16,
+          "errors": 1
+        },
+        "fleurs-heldout": {
+          "words": 109,
+          "errors": 14
+        }
+      }
+    },
+    "lite": {
+      "device": "SM-G960U1",
+      "hardware": "qcom",
+      "inferences": 76,
+      "medianMs": 572.364427,
+      "sumMs": 56535.647476,
+      "sumCpuMs": 206804,
+      "meanLoadMs": 1745.895078,
+      "meanPssAfterInferenceMiB": 329.1142578125,
+      "maxPeakRssMiB": 395.44140625,
+      "accuracy": {
+        "primary": {
+          "words": 57,
+          "errors": 1
+        },
+        "raw-control": {
+          "words": 16,
+          "errors": 1
+        },
+        "fleurs-heldout": {
+          "words": 109,
+          "errors": 15
+        }
+      }
+    }
+  },
+  "protocol": "Samsung S9 Android 10; CPU EP, 4 threads, spin=0; fresh processes in baseline/lite/lite/baseline order; 19 recordings, 2 runs each",
+  "sizeReductionPercent": 26.403577052041783,
+  "deviceChangesPercent": {
+    "totalInferenceTimeReduction": 10.009744656261987,
+    "cpuTimeReduction": 10.052758169252385,
+    "steadyPssReduction": 20.072524863719423
+  },
+  "decision": "experimental opt-in catalog release authorized; held-out aggregate WER non-regression gate failed by one word; do not replace recommended default"
+}

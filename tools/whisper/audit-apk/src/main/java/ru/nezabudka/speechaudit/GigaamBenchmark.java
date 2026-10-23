@@ -44,6 +44,12 @@ public final class GigaamBenchmark extends Instrumentation {
     private static String read(File file) throws Exception {
         return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
     }
+    private static long peakRssKiB() throws Exception {
+        for (String line : read(new File("/proc/self/status")).split("\n")) {
+            if (line.startsWith("VmHWM:")) return Long.parseLong(line.replaceAll("[^0-9]", ""));
+        }
+        return -1;
+    }
     private static void write(File file, JSONObject value) throws Exception {
         Files.write(file.toPath(), value.toString(2).getBytes(StandardCharsets.UTF_8));
     }
@@ -92,6 +98,7 @@ public final class GigaamBenchmark extends Instrumentation {
             }, 30, TimeUnit.SECONDS);
             try {
                 long started = SystemClock.elapsedRealtimeNanos();
+                long cpuStarted = android.os.Process.getElapsedCpuTime();
                 try (OrtSession.Result result = session.run(inputs, run)) {
                     double ms = (SystemClock.elapsedRealtimeNanos() - started) / 1e6;
                     long[] labels = ((long[][]) result.get(0).getValue())[0];
@@ -103,7 +110,8 @@ public final class GigaamBenchmark extends Instrumentation {
                         if (token != vocabulary.length() && token != previous) text.append(vocabulary.getString((int) token));
                         previous = token;
                     }
-                    return new JSONObject().put("text", text.toString()).put("ms", ms);
+                    return new JSONObject().put("text", text.toString()).put("ms", ms)
+                        .put("cpuMs", android.os.Process.getElapsedCpuTime() - cpuStarted);
                 }
             } finally { timeout.cancel(false); }
         }
@@ -122,7 +130,7 @@ public final class GigaamBenchmark extends Instrumentation {
             }
             activity = activityContext;
             String name = arguments.getString("model", "v3_ctc-waveform-int8.onnx");
-            if (!name.matches("(?:v[123]_ctc-waveform-(?:int8|fp32)|gigaam-v[123]-ctc-int8)\\.onnx")) throw new IllegalArgumentException("Unknown model");
+            if (!name.matches("(?:v[123]_ctc-waveform-(?:int8|fp32)|gigaam-v[123]-ctc-int8|gigaam-v3-ctc-lite-(?:minmax|pointwise)-int8)\\.onnx")) throw new IllegalArgumentException("Unknown model");
             int threads = Integer.parseInt(arguments.getString("threads", "4"));
             if (threads < 1 || threads > Runtime.getRuntime().availableProcessors()) throw new IllegalArgumentException("Thread count");
             destination = new File(directory, name + ".threads" + threads + ".json");
@@ -139,6 +147,8 @@ public final class GigaamBenchmark extends Instrumentation {
             OrtEnvironment env = OrtEnvironment.getEnvironment();
             try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
                 options.setIntraOpNumThreads(threads); options.setInterOpNumThreads(1);
+                options.addConfigEntry("session.intra_op.allow_spinning", "0");
+                options.addConfigEntry("session.inter_op.allow_spinning", "0");
                 options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
                 long started = SystemClock.elapsedRealtimeNanos();
                 try (OrtSession session = env.createSession(model.getAbsolutePath(), options)) {
@@ -157,6 +167,7 @@ public final class GigaamBenchmark extends Instrumentation {
                         if (activityContext == null) sendStatus(0, progress);
                     }
                     report.put("pssAfterInferenceKiB", Debug.getPss());
+                    report.put("peakRssKiB", peakRssKiB());
                 }
             }
             report.put("status", "complete");

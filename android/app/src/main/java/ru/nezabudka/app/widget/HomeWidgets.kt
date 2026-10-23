@@ -20,6 +20,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.nezabudka.app.R
@@ -37,6 +39,8 @@ object HomeWidgets {
     private var observation: Job? = null
     private var settingsPrefs: SharedPreferences? = null
     private var settingsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+    // Accessed only under refreshLock; collection rows are refreshed independently.
+    private val frames = mutableMapOf<Int, List<Any?>>()
 
     fun ids(context: Context, kind: WidgetKind): IntArray = AppWidgetManager.getInstance(context)
         .getAppWidgetIds(ComponentName(context, if (kind == WidgetKind.NOTES) NotesWidgetProvider::class.java else RemindersWidgetProvider::class.java))
@@ -47,6 +51,7 @@ object HomeWidgets {
             if (value == WidgetKind.NOTES) NotesWidgetProvider::class.java else RemindersWidgetProvider::class.java) }
     }
 
+    @OptIn(FlowPreview::class)
     @Synchronized fun start(context: Context) {
         val app = context.applicationContext
         if (WidgetKind.entries.all { ids(app, it).isEmpty() }) { stop(app); return }
@@ -57,12 +62,11 @@ object HomeWidgets {
         }.also { settingsPrefs?.registerOnSharedPreferenceChangeListener(it) }
         observation = scope.launch {
             AppDatabase.get(app).invalidationTracker.createFlow("reminders", "notes", "note_folders", "note_folder_refs")
-                .collect { tables ->
-                    val kinds = buildSet {
-                        if ("reminders" in tables) add(WidgetKind.REMINDERS)
-                        if (tables.any { it != "reminders" }) add(WidgetKind.NOTES)
-                    }
-                    runCatching { refresh(app, kinds) }.onFailure { Log.w("HomeWidgets", "Не удалось обновить виджеты", it) }
+                .debounce(300)
+                .collect {
+                    // A burst may touch different tables: refresh both installed kinds
+                    // rather than dropping an earlier invalidation with debounce.
+                    runCatching { refresh(app, forceFrame = false) }.onFailure { Log.w("HomeWidgets", "Не удалось обновить виджеты", it) }
                 }
         }
         scheduleDayRefresh(app)
@@ -82,32 +86,45 @@ object HomeWidgets {
     }
 
     @Suppress("DEPRECATION")
-    internal suspend fun refresh(context: Context, kinds: Set<WidgetKind> = WidgetKind.entries.toSet(), resetScrollId: Int? = null) = refreshLock.withLock {
+    internal suspend fun refresh(context: Context, kinds: Set<WidgetKind> = WidgetKind.entries.toSet(), resetScrollId: Int? = null,
+                                 forceFrame: Boolean = true) = refreshLock.withLock {
         val manager = AppWidgetManager.getInstance(context)
         if (kinds.all { ids(context, it).isEmpty() }) return@withLock
         val database = AppDatabase.get(context)
         val preferences = WidgetPreferences(context)
-        val folders = if (WidgetKind.NOTES in kinds) database.notesDao().allFolders() else emptyList()
+        val enabled = kinds.associateWith { widgetFeatureEnabled(context, it) }
+        val folders = if (WidgetKind.NOTES in kinds && enabled[WidgetKind.NOTES] == true && ids(context, WidgetKind.NOTES).isNotEmpty()) database.notesDao().allFolders() else emptyList()
+        val reminderRows = if (WidgetKind.REMINDERS in kinds && enabled[WidgetKind.REMINDERS] == true && ids(context, WidgetKind.REMINDERS).isNotEmpty())
+            widgetReminderRows(database, preferences, LocalDate.now()) else null
+        val noteCounts = mutableMapOf<Long?, Int>()
+        val palette = WidgetPalette.read(context)
+        val existing = WidgetKind.entries.flatMap { ids(context, it).toList() }.toSet()
+        frames.keys.retainAll(existing)
         kinds.forEach { kind ->
             ids(context, kind).forEach { id ->
                 val folderId = if (kind == WidgetKind.NOTES) preferences.folder(id) else null
                 val folder = folders.firstOrNull { it.id == folderId }
-                val missingFolder = kind == WidgetKind.NOTES && folderId != null && folder == null
+                val active = enabled[kind] == true
+                val missingFolder = active && kind == WidgetKind.NOTES && folderId != null && folder == null
                 val title = when {
                     kind == WidgetKind.REMINDERS -> context.getString(R.string.widget_today)
                     missingFolder -> "Папка удалена"
                     else -> folder?.name ?: context.getString(R.string.widget_all_notes)
                 }
-                val reminderRows = if (kind == WidgetKind.REMINDERS) widgetReminderRows(database, preferences, LocalDate.now()) else null
                 val count = when {
+                    !active -> 0
                     kind == WidgetKind.REMINDERS -> requireNotNull(reminderRows).activeCount
                     missingFolder -> 0
-                    else -> database.notesDao().widgetCount(folderId)
+                    else -> noteCounts[folderId] ?: database.notesDao().widgetCount(folderId).also { noteCounts[folderId] = it }
                 }
-                val views = WidgetRenderer.frame(context, id, kind, title, count, folderId, missingFolder, id == resetScrollId,
-                    if (kind == WidgetKind.REMINDERS) preferences.undo(id) else null)
-                manager.updateAppWidget(id, views)
-                manager.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
+                val undo = if (kind == WidgetKind.REMINDERS) preferences.undo(id) else null
+                val state = listOf(kind, title, count, folderId, missingFolder, active, palette, undo)
+                if (forceFrame || id == resetScrollId || frames[id] != state) {
+                    val views = WidgetRenderer.frame(context, id, kind, title, count, folderId, missingFolder, id == resetScrollId, undo)
+                    manager.updateAppWidget(id, views)
+                    frames[id] = state
+                }
+                if (active) manager.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
             }
         }
     }

@@ -27,13 +27,40 @@ import java.time.LocalDateTime
 class InterfaceReviewActivity : ComponentActivity() {
     var deletions = 0
     var galleryBounds = Rect()
+    var lastReminderCompleted: Boolean? = null
+    var editorClosed = false
+    var savedTheme: ru.nezabudka.app.domain.CustomThemeSettings? = null
+    var selectedNoteColor: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val settings = SettingsStore(this).state.value.let { if (intent.hasExtra("gallery_message")) it.copy(theme = "dark") else it }
+        val fixtureTheme = ru.nezabudka.app.domain.defaultCustomTheme("light").let {
+            it.copy(notePalette = it.notePalette + listOf("#123456", "#654321"))
+        }
+        val settings = SettingsStore(this).state.value.let {
+            when (intent.getStringExtra("scenario")) {
+                "theme-editor", "note-colors" -> it.copy(theme = "custom", customTheme = fixtureTheme)
+                else -> if (intent.hasExtra("gallery_message")) it.copy(theme = "dark") else it
+            }
+        }
         setContent {
             LocalAssistantTheme(settings) {
                 Surface(Modifier.fillMaxSize(), color = AppTheme.tokens.colors.background) {
-                    if (intent.getStringExtra("scenario") == "swipe") {
+                    if (intent.getStringExtra("scenario") == "reminder-editor") {
+                        val reminder = remember { LocalDateTime.now().let { Reminder(900002, "Проверка редактора", it.plusHours(1), null, "active", it) } }
+                        ReminderEditorScreen(reminder, back = { editorClosed = true },
+                            save = { _, _, _, _, _, completed, done -> lastReminderCompleted = completed; done() },
+                            delete = { _, done -> done() })
+                    } else if (intent.getStringExtra("scenario") == "theme-editor") {
+                        CustomThemeEditorDialog(fixtureTheme, dismiss = {}, save = {
+                            savedTheme = it
+                            SettingsStore(this).setCustomTheme(it)
+                        })
+                    } else if (intent.getStringExtra("scenario") == "note-colors") {
+                        var selected by remember { mutableStateOf<String?>(null) }
+                        Column(Modifier.padding(top = 100.dp, start = 20.dp, end = 20.dp)) {
+                            NoteColorGrid(selected, { selected = it; selectedNoteColor = it })
+                        }
+                    } else if (intent.getStringExtra("scenario") == "swipe") {
                         Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 100.dp)) {
                             val now = LocalDateTime.now()
                             SwipeableReminderRow(Reminder(900001, "Проверка безопасного свайпа", now.plusHours(1), null, "active", now),

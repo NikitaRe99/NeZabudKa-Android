@@ -180,20 +180,8 @@ private fun NoteSelectionTopBar(
                     modifier = Modifier.width(300.dp),
                 ) {
                     Text("Выберите цвет", Modifier.padding(horizontal = 18.dp, vertical = 12.dp), style = MaterialTheme.typography.titleMedium)
-                    noteColorPaletteRows().forEach { rowColors ->
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            rowColors.forEach { option ->
-                                Box(
-                                    Modifier.size(48.dp).clip(CircleShape).background(option.color)
-                                        .border(2.dp, theme.colors.outline, CircleShape)
-                                        .combinedClickable(onClick = { color(option.value); paletteOpen = false }, onLongClick = {}),
-                                )
-                            }
-                        }
-                    }
+                    NoteColorGrid(notes.firstOrNull()?.color, { selected -> color(selected); paletteOpen = false },
+                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
                 }
             }
             IconButton(onClick = folders) { Icon(Icons.Default.Folder, "Папки") }
@@ -337,13 +325,17 @@ internal fun NotesScreen(
     val displayInput = remember(notes, sort, selectedFolder, section, query) {
         NotesDisplayInput(notes, sort, selectedFolder, section, query)
     }
+    val listProjector = remember { NoteListProjector() }
     val projection by produceState<Pair<NotesDisplayInput, List<Note>>?>(null, displayInput) {
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            displayInput to filterNotesForDisplay(sortNotesForDisplay(notes, sort), selectedFolder, section, query)
+            displayInput to listProjector.project(notes, sort, selectedFolder, section, query)
         }
     }
-    val displayReady = !isLoading && projection?.first == displayInput
-    val visible = if (displayReady) projection!!.second else emptyList()
+    val currentProjection = projection?.takeIf { it.first.folderId == selectedFolder && it.first.section == section }
+    // Keep the previous frame while a new search/order is calculated. Clearing it
+    // here removed/recreated every visible card and briefly showed a spinner.
+    val displayReady = !isLoading && currentProjection != null
+    val visible = if (displayReady) currentProjection!!.second else emptyList()
     val pinned = remember(visible) { visible.filter { it.pinned } }
     val others = remember(visible) { visible.filterNot { it.pinned } }
     val manualSortingEnabled = sort == NoteSort.MANUAL

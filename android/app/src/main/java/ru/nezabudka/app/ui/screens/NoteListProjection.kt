@@ -2,6 +2,22 @@ package ru.nezabudka.app.ui.screens
 
 import ru.nezabudka.app.domain.Note
 
+/** Search/folder changes reuse the already sorted source. Called off the UI thread. */
+internal class NoteListProjector {
+    private var source: List<Note>? = null
+    private var order: NoteSort? = null
+    private var sorted = emptyList<Note>()
+
+    @Synchronized fun project(notes: List<Note>, sort: NoteSort, folder: Long?, section: NoteSection, query: String): List<Note> {
+        if (source !== notes || order != sort) {
+            sorted = sortNotesForDisplay(notes, sort)
+            source = notes
+            order = sort
+        }
+        return filterNotesForDisplay(sorted, folder, section, query)
+    }
+}
+
 internal fun sortNotesForDisplay(notes: List<Note>, sort: NoteSort): List<Note> =
     notes.sortedWith(
         when (sort) {

@@ -3,10 +3,6 @@ package ru.nezabudka.app.data
 import android.net.Uri
 import android.content.Context
 import androidx.room.withTransaction
-import ru.nezabudka.app.domain.AppSettings
-import ru.nezabudka.app.domain.Note
-import ru.nezabudka.app.domain.NoteFolder
-import ru.nezabudka.app.domain.Reminder
 import ru.nezabudka.app.ports.PortableCloudConfigurationStore
 import ru.nezabudka.app.ports.PortableModelSelection
 import ru.nezabudka.app.ports.PortableCloudConfiguration
@@ -20,7 +16,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -35,8 +30,6 @@ data class BackupSyncResult(
 class UserDataBackupManager(
     private val storage: UserModelsStorage,
     private val database: AppDatabase,
-    private val reminders: RoomReminderRepository,
-    private val notes: RoomNotesRepository,
     private val settings: SettingsStore,
     private val whisperModels: PortableModelSelection,
     private val cloudConfiguration: PortableCloudConfigurationStore,
@@ -44,6 +37,7 @@ class UserDataBackupManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
+    private var lastWritten: UserDataBackupDto? = null
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun start() {
         scope.launch {
@@ -59,36 +53,19 @@ class UserDataBackupManager(
                     if (!active) {
                         emptyFlow()
                     } else {
+                        // Observe invalidations without loading each table twice. Read one
+                        // consistent transaction after the burst of changes has settled.
                         val applicationData = combine(
-                            settings.state,
-                            storage.state,
-                            reminders.observeAll(),
-                            notes.observeFolders(),
-                            notes.observeAll(),
-                        ) { appSettings, storageState, reminderValues, folderValues, noteValues ->
-                            BackupObservation(
-                                appSettings = appSettings,
-                                storageConfigured = storageState.configured,
-                                reminders = reminderValues,
-                                folders = folderValues,
-                                notes = noteValues,
-                            )
-                        }
-                        combine(
-                            applicationData,
-                            whisperModels.selectedModelName,
-                            cloudConfiguration.portableConfiguration,
-                        ) { value, selectedWhisperModel, portableCloud ->
-                            value.copy(
-                                selectedWhisperModel = selectedWhisperModel,
-                                yandexFolderId = portableCloud.yandexFolderId,
-                                vkEndpoint = portableCloud.vkEndpoint,
-                            )
-                        }
+                            settings.state.map { it.toPortableSettings(null, "", "") }.distinctUntilChanged(),
+                            storage.state.map { it.configured to it.location }.distinctUntilChanged(),
+                            database.invalidationTracker.createFlow("reminders", "notes", "note_folders", "note_folder_refs"),
+                        ) { _, _, _ -> Unit }
+                        combine(applicationData, whisperModels.selectedModelName,
+                            cloudConfiguration.portableConfiguration) { _, _, _ -> Unit }
                     }
                 }
                 .debounce(1_200)
-                .collect { value ->
+                .collect {
                     runCatching {
                         mutex.withLock {
                             if (storage.state.value.userSelectedDirectory) writeCurrent()
@@ -101,6 +78,7 @@ class UserDataBackupManager(
     suspend fun selectRoot(uri: Uri): BackupSyncResult = withContext(Dispatchers.IO) {
         mutex.withLock {
             storage.selectRoot(uri)
+            lastWritten = null
             val restored = restoreIfDatabaseEmpty()
             writeCurrent()
             BackupSyncResult(
@@ -114,73 +92,48 @@ class UserDataBackupManager(
     suspend fun useDefaultRoot(deletePrevious: Boolean) = withContext(Dispatchers.IO) {
         mutex.withLock {
             storage.useDefaultRoot(deletePrevious)
+            lastWritten = null
             writeCurrent()
         }
     }
 
     private suspend fun writeCurrent() {
-        write(
-            reminders.observeAll().first(),
-            notes.observeFolders().first(),
-            notes.observeAll().first(),
-            settings.state.value.toPortableSettings(
-                selectedWhisperModel = whisperModels.currentSelectedModelName(),
-                yandexFolderId = cloudConfiguration.currentPortableConfiguration().yandexFolderId,
-                vkEndpoint = cloudConfiguration.currentPortableConfiguration().vkEndpoint,
-            ),
-        )
+        val cloud = cloudConfiguration.currentPortableConfiguration()
+        val next = databaseSnapshot(settings.state.value.toPortableSettings(
+            selectedWhisperModel = whisperModels.currentSelectedModelName(),
+            yandexFolderId = cloud.yandexFolderId,
+            vkEndpoint = cloud.vkEndpoint,
+        ))
+        if (next == lastWritten && storage.hasDataBackup()) return
+        storage.writeDataBackup(UserDataBackupCodec.encode(next))
+        // Failed writes must be retried; remember only a successfully verified copy.
+        lastWritten = next
     }
 
-    private fun write(
-        reminders: List<Reminder>,
-        folders: List<NoteFolder>,
-        notes: List<Note>,
-        portableSettings: PortableAppSettings,
-    ) {
-        storage.writeDataBackup(UserDataBackupCodec.encode(snapshot(reminders, folders, notes, portableSettings)))
+    internal suspend fun databaseSnapshot(portableSettings: PortableAppSettings? = null,
+                                         content: BackupContent? = null): UserDataBackupDto = database.withTransaction {
+        val reminders = if (content == null || content == BackupContent.REMINDERS) database.reminderDao().allForBackup().map {
+            BackupReminderDto(it.id, it.text, it.remindAt?.toString(), it.recurrence, it.status,
+                it.createdAt.toString(), it.favorite, it.manualOrder, it.completedAt?.toString())
+        } else emptyList()
+        val dao = database.notesDao()
+        val folders = if (content == null || content == BackupContent.NOTES) dao.allFolders().map {
+            BackupFolderDto(it.id, it.name, it.createdAt.toString(), it.manualOrder)
+        } else emptyList()
+        val notes = if (content == null || content == BackupContent.NOTES) {
+            val refs = dao.allRefsForBackup().groupBy { it.noteId }
+            dao.allNotesInManualOrder().map {
+                BackupNoteDto(it.id, it.folderId, refs[it.id].orEmpty().map { ref -> ref.folderId },
+                    it.text, it.createdAt.toString(), it.updatedAt.toString(), it.pinned, it.archived,
+                    it.trashed, it.color, it.title, it.manualOrder)
+            }
+        } else emptyList()
+        UserDataBackupDto(reminders = reminders, folders = folders, notes = notes, settings = portableSettings)
     }
-
-    private fun snapshot(
-        reminders: List<Reminder>, folders: List<NoteFolder>, notes: List<Note>,
-        portableSettings: PortableAppSettings? = null,
-    ): UserDataBackupDto = UserDataBackupDto(
-            reminders = reminders.map {
-                BackupReminderDto(
-                    it.id, it.text, it.remindAt?.toString(), it.recurrence, it.status, it.createdAt.toString(),
-                    it.favorite, it.manualOrder, it.completedAt?.toString(),
-                )
-            },
-            folders = folders.map { BackupFolderDto(it.id, it.name, it.createdAt.toString(), it.manualOrder) },
-            notes = notes.map {
-                BackupNoteDto(
-                    it.id, it.folderId, it.folderIds, it.text, it.createdAt.toString(), it.updatedAt.toString(),
-                    it.pinned, it.archived, it.trashed, it.color, it.title, it.manualOrder,
-                )
-            },
-            settings = portableSettings,
-        )
 
     suspend fun exportFile(context: Context, uri: Uri, content: BackupContent) = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val data = database.withTransaction {
-                val reminders = if (content == BackupContent.REMINDERS) database.reminderDao().allForBackup().map {
-                    BackupReminderDto(it.id, it.text, it.remindAt?.toString(), it.recurrence, it.status,
-                        it.createdAt.toString(), it.favorite, it.manualOrder, it.completedAt?.toString())
-                } else emptyList()
-                val dao = database.notesDao()
-                val folders = if (content == BackupContent.NOTES) dao.allFolders().map {
-                    BackupFolderDto(it.id, it.name, it.createdAt.toString(), it.manualOrder)
-                } else emptyList()
-                val notes = if (content == BackupContent.NOTES) {
-                    val refs = dao.allRefsForBackup().groupBy { it.noteId }
-                    dao.allNotesInManualOrder().map {
-                        BackupNoteDto(it.id, it.folderId, refs[it.id].orEmpty().map { ref -> ref.folderId },
-                            it.text, it.createdAt.toString(), it.updatedAt.toString(), it.pinned, it.archived,
-                            it.trashed, it.color, it.title, it.manualOrder)
-                    }
-                } else emptyList()
-                UserDataBackupDto(reminders = reminders, folders = folders, notes = notes)
-            }
+            val data = databaseSnapshot(content = content)
             val encoded = UserDataBackupCodec.encode(UserDataBackupCodec.forContent(data, content))
             val output = context.contentResolver.openOutputStream(uri, "wt") ?: error("Не удалось открыть файл для сохранения")
             output.bufferedWriter(Charsets.UTF_8).use { it.write(encoded) }
@@ -275,14 +228,4 @@ class UserDataBackupManager(
         return true
     }
 
-    private data class BackupObservation(
-        val appSettings: AppSettings,
-        val storageConfigured: Boolean,
-        val reminders: List<Reminder>,
-        val folders: List<NoteFolder>,
-        val notes: List<Note>,
-        val selectedWhisperModel: String? = null,
-        val yandexFolderId: String = "",
-        val vkEndpoint: String = "",
-    )
 }

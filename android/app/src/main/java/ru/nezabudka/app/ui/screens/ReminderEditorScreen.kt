@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Repeat
@@ -75,6 +76,7 @@ internal fun ReminderEditorScreen(
     var recurrenceDialog by remember(reminder.id) { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
     var deleteDialog by remember { mutableStateOf(false) }
+    var completeDialog by remember(reminder.id) { mutableStateOf(false) }
     var textEdited by remember(reminder.id) { mutableStateOf(false) }
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
@@ -95,7 +97,7 @@ internal fun ReminderEditorScreen(
     // The first Back while typing must only close the keyboard. Dialogs and
     // popup menus handle their own Back; committing is reserved for real exit.
     BackHandler(
-        enabled = !imeVisible && !dateDialog && !recurrenceDialog && !deleteDialog && !moreMenu,
+        enabled = !imeVisible && !dateDialog && !recurrenceDialog && !deleteDialog && !completeDialog && !moreMenu,
         onBack = saveAndClose,
     )
     LaunchedEffect(text) {
@@ -137,14 +139,21 @@ internal fun ReminderEditorScreen(
             Row(
                 Modifier.fillMaxWidth().navigationBarsPadding()
                     .padding(horizontal = ReminderEditorHorizontalPadding, vertical = 20.dp),
-                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (reminder.status != "completed") TextButton(
+                    enabled = text.isNotBlank(),
+                    onClick = { completeDialog = true },
+                ) {
+                    Icon(Icons.Default.CheckCircleOutline, null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Выполнено")
+                }
+                Spacer(Modifier.weight(1f))
                 Button(
                     enabled = text.isNotBlank(),
-                    onClick = {
-                        save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, true, back)
-                    },
-                ) { Text("Выполнено") }
+                    onClick = saveAndClose,
+                ) { Text("Сохранить") }
             }
         },
     ) { inner ->
@@ -273,6 +282,17 @@ internal fun ReminderEditorScreen(
             },
         )
     }
+    if (completeDialog) AppAlertDialog(
+        onDismissRequest = { completeDialog = false },
+        title = { Text("Отметить напоминание выполненным?") },
+        text = { Text(if (recurrence == null) "Напоминание перейдёт в выполненные."
+            else "Этот повтор будет выполнен. Следующий останется по расписанию.") },
+        dismissButton = { TextButton(onClick = { completeDialog = false }) { Text("Отмена") } },
+        confirmButton = { TextButton(enabled = text.isNotBlank(), onClick = {
+            completeDialog = false
+            save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, true, back)
+        }) { Text("Отметить выполненным") } },
+    )
     if (deleteDialog) AppAlertDialog(
         onDismissRequest = { deleteDialog = false },
         title = { Text("Удалить напоминание?") },

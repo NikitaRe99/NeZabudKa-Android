@@ -529,29 +529,7 @@ internal fun NoteEditorScreen(
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp)) {
             Text("Цвет заметки", style = MaterialTheme.typography.titleMedium)
-            Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                noteColorPaletteRows().forEach { rowColors ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        rowColors.forEach { option ->
-                            Box(
-                                Modifier.size(48.dp).clip(CircleShape)
-                                    .background(option.color)
-                                    .border(
-                                        if (isSelectedNoteColor(color, option.value)) 3.dp else 1.dp,
-                                        if (isSelectedNoteColor(color, option.value)) theme.colors.accent else theme.colors.outline,
-                                        CircleShape,
-                                    )
-                                    .pointerInput(option.value) {
-                                        detectTapGestures {
-                                            color = option.value
-                                            colorMenu = false
-                                        }
-                                    },
-                            )
-                        }
-                    }
-                }
-            }
+            NoteColorGrid(color, { selected -> color = selected; colorMenu = false }, Modifier.padding(vertical = 18.dp))
         }
     }
     if (actionMenu) ModalBottomSheet(
