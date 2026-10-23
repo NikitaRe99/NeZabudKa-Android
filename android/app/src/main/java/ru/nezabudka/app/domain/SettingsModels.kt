@@ -3,6 +3,18 @@ package ru.nezabudka.app.domain
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class SpokenSymbol(val phrase: String, val symbol: String)
+
+val DEFAULT_SPOKEN_SYMBOLS = listOf(
+    SpokenSymbol("двоеточие", ":"), SpokenSymbol("тире", "—"),
+    SpokenSymbol("точка с запятой", ";"), SpokenSymbol("запятая", ","),
+    SpokenSymbol("точка", "."), SpokenSymbol("вопросительный знак", "?"),
+    SpokenSymbol("восклицательный знак", "!"), SpokenSymbol("многоточие", "…"),
+    SpokenSymbol("открывающая скобка", "("), SpokenSymbol("закрывающая скобка", ")"),
+    SpokenSymbol("новая строка", "\n"), SpokenSymbol("новый абзац", "\n\n"),
+)
+
+@Serializable
 data class TimeOfDaySetting(val phrase: String, val time: String)
 
 val DEFAULT_TIME_OF_DAY_SETTINGS = listOf(
@@ -38,6 +50,8 @@ data class AppSettings(
     val gigaamThreadCount: Int = 0,
     val gigaamLivePreview: Boolean = false,
     val editorFullPunctuation: Boolean = false,
+    val spokenSymbolsEnabled: Boolean = false,
+    val spokenSymbols: List<SpokenSymbol> = DEFAULT_SPOKEN_SYMBOLS,
     val audioPreprocessingEnabled: Boolean,
     val showPlaybackButton: Boolean,
     val trustStt: Boolean,

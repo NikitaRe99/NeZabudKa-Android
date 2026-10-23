@@ -120,7 +120,8 @@ fun prioritizedAssistantTips(tips: List<AssistantTipKind>) = tips.sortedBy { it.
 data class ReminderPermissionStatus(
     val notifications: Boolean, val exactTime: Boolean, val background: Boolean,
     val fullScreen: Boolean, val overlay: Boolean,
+    val backgroundVerifiable: Boolean = true,
 ) {
-    fun deliveryReady() = notifications && exactTime && background
+    fun deliveryReady() = notifications && exactTime && (background || !backgroundVerifiable)
     fun alarmWindowReady() = deliveryReady() && fullScreen && overlay
 }

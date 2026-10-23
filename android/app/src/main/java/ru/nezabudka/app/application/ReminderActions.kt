@@ -1,6 +1,7 @@
 package ru.nezabudka.app.application
 
 import ru.nezabudka.app.domain.Reminder
+import ru.nezabudka.app.domain.alignReminderOccurrence
 import ru.nezabudka.app.domain.nextReminderOccurrence
 import ru.nezabudka.app.domain.normalizeReminderRecurrence
 import ru.nezabudka.app.ports.ReminderRepository
@@ -20,7 +21,8 @@ class ReminderActions(
         recurrence: String? = null,
         favorite: Boolean = false,
     ): Reminder {
-        var created = reminders.create(text, remindAt, normalizeReminderRecurrence(recurrence))
+        val normalized = normalizeReminderRecurrence(recurrence)
+        var created = reminders.create(text, remindAt?.let { alignReminderOccurrence(it, normalized) }, normalized)
         if (favorite) {
             reminders.setFavorite(created.id, true)
             created = created.copy(favorite = true)
@@ -46,6 +48,7 @@ class ReminderActions(
     ): Reminder {
         val normalizedRecurrence = normalizeReminderRecurrence(recurrence)
         val now = LocalDateTime.now(clock)
+        val alignedDate = remindAt?.let { alignReminderOccurrence(it, normalizedRecurrence) }
         val effectiveRemindAt = if (
             normalizedRecurrence != null &&
             normalizedRecurrence != normalizeReminderRecurrence(original.recurrence) &&
@@ -54,7 +57,7 @@ class ReminderActions(
         ) {
             nextReminderOccurrence(remindAt, normalizedRecurrence, now) ?: remindAt
         } else {
-            remindAt
+            alignedDate
         }
         val updated = reminders.saveEditor(
             original.id,
@@ -123,8 +126,8 @@ class ReminderActions(
 
     suspend fun rescheduleWithRecurrence(reminder: Reminder, date: LocalDateTime?, recurrence: String?): Reminder {
         scheduler.cancel(reminder.id)
-        var updated = reminders.reschedule(reminder.id, reminder.text, date)
         val normalized = if (date == null) null else normalizeReminderRecurrence(recurrence)
+        var updated = reminders.reschedule(reminder.id, reminder.text, date?.let { alignReminderOccurrence(it, normalized) })
         if (updated.recurrence != normalized) updated = reminders.setRecurrence(updated.id, normalized)
         scheduler.schedule(updated)
         return updated

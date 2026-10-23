@@ -244,6 +244,9 @@ internal fun SettingsScreen(
     returnToAssistant: () -> Unit = {},
     setGigaamLivePreview: (Boolean) -> Unit = {},
     setEditorFullPunctuation: (Boolean) -> Unit = {},
+    useDefaultModelsDirectory: (Boolean) -> Unit = {},
+    setSpokenSymbolsEnabled: (Boolean) -> Unit = {},
+    setSpokenSymbols: (List<ru.nezabudka.app.domain.SpokenSymbol>) -> Unit = {},
 ) {
     val gigaam = settings.sttEngine == "gigaam"
     val localThreadCount = if (gigaam) settings.gigaamThreadCount else settings.whisperThreadCount
@@ -282,6 +285,15 @@ internal fun SettingsScreen(
     var alarmPauseExpanded by remember { mutableStateOf(false) }
     var alarmRepeatExpanded by remember { mutableStateOf(false) }
     var trashRetentionExpanded by remember { mutableStateOf(false) }
+    var deleteStorageFolderDialog by remember { mutableStateOf(false) }
+    var spokenSymbolsDialog by remember { mutableStateOf(false) }
+    if (spokenSymbolsDialog) SpokenSymbolsDialog(settings.spokenSymbols, { spokenSymbolsDialog = false }, setSpokenSymbols)
+    if (deleteStorageFolderDialog) AppAlertDialog(
+        onDismissRequest = { deleteStorageFolderDialog = false }, title = { Text("Удалить выбранную папку?") },
+        text = { Text("${modelStorage.location}\n\nМодели будут перенесены в папку по умолчанию. Затем выбранная папка, включая резервные копии в data, будет удалена. Заметки и напоминания в приложении сохранятся. Папку с посторонними файлами удалить нельзя.") },
+        confirmButton = { TextButton(onClick = { deleteStorageFolderDialog = false; useDefaultModelsDirectory(true) }) { Text("Перенести и удалить") } },
+        dismissButton = { TextButton(onClick = { deleteStorageFolderDialog = false }) { Text("Отмена") } },
+    )
     var folderInterfaceExpanded by remember { mutableStateOf(false) }
     var whisperExpanded by remember { mutableStateOf(false) }
     var whisperThreadsExpanded by remember { mutableStateOf(false) }
@@ -515,13 +527,20 @@ internal fun SettingsScreen(
         }
         if (showSection("Данные и хранилище")) item(key = "Данные и хранилище", contentType = "settings-section") {
             SettingsSection("Каталог данных и моделей") {
+                if (dataTransfer.busy) SettingsSupportingText("Перенос моделей… Дождитесь завершения.")
+                if (dataTransfer.error) dataTransfer.message?.let { SettingsSupportingText(it, color = MaterialTheme.colorScheme.error) }
                 SettingsSupportingText("В выбранной вами папке сохраняются модели и данные. После переустановки выберите её снова для восстановления. Без своей папки используйте сохранение в файл.")
                 SettingsActionRow(title = "Папка хранения",
                     value = if (modelStorage.userSelectedDirectory) "Пользовательский каталог" else "Каталог приложения",
-                    onClick = { selectModelsRoot.launch(null) }, trailingIcon = Icons.Default.FolderOpen)
+                    onClick = { selectModelsRoot.launch(null) }, trailingIcon = Icons.Default.FolderOpen, enabled = !dataTransfer.busy && canDeleteModels)
                 if (modelStorage.configured) SettingsActionRow(title = "Текущий каталог",
                     value = modelStorage.location.substringAfterLast('/').substringAfterLast(':'),
                     onClick = { storagePathDialog = true }, trailingIcon = Icons.Default.Info)
+                SettingsSupportingText("Модели — в models/whisper, models/gigaam, models/nlu и models/punctuation. Резервная копия — в data. При смене папки модели переносятся с проверкой файлов.")
+                if (modelStorage.userSelectedDirectory) {
+                    SettingsActionRow(title = "Вернуть папку по умолчанию", description = "Перенести модели в каталог приложения", onClick = { useDefaultModelsDirectory(false) }, enabled = canDeleteModels && !dataTransfer.busy)
+                    SettingsActionRow(title = "Удалить выбранную папку", description = "Сначала перенести модели в папку по умолчанию", onClick = { deleteStorageFolderDialog = true }, enabled = canDeleteModels && !dataTransfer.busy)
+                }
             }
         }
         if (showSection("storage-cache")) item(key = "storage-cache", contentType = "settings-section") {
@@ -695,6 +714,36 @@ internal fun SettingsScreen(
                             AppMenuItem(title, onClick = { setNoteFolderInterface(key); folderInterfaceExpanded = false }, selected = settings.noteFolderInterface == key)
                         }
                     }
+                }
+            }
+        }
+        if (showSection("Корзина заметок")) item(key = "Корзина заметок", contentType = "settings-section") {
+            SettingsSection("Корзина заметок") {
+                SettingsSupportingText("Удалённые заметки можно восстановить, пока не истёк срок хранения в корзине.")
+                SettingsSupportingText(
+                    "Заметки старше выбранного срока будут окончательно удаляться автоматически.",
+                )
+                Box(Modifier.fillMaxWidth()) {
+                    SettingsActionRow(
+                        title = "Автоматическое удаление",
+                        value = noteTrashRetentionLabel(settings.noteTrashRetentionDays),
+                        onClick = { trashRetentionExpanded = true },
+                        trailingDescription = "Выбрать срок",
+                    )
+                    AppDropdownMenu(
+                            expanded = trashRetentionExpanded,
+                            onDismissRequest = { trashRetentionExpanded = false },
+                        ) {
+                            NOTE_TRASH_RETENTION_OPTIONS.forEach { days ->
+                                AppMenuItem(
+                                    text = noteTrashRetentionLabel(days),
+                                    onClick = {
+                                        setNoteTrashRetentionDays(days)
+                                        trashRetentionExpanded = false
+                                    },
+                                )
+                            }
+                        }
                 }
             }
         }
@@ -898,7 +947,10 @@ internal fun SettingsScreen(
                         trailingIcon = Icons.AutoMirrored.Filled.OpenInNew)
                 }
                 SettingsActionRow(title = "Работа в фоне",
-                    description = if (backgroundRunAllowed) "Разрешена" else "Разрешить напоминания после закрытия приложения", isError = !backgroundRunAllowed,
+                    description = if (android.os.Build.MANUFACTURER.equals("samsung", true))
+                        "Проверьте вручную: Батарея → Разрешение фоновой деятельности. Также проверьте, что приложение не переведено в спящий режим."
+                        else if (backgroundRunAllowed) "Ограничение энергосбережения отключено" else "Проверьте ограничения батареи для напоминаний в фоне",
+                    isError = !backgroundRunAllowed && !android.os.Build.MANUFACTURER.equals("samsung", true),
                     onClick = openBackgroundRunSettings, trailingIcon = Icons.AutoMirrored.Filled.OpenInNew)
                 if (autoStartSettingsTitle != null) SettingsActionRow(title = "Автозапуск",
                     description = "Проверьте вручную: Android не сообщает, включён ли автозапуск", onClick = openAutoStartSettings,
@@ -940,34 +992,11 @@ internal fun SettingsScreen(
                 )
             }
         }
-        if (showSection("Корзина заметок")) item(key = "Корзина заметок", contentType = "settings-section") {
-            SettingsSection("Корзина заметок") {
-                SettingsSupportingText("Удалённые заметки можно восстановить, пока не истёк срок хранения в корзине.")
-                SettingsSupportingText(
-                    "Заметки старше выбранного срока будут окончательно удаляться автоматически.",
-                )
-                Box(Modifier.fillMaxWidth()) {
-                    SettingsActionRow(
-                        title = "Автоматическое удаление",
-                        value = noteTrashRetentionLabel(settings.noteTrashRetentionDays),
-                        onClick = { trashRetentionExpanded = true },
-                        trailingDescription = "Выбрать срок",
-                    )
-                    AppDropdownMenu(
-                            expanded = trashRetentionExpanded,
-                            onDismissRequest = { trashRetentionExpanded = false },
-                        ) {
-                            NOTE_TRASH_RETENTION_OPTIONS.forEach { days ->
-                                AppMenuItem(
-                                    text = noteTrashRetentionLabel(days),
-                                    onClick = {
-                                        setNoteTrashRetentionDays(days)
-                                        trashRetentionExpanded = false
-                                    },
-                                )
-                            }
-                        }
-                }
+        if (showSection("spoken-symbols")) item(key = "spoken-symbols", contentType = "settings-section") {
+            SettingsSection("Слова в символы") {
+                SettingsToggleRow(title = "Заменять названия знаков", checked = settings.spokenSymbolsEnabled, onCheckedChange = setSpokenSymbolsEnabled,
+                    description = "Например, «двоеточие» → «:». Применяется к голосовому вводу после распознавания.")
+                SettingsActionRow(title = "Слова и символы", value = "Замен: ${settings.spokenSymbols.size}", onClick = { spokenSymbolsDialog = true })
             }
         }
         if (showSection("Распознавание речи")) item(key = "Распознавание речи", contentType = "settings-section") {
@@ -1297,6 +1326,7 @@ internal fun SettingsScreen(
                         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(status, style = MaterialTheme.typography.bodyMedium,
                                 color = if (appUpdateState.status == "error") MaterialTheme.colorScheme.error else theme.colors.textPrimary)
+                            if (appUpdateState.version != null && appUpdateState.changes.isNotBlank()) Text(appUpdateState.changes, style = MaterialTheme.typography.bodySmall)
                             if (appUpdateState.status == "downloading") androidx.compose.material3.LinearProgressIndicator(
                                 progress = { appUpdateState.percent.coerceIn(0, 100) / 100f }, modifier = Modifier.fillMaxWidth())
                         }
@@ -1878,7 +1908,7 @@ private fun NotificationSoundRow(
     }
 }
 
-private fun noteTrashRetentionLabel(days: Int): String = when (days) {
+internal fun noteTrashRetentionLabel(days: Int): String = when (days) {
     0 -> "Никогда"
     1 -> "Через 1 день"
     else -> "Через $days дней"
@@ -2334,25 +2364,5 @@ private fun SettingsTimePickerDialog(
     dismiss: () -> Unit,
     confirm: (LocalTime) -> Unit,
 ) {
-    val state = rememberTimePickerState(initialTime.hour, initialTime.minute, is24Hour = true)
-    val theme = AppTheme.tokens
-    val feedback = androidx.compose.ui.platform.LocalHapticFeedback.current
-    ru.nezabudka.app.ui.SelectionHapticEffect(state.hour to state.minute)
-    AppDialog(onDismissRequest = dismiss) {
-        Surface(
-            shape = RoundedCornerShape(theme.shapes.dialog),
-            tonalElevation = 6.dp,
-            shadowElevation = appShadowElevation(8.dp),
-        ) {
-            Column(Modifier.padding(24.dp)) {
-                Text("Выбор времени", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(20.dp))
-                TimePicker(state = state)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = dismiss) { Text("Отмена") }
-                    TextButton(onClick = { feedback.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm); confirm(LocalTime.of(state.hour, state.minute)) }) { Text("ОК") }
-                }
-            }
-        }
-    }
+    AppTimePickerDialog(initialTime, dismiss, confirm)
 }

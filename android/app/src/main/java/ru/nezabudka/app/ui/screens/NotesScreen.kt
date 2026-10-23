@@ -125,6 +125,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.DialogProperties
 import ru.nezabudka.app.application.ActionEffect
 import ru.nezabudka.app.domain.Note
+import ru.nezabudka.app.domain.NOTE_TRASH_RETENTION_OPTIONS
 import ru.nezabudka.app.domain.NoteFolder
 import ru.nezabudka.app.ui.ActionNotice
 import ru.nezabudka.app.ui.AppLayout
@@ -226,6 +227,8 @@ internal fun NotesScreen(
     reducedUiEffects: Boolean = false,
     isLoading: Boolean = false,
     openTrashSettings: () -> Unit = {},
+    trashRetentionDays: Int = 30,
+    setTrashRetentionDays: (Int) -> Unit = {},
 ) {
     val selectedFolder = selectedFolderId
     val columns = noteColumns.coerceIn(1, 2)
@@ -838,7 +841,17 @@ internal fun NotesScreen(
                 }
             }
             if (section == NoteSection.TRASH) item(key = "trash-retention-settings", span = StaggeredGridItemSpan.FullLine) {
-                TextButton(onClick = openTrashSettings) { Text("Срок хранения в корзине") }
+                var retentionMenu by remember { mutableStateOf(false) }
+                Box {
+                    TextButton(onClick = { retentionMenu = true }) {
+                        Text("Срок хранения: " + when (trashRetentionDays) { 0 -> "без ограничения"; 1 -> "1 день"; else -> "$trashRetentionDays дней" })
+                    }
+                    AppDropdownMenu(retentionMenu, { retentionMenu = false }) {
+                        NOTE_TRASH_RETENTION_OPTIONS.forEach { days ->
+                            AppMenuItem(noteTrashRetentionLabel(days), onClick = { setTrashRetentionDays(days); retentionMenu = false }, selected = trashRetentionDays == days)
+                        }
+                    }
+                }
             }
             if (displayedPinned.isNotEmpty()) {
                 item(key = "pinned-header", contentType = "section-header", span = StaggeredGridItemSpan.FullLine) { Text("Закреплённые", style = MaterialTheme.typography.labelLarge) }

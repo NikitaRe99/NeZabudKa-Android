@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 internal data class GithubRelease(
     val version: String,
@@ -12,12 +13,26 @@ internal data class GithubRelease(
     val downloadUrl: String,
     val size: Long,
     val sha256: String,
+    val changes: String = "",
 )
 
 /** Only versioned app releases with a digest and an APK for this device are installable. */
 internal fun findAppRelease(json: String, currentVersion: String, supportedAbis: List<String>): GithubRelease? {
     val current = parseVersion(currentVersion) ?: return null
     val releases = Json.parseToJsonElement(json) as? JsonArray ?: return null
+    val newerNotes = releases.filterIsInstance<JsonObject>().filter { release ->
+        release["draft"]?.jsonPrimitive?.booleanOrNull == false &&
+            release["prerelease"]?.jsonPrimitive?.booleanOrNull == false &&
+            isNewerAppVersion(release.string("tag_name")?.removePrefix("v"), currentVersion)
+    }.sortedWith { a, b -> compareVersions(parseVersion(b.string("tag_name")!!.removePrefix("v"))!!, parseVersion(a.string("tag_name")!!.removePrefix("v"))!!) }
+    fun changesThrough(selectedVersion: String) = newerNotes.filterNot { isNewerAppVersion(it.string("tag_name")?.removePrefix("v"), selectedVersion) }.joinToString("\n\n") { release ->
+        val body = release.string("body").orEmpty().substringBefore("## Установка").lineSequence()
+            .filterNot { it.startsWith("# ") || it.trim() == "## Что изменилось" }
+            .map { it.replace(Regex("^#{1,6}\\s+"), "").replace("**", "").replace("`", "")
+                .replace(Regex("\\[([^]]+)]\\([^)]+\\)"), "$1") }
+            .joinToString("\n").trim()
+        "Версия ${release.string("tag_name")!!.removePrefix("v")}\n${body.ifBlank { "Описание изменений не добавлено." }}"
+    }
     return releases.mapNotNull { element ->
         val release = element as? JsonObject ?: return@mapNotNull null
         if (release["draft"]?.jsonPrimitive?.booleanOrNull != false ||
@@ -41,10 +56,10 @@ internal fun findAppRelease(json: String, currentVersion: String, supportedAbis:
         GithubRelease(version, matchingAsset.string("name")!!, url, size, digest.lowercase())
     }.maxWithOrNull { left, right ->
         compareVersions(parseVersion(left.version)!!, parseVersion(right.version)!!)
-    }
+    }?.let { it.copy(changes = changesThrough(it.version)) }
 }
 
-private fun JsonObject.string(key: String): String? = this[key]?.jsonPrimitive?.content
+private fun JsonObject.string(key: String): String? = this[key]?.jsonPrimitive?.contentOrNull
 
 private fun parseVersion(version: String): List<Int>? {
     if (!version.matches(Regex("\\d+\\.\\d+\\.\\d+"))) return null

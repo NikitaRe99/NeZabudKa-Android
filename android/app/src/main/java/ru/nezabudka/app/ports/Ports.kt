@@ -104,6 +104,8 @@ interface SettingsPort {
     fun setKeepGigaamModelLoaded(value: Boolean) { error("Настройка GigaAM не поддерживается") }
     fun setGigaamThreadCount(value: Int) { error("Настройка GigaAM не поддерживается") }
     fun setGigaamLivePreview(value: Boolean) { error("Настройка GigaAM не поддерживается") }
+    fun setSpokenSymbolsEnabled(value: Boolean) {}
+    fun setSpokenSymbols(values: List<ru.nezabudka.app.domain.SpokenSymbol>) {}
     fun setEditorFullPunctuation(value: Boolean) { error("Настройка пунктуации не поддерживается") }
     fun setKeepWhisperModelLoaded(enabled: Boolean)
     fun setWhisperThreadCount(value: Int)

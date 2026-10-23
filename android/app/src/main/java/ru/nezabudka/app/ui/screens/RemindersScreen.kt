@@ -1244,8 +1244,7 @@ private fun CustomReminderRecurrenceDialog(
                 enabled = valid,
                 onClick = {
                     val start = startDate.atTime(startTime)
-                    select(
-                        CustomReminderRecurrence(
+                    val rule = CustomReminderRecurrence(
                             interval = interval!!,
                             unit = unit,
                             weekdays = if (unit == ReminderRecurrenceUnit.WEEK) {
@@ -1256,9 +1255,8 @@ private fun CustomReminderRecurrenceDialog(
                             start = start,
                             endDate = endDate.takeIf { endMode == "date" },
                             repeatCount = repeatCount.takeIf { endMode == "count" },
-                        ).storedValue(),
-                        start,
-                    )
+                        ).storedValue()
+                    select(rule, ru.nezabudka.app.domain.alignReminderOccurrence(start, rule))
                 },
             ) { Text("Готово") }
         },
@@ -1316,32 +1314,7 @@ private fun ReminderTimePickerDialog(
     dismiss: () -> Unit,
     confirm: (LocalTime) -> Unit,
 ) {
-    val theme = AppTheme.tokens
-    val feedback = LocalHapticFeedback.current
-    val state = rememberTimePickerState(
-        initialHour = initialTime.hour,
-        initialMinute = initialTime.minute,
-        is24Hour = true,
-    )
-    ru.nezabudka.app.ui.SelectionHapticEffect(state.hour to state.minute)
-    AppDialog(onDismissRequest = dismiss) {
-        Surface(
-            shape = RoundedCornerShape(theme.shapes.dialog),
-            tonalElevation = 6.dp,
-            shadowElevation = appShadowElevation(8.dp),
-        ) {
-            Column(Modifier.padding(24.dp)) {
-                Text("Выбор времени", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(20.dp))
-                TimePicker(state = state)
-                Spacer(Modifier.height(12.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = dismiss) { Text("Отмена") }
-                    TextButton(onClick = { feedback.performHapticFeedback(HapticFeedbackType.Confirm); confirm(LocalTime.of(state.hour, state.minute)) }) { Text("ОК") }
-                }
-            }
-        }
-    }
+    AppTimePickerDialog(initialTime, dismiss, confirm)
 }
 
 private fun formatReminderDateTimeCompact(date: LocalDate, time: LocalTime?): String {

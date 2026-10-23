@@ -25,21 +25,95 @@ class UserModelsStorage(private val context: Context) {
         _state.value = readState().copy(cache = _state.value.cache)
     }
 
-    fun selectRoot(uri: Uri) {
-        context.contentResolver.takePersistableUriPermission(
-            uri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-        )
-        preferences.edit().putString(KEY_ROOT, uri.toString()).commit()
-        ensureFolder("whisper")
-        ensureFolder("gigaam")
-        ensureFolder("nlu")
-        ensureFolder("punctuation")
+    fun selectRoot(uri: Uri) = switchRoot(uri, deletePrevious = false)
+
+    fun useDefaultRoot(deletePrevious: Boolean = false) = switchRoot(null, deletePrevious)
+
+    @Synchronized
+    private fun switchRoot(uri: Uri?, deletePrevious: Boolean) {
+        check(!hasActiveModelDownload()) { "Дождитесь завершения загрузок моделей" }
+        if (uri != null) context.contentResolver.takePersistableUriPermission(uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        val oldUri = preferences.getString(KEY_ROOT, null)
+        if (oldUri == uri?.toString()) { refresh(); return }
+        val old = root() ?: throw IOException("Нет доступа к прежней папке")
+        if (deletePrevious) {
+            require(oldUri != null) { "Можно удалить только выбранную пользовательскую папку" }
+            require(old.listFiles().all { it.name in setOf("models", DATA_FOLDER) }) {
+                "В папке есть посторонние файлы. Их удаление не разрешено; выберите возврат к папке по умолчанию."
+            }
+        }
+        val target = if (uri == null) DocumentFile.fromFile(defaultRootFolder())
+            else DocumentFile.fromTreeUri(context, uri) ?: throw IOException("Папка недоступна")
+        require(target.canRead() && target.canWrite()) { "Нет доступа к новой папке" }
+        if (target.uri == old.uri) return
+        fun identity(document: DocumentFile): String {
+            if (document.uri.scheme == "file") return File(requireNotNull(document.uri.path)).canonicalPath
+            if (document.uri.authority == "com.android.externalstorage.documents") {
+                val id = android.provider.DocumentsContract.getTreeDocumentId(document.uri)
+                if (id.startsWith("primary:")) return File(android.os.Environment.getExternalStorageDirectory(), id.substringAfter(':')).canonicalPath
+            }
+            return document.uri.toString().trimEnd('/')
+        }
+        val oldPath = identity(old)
+        val newPath = identity(target)
+        require(oldPath != newPath && !oldPath.startsWith("$newPath/") && !newPath.startsWith("$oldPath/")) {
+            "Выберите отдельную папку: она не должна совпадать с прежней, находиться внутри неё или содержать её"
+        }
+        val copies = mutableListOf<Pair<DocumentFile, DocumentFile>>()
+        fun directory(parent: DocumentFile, name: String): DocumentFile = parent.findFile(name)?.also {
+            require(it.isDirectory) { "Вместо папки $name найден файл" }
+        } ?: parent.createDirectory(name) ?: throw IOException("Не удалось создать папку $name")
+        val targetModels = directory(target, "models")
+        for (kind in MODEL_KINDS) {
+            val destination = directory(targetModels, kind)
+            old.findFile("models")?.findFile(kind)?.listFiles().orEmpty().filter { it.isFile && it.name?.endsWith(".part") == false }.forEach { source ->
+                val name = source.name ?: throw IOException("Не удалось прочитать имя модели")
+                val existing = destination.findFile(name)
+                val copied = if (existing != null) {
+                    check(existing.isFile && digest(source) == digest(existing)) { "В новой папке уже есть другая модель $name. Выберите другую папку." }
+                    existing
+                } else copyVerified(source, destination, name)
+                copies += source to copied
+            }
+        }
+        val data = directory(target, DATA_FOLDER)
+        old.findFile(DATA_FOLDER)?.listFiles().orEmpty().filter { it.isFile && it.name in setOf(DATA_BACKUP_FILE, PREVIOUS_DATA_BACKUP_FILE) }.forEach { source ->
+            val name = requireNotNull(source.name)
+            if (data.findFile(name) == null) copyVerified(source, data, name)
+        }
+        val editor = preferences.edit()
+        if (uri == null) editor.remove(KEY_ROOT) else editor.putString(KEY_ROOT, uri.toString())
+        check(editor.commit()) { "Не удалось сохранить выбор папки" }
+        // All models have been verified before changing the root or removing any source.
+        copies.forEach { (source, _) -> source.delete() }
+        val deletionFailed = deletePrevious && !old.delete()
         migrateLegacy("whisper", "bin")
         migrateLegacy("gigaam", "onnx")
         migrateLegacy("nlu", "onnx")
         migrateLegacy("punctuation", "onnx")
         _state.value = readState().copy(cache = _state.value.cache)
+        if (deletionFailed) throw IOException("Данные перенесены, но прежнюю папку не удалось удалить")
+    }
+
+    private fun digest(document: DocumentFile): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        context.contentResolver.openInputStream(document.uri)?.use { input ->
+            val bytes = ByteArray(128 * 1024)
+            while (true) { val count = input.read(bytes); if (count < 0) break; digest.update(bytes, 0, count) }
+        } ?: throw IOException("Не удалось прочитать ${document.name}")
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun copyVerified(source: DocumentFile, folder: DocumentFile, name: String): DocumentFile {
+        requireSafeName(name)
+        val temporary = folder.createFile("application/octet-stream", "$name.moving") ?: throw IOException("Не удалось создать $name")
+        try {
+            copyDocument(source, temporary)
+            check(digest(source) == digest(temporary)) { "Ошибка проверки переноса $name" }
+            check(temporary.renameTo(name)) { "Не удалось завершить перенос $name" }
+            return folder.findFile(name) ?: throw IOException("Не удалось найти перенесённый файл $name")
+        } catch (error: Throwable) { temporary.delete(); throw error }
     }
 
     fun list(kind: String, extension: String): List<String> = ensureFolder(kind).listFiles()
@@ -263,7 +337,7 @@ class UserModelsStorage(private val context: Context) {
 
     private fun defaultRootFolder(): File {
         val parent = context.getExternalFilesDir(null) ?: context.filesDir
-        return migratedDefaultModelRoot(parent, DEFAULT_ROOT_FOLDER, LEGACY_ROOT_FOLDER)
+        return migrateDefaultStorageLayout(parent)
     }
 
     private fun readState(): UserModelsStorageState {
@@ -297,9 +371,9 @@ class UserModelsStorage(private val context: Context) {
         }
 
     private fun defaultRootDescription(): String = if (context.getExternalFilesDir(null) != null) {
-        "Память телефона/Android/data/${context.packageName}/files/$DEFAULT_ROOT_FOLDER"
+        "Память телефона/Android/data/${context.packageName}/files"
     } else {
-        "Память приложения/$DEFAULT_ROOT_FOLDER"
+        "Память приложения"
     }
 
     companion object {
@@ -312,6 +386,27 @@ class UserModelsStorage(private val context: Context) {
         private const val PREVIOUS_DATA_BACKUP_FILE = "assistant-backup.previous.json"
         private const val STALE_DOWNLOAD_MILLIS = 7L * 24L * 60L * 60L * 1_000L
     }
+}
+
+@Synchronized
+internal fun migrateDefaultStorageLayout(parent: File): File {
+    parent.mkdirs()
+    for (oldName in listOf("НеЗабудьКа", "LocalAssistant")) {
+        val legacy = File(parent, oldName)
+        for (kind in listOf("models", "data")) {
+            val source = File(legacy, kind)
+            val destination = File(parent, kind)
+            if (source.isDirectory && !destination.exists()) check(source.renameTo(destination)) { "Не удалось перенести $kind" }
+            else if (source.isDirectory) {
+                source.walkTopDown().filter { it.isFile }.forEach { file ->
+                    val target = File(destination, file.relativeTo(source).path)
+                    if (!target.exists()) { target.parentFile?.mkdirs(); check(file.renameTo(target)) { "Не удалось перенести ${file.name}" } }
+                }
+            }
+        }
+        if (legacy.isDirectory) legacy.walkBottomUp().filter { it.isDirectory && it.listFiles()?.isEmpty() == true }.forEach { it.delete() }
+    }
+    return parent
 }
 
 internal fun migratedDefaultModelRoot(parent: File, currentName: String, legacyName: String): File {

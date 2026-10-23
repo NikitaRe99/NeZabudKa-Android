@@ -51,6 +51,8 @@ data class PortableAppSettings(
     val gigaamThreadCount: Int = 0,
     val gigaamLivePreview: Boolean = false,
     val editorFullPunctuation: Boolean = false,
+    val spokenSymbolsEnabled: Boolean = false,
+    val spokenSymbols: List<ru.nezabudka.app.domain.SpokenSymbol> = ru.nezabudka.app.domain.DEFAULT_SPOKEN_SYMBOLS,
     val whisperThreadCount: Int = 0,
     val whisperAccurateMode: Boolean = false,
     val whisperRawMode: Boolean = false,
@@ -112,6 +114,8 @@ fun AppSettings.toPortableSettings(
     gigaamThreadCount = gigaamThreadCount,
     gigaamLivePreview = gigaamLivePreview,
     editorFullPunctuation = editorFullPunctuation,
+    spokenSymbolsEnabled = spokenSymbolsEnabled,
+    spokenSymbols = spokenSymbols,
     whisperThreadCount = whisperThreadCount,
     whisperAccurateMode = whisperAccurateMode,
     whisperRawMode = whisperRawMode,
@@ -280,6 +284,16 @@ class SettingsStore(context: Context) : SettingsPort {
     override fun setGigaamLivePreview(value: Boolean) {
         prefs.edit().putBoolean("gigaam_live_preview", value).apply(); _state.value = read()
     }
+    override fun setSpokenSymbolsEnabled(value: Boolean) {
+        prefs.edit().putBoolean("spoken_symbols_enabled", value).apply(); _state.value = read()
+    }
+    override fun setSpokenSymbols(values: List<ru.nezabudka.app.domain.SpokenSymbol>) {
+        val clean = values.filter { it.phrase.isNotBlank() && it.symbol.isNotEmpty() }.map {
+            it.copy(phrase = it.phrase.trim().take(100), symbol = it.symbol.take(20))
+        }.distinctBy { it.phrase.lowercase() }.take(100)
+        prefs.edit().putString("spoken_symbols", json.encodeToString(clean)).apply(); _state.value = read()
+    }
+
     override fun setEditorFullPunctuation(value: Boolean) {
         prefs.edit().putBoolean("editor_full_punctuation", value).apply(); _state.value = read()
     }
@@ -381,6 +395,8 @@ class SettingsStore(context: Context) : SettingsPort {
         setGigaamThreadCount(value.gigaamThreadCount)
         setGigaamLivePreview(value.gigaamLivePreview)
         setEditorFullPunctuation(value.editorFullPunctuation)
+        setSpokenSymbolsEnabled(value.spokenSymbolsEnabled)
+        setSpokenSymbols(value.spokenSymbols)
         setKeepWhisperModelLoaded(value.keepWhisperModelLoaded)
         setWhisperThreadCount(value.whisperThreadCount)
         setWhisperAccurateMode(value.whisperAccurateMode)
@@ -423,6 +439,8 @@ class SettingsStore(context: Context) : SettingsPort {
         gigaamThreadCount = normalizeWhisperThreadCount(prefs.getInt("gigaam_thread_count", 0)),
         gigaamLivePreview = prefs.getBoolean("gigaam_live_preview", false),
         editorFullPunctuation = prefs.getBoolean("editor_full_punctuation", false),
+        spokenSymbolsEnabled = prefs.getBoolean("spoken_symbols_enabled", false),
+        spokenSymbols = runCatching { json.decodeFromString<List<ru.nezabudka.app.domain.SpokenSymbol>>(prefs.getString("spoken_symbols", null) ?: "null") }.getOrDefault(ru.nezabudka.app.domain.DEFAULT_SPOKEN_SYMBOLS),
         keepWhisperModelLoaded = prefs.getBoolean("keep_whisper_model_loaded", false),
         whisperThreadCount = normalizeWhisperThreadCount(prefs.getInt("whisper_thread_count", 0)),
         whisperAccurateMode = prefs.getBoolean("whisper_accurate_mode", false),

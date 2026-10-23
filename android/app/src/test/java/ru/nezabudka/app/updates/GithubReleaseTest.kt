@@ -7,6 +7,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class GithubReleaseTest {
+    @Test fun includesEveryMissedAppReleaseButNotInstalledOrModelReleases() {
+        fun withBody(tag: String, body: String) = release(tag, "app-arm64-v8a-release.apk").dropLast(1) + ",\"body\":\"$body\"}"
+        val json = "[${withBody("v0.2.85", "New fix")},${withBody("v0.2.84", "Previous fix")},${withBody("v0.2.83", "Installed fix")},${withBody("models-v3", "Model")}]"
+        val changes = findAppRelease(json, "0.2.83", listOf("arm64-v8a"))!!.changes
+        assertTrue(changes.contains("New fix")); assertTrue(changes.contains("Previous fix"))
+        assertFalse(changes.contains("Installed fix")); assertFalse(changes.contains("Model"))
+    }
     private fun release(tag: String, name: String, digest: String = "sha256:${"a".repeat(64)}", draft: Boolean = false) =
         """{"tag_name":"$tag","draft":$draft,"prerelease":false,"assets":[{"name":"$name","size":84000000,"digest":"$digest","browser_download_url":"https://github.com/NikitaRe99/NeZabudKa-Android/releases/download/$tag/$name"}]}"""
 

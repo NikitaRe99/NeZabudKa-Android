@@ -8,6 +8,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class ReminderRecurrenceTest {
+    @Test fun `first alarm on tuesday advances to selected wednesday`() {
+        val tuesday = LocalDateTime.of(2026, 10, 20, 9, 0)
+        val rule = CustomReminderRecurrence(1, ReminderRecurrenceUnit.WEEK,
+            setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY), tuesday).storedValue()
+        assertEquals(tuesday.plusDays(1), alignReminderOccurrence(tuesday, rule))
+        assertEquals(tuesday.plusDays(3), nextReminderOccurrence(tuesday.plusDays(1), rule, tuesday.plusDays(1)))
+    }
     private val thursday = LocalDateTime.of(2026, 7, 30, 9, 15)
 
     @Test

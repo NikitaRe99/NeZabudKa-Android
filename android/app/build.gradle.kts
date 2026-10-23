@@ -31,8 +31,8 @@ android {
         // compileSdk stays current so modern Compose/Room APIs can compile.
         minSdk = 29
         targetSdk = 36
-        versionCode = 107
-        versionName = "0.2.84"
+        versionCode = 108
+        versionName = "0.2.85"
         // Store builds: pass -PgithubUpdatesEnabled=false to remove GitHub updates.
         buildConfigField("boolean", "GITHUB_UPDATES_ENABLED", providers.gradleProperty("githubUpdatesEnabled").orElse("true").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

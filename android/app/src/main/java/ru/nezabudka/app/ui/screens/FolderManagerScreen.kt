@@ -260,7 +260,10 @@ internal fun FolderManagerScreen(
                 value = draftName,
                 onValueChange = { draftName = it },
                 singleLine = true,
-                placeholder = { Text("Название папки") },
+                label = { Text("Название папки") },
+                shape = RoundedCornerShape(theme.shapes.action),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences),
             )
         },
         confirmButton = {

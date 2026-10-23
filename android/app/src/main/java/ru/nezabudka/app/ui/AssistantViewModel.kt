@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
@@ -209,11 +210,16 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             AssistantTipKind.LIVE_TEXT -> current.gigaamLivePreview || current.sttEngine != "gigaam"
             AssistantTipKind.GIGAAM_SPEED -> current.sttEngine != "gigaam"
             AssistantTipKind.WHISPER_SPEED -> current.sttEngine != "whisper"
+            AssistantTipKind.RECOGNITION -> current.sttEngine == "android" || current.sttEngine.endsWith("cloud")
+            AssistantTipKind.NLU_ENABLE -> current.classicNluEnabled
+            AssistantTipKind.WELCOME_RESTORE -> current.showAssistantWelcomeCard
             AssistantTipKind.IMMEDIATE_COMMANDS -> current.trustStt
             AssistantTipKind.PUNCTUATION -> current.notePunctuationModel != "whisper" || (current.sttEngine == "whisper" && current.whisperRawMode)
             AssistantTipKind.EDITOR_PUNCTUATION -> current.editorFullPunctuation || current.notePunctuationModel == "whisper"
             else -> false
         } }
+    }.onEach { active ->
+        tips.pending.value.filterNot { it in active }.forEach(tips::acknowledge)
     }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, tips.pending.value)
     fun refreshPermissionTips(status: ru.nezabudka.app.domain.ReminderPermissionStatus, alarmWindow: Boolean, manualBackgroundCheck: Boolean) {
         resolvedPermissionTips.value = buildSet {
@@ -325,7 +331,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             awaitingSttConfirmation = _ui.value.awaitingSttConfirmation && value.isNotBlank(),
         )
     }
-    fun selectFolder(id: Long?) { notesFeature.dispatch(NoteUiEvent.SelectFolder(id)) }
+    fun selectFolder(id: Long?) { notesFeature.dispatch(NoteUiEvent.SelectFolder(id)); if (id != null) tips.acknowledge(AssistantTipKind.FOLDERS) }
     suspend fun noteForWidget(id: Long): Note? = withContext(Dispatchers.IO) { container.notes.byId(id) }
     suspend fun reminderForWidget(id: Long): Reminder? = withContext(Dispatchers.IO) { container.reminders.observe(id).first() }
     suspend fun folderForWidget(id: Long?): Long? = withContext(Dispatchers.IO) {
@@ -382,20 +388,25 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
     fun setWhisperAccurateMode(enabled: Boolean) = container.settings.setWhisperAccurateMode(enabled)
     fun setGigaamLivePreview(enabled: Boolean) = container.settings.setGigaamLivePreview(enabled)
+    fun setSpokenSymbolsEnabled(enabled: Boolean) = container.settings.setSpokenSymbolsEnabled(enabled)
+    fun setSpokenSymbols(values: List<ru.nezabudka.app.domain.SpokenSymbol>) = container.settings.setSpokenSymbols(values)
     fun setEditorFullPunctuation(enabled: Boolean) = container.settings.setEditorFullPunctuation(enabled)
     fun setWhisperRawMode(enabled: Boolean) = container.settings.setWhisperRawMode(enabled)
     fun setNotePunctuationModel(value: String) = container.settings.setNotePunctuationModel(value)
     fun downloadPunctuationModel() = viewModelScope.launch(Dispatchers.IO) {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         runCatching { container.notePunctuation.models.download() }.onFailure(::fail)
     }
     fun cancelPunctuationDownload() { container.notePunctuation.models.cancelDownload() }
     fun importPunctuationModel(uri: Uri) = viewModelScope.launch(Dispatchers.IO) {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         runCatching {
             container.notePunctuation.models.importModel(uri)
             container.settings.setNotePunctuationModel("rupunct_small")
         }.onFailure(::fail)
     }
     fun selectPunctuationModel(name: String) = viewModelScope.launch(Dispatchers.IO) {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         runCatching {
             container.notePunctuation.models.selectModel(name)
             container.settings.setNotePunctuationModel("rupunct_small")
@@ -406,6 +417,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         val normalized = value.coerceIn(0, maximumWhisperThreadCount(deviceCapabilities.cpuCores))
         if (settings.value.sttEngine == "gigaam") container.settings.setGigaamThreadCount(normalized)
         else container.settings.setWhisperThreadCount(normalized)
+        tips.acknowledge(if (settings.value.sttEngine == "gigaam") AssistantTipKind.GIGAAM_SPEED else AssistantTipKind.WHISPER_SPEED)
     }
 
     fun startWhisperThreadBenchmark() {
@@ -471,7 +483,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             result.bestThreads?.let(::setWhisperThreadCount)
         }
     }
-    fun setTimeOfDaySettings(values: List<TimeOfDaySetting>) = container.settings.setTimeOfDaySettings(values)
+    fun setTimeOfDaySettings(values: List<TimeOfDaySetting>) { container.settings.setTimeOfDaySettings(values); tips.acknowledge(AssistantTipKind.TIME_OF_DAY) }
     fun setAudioPreprocessing(enabled: Boolean) = container.settings.setAudioPreprocessing(enabled)
     fun setShowPlaybackButton(enabled: Boolean) = container.settings.setShowPlaybackButton(enabled)
     fun setShowAssistantWelcomeCard(enabled: Boolean) = container.settings.setShowAssistantWelcomeCard(enabled)
@@ -480,7 +492,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     fun setReminderSort(sort: ReminderSort) = container.settings.setReminderSort(sort.key)
     fun setNoteSort(value: String) = container.settings.setNoteSort(value)
     fun setNoteColumns(value: Int) = container.settings.setNoteColumns(value)
-    fun setNoteFolderInterface(value: String) = container.settings.setNoteFolderInterface(value)
+    fun setNoteFolderInterface(value: String) { container.settings.setNoteFolderInterface(value); tips.acknowledge(AssistantTipKind.FOLDERS) }
     fun setNoteTrashRetentionDays(value: Int) = container.setNoteTrashRetentionDays(value)
     fun setUiHapticsEnabled(enabled: Boolean) = container.settings.setUiHapticsEnabled(enabled)
     fun setShowNavigationLabels(enabled: Boolean) = container.settings.setShowNavigationLabels(enabled)
@@ -504,6 +516,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
     fun setReminderAlarmMode(enabled: Boolean) {
         container.settings.setReminderAlarmMode(enabled)
+        tips.acknowledge(AssistantTipKind.REMINDER_MODES)
         if (enabled) tips.offer(AssistantTipKind.ALARM_WINDOW)
         viewModelScope.launch(Dispatchers.IO) {
             if (!enabled) NotificationChannels.cancelActiveAlarms(container.app)
@@ -542,8 +555,30 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     fun saveVkCredentials(serviceToken: String, endpoint: String) = runCatching {
         container.cloudSttCredentials.saveVk(serviceToken, endpoint)
     }.onFailure(::fail)
+    private val storageChangeMutex = kotlinx.coroutines.sync.Mutex()
+    fun useDefaultModelsDirectory(deletePrevious: Boolean) = viewModelScope.launch {
+        if (!storageChangeMutex.tryLock()) return@launch
+        _dataTransfer.value = DataTransferUiState(busy = true, message = "Перенос моделей…")
+        try {
+            check(!_ui.value.isRecording && !_ui.value.isProcessing) { "Дождитесь завершения распознавания" }
+            withContext(Dispatchers.Default) { container.whisper.release(); container.gigaam.release() }
+            container.dataBackup.useDefaultRoot(deletePrevious)
+            withContext(Dispatchers.IO) {
+                container.whisperModels.refresh(); container.gigaamModels.refresh()
+                container.classicNlu.refreshModel(); container.notePunctuation.models.refresh()
+            }
+            publishNotice("Модели перенесены в папку по умолчанию", null)
+            _dataTransfer.value = DataTransferUiState(message = "Модели перенесены в папку по умолчанию")
+        } catch (error: Exception) { fail(error); _dataTransfer.value = DataTransferUiState(message = error.message, error = true) }
+        finally { storageChangeMutex.unlock() }
+    }
     fun selectModelsDirectory(uri: Uri) = viewModelScope.launch {
+        if (!storageChangeMutex.tryLock()) return@launch
+        _dataTransfer.value = DataTransferUiState(busy = true, message = "Перенос моделей…")
+        try {
         runCatching {
+            check(!_ui.value.isRecording && !_ui.value.isProcessing) { "Дождитесь завершения распознавания" }
+            withContext(Dispatchers.Default) { container.whisper.release(); container.gigaam.release() }
             val result = container.dataBackup.selectRoot(uri)
             withContext(Dispatchers.IO) { container.startDataBackupServices() }
             withContext(Dispatchers.IO) {
@@ -558,8 +593,10 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             }
             result
         }.onSuccess { result ->
+            _dataTransfer.value = DataTransferUiState(message = result.message)
             update("${result.message}: ${container.modelStorage.description()}") { it.copy(error = null) }
-        }.onFailure(::fail)
+        }.onFailure { error -> fail(error); _dataTransfer.value = DataTransferUiState(message = error.message, error = true) }
+        } finally { storageChangeMutex.unlock() }
     }
 
     fun clearModelCache(onComplete: (Long?) -> Unit) = viewModelScope.launch {
@@ -585,6 +622,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun selectWhisperModel(fileName: String) = viewModelScope.launch(Dispatchers.Default) {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         runCatching {
             if (settings.value.sttEngine == "gigaam") {
                 container.gigaam.release(); container.gigaamModels.select(fileName)
@@ -597,6 +635,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun deleteDownloadedModel(kind: String, fileName: String) {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return }
         if (_ui.value.isRecording || _ui.value.isProcessing || _whisperThreadBenchmark.value.running) {
             fail(IllegalStateException("Дождитесь завершения записи или обработки"))
             return
@@ -629,6 +668,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
     fun downloadWhisperModel(model: WhisperDownload) = viewModelScope.launch {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         update("Подготовка фоновой загрузки Whisper ${model.fileName}") { it.copy(error = null) }
         runCatching {
             if (settings.value.sttEngine == "gigaam") container.gigaamModels.download(model)
@@ -638,6 +678,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             .onFailure(::fail)
     }
     fun importWhisperModel(uri: Uri) = viewModelScope.launch {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         update("Импорт GGML-модели") { it.copy(error = null) }
         runCatching {
             if (settings.value.sttEngine == "gigaam") { container.gigaam.release(); container.gigaamModels.import(uri) }
@@ -648,6 +689,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun downloadClassicNluModel() = viewModelScope.launch {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         update("Подготовка фоновой загрузки NLU-модели") { it.copy(error = null) }
         runCatching { container.classicNlu.downloadModel(BuildConfig.CLASSIC_NLU_MODEL_URL) }
             .onSuccess { container.settings.setClassicNluEnabled(true); update("NLU-модель поставлена в фоновую загрузку") { it } }
@@ -655,6 +697,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun importClassicNluModel(uri: Uri) = viewModelScope.launch {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         update("Импорт NLU-модели") { it.copy(error = null) }
         runCatching { container.classicNlu.importModel(uri) }
             .onSuccess { container.settings.setClassicNluEnabled(true); update("NLU-модель сохранена в models/nlu") { it } }
@@ -662,12 +705,14 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun selectClassicNluModel(fileName: String) = viewModelScope.launch {
+        if (storageChangeMutex.isLocked) { fail(IllegalStateException("Дождитесь переноса моделей")); return@launch }
         runCatching { container.classicNlu.selectModel(fileName) }
             .onSuccess { container.settings.setClassicNluEnabled(true); update("Выбрана NLU-модель: $fileName") { it.copy(error = null) } }
             .onFailure(::fail)
     }
 
     fun toggleRecording() {
+        if (storageChangeMutex.isLocked) { publishNotice("Дождитесь переноса моделей", null); return }
         val engine = container.stt.require(settings.value.sttEngine)
         if (engine is LiveSpeechToTextEngine) {
             if (_ui.value.isRecording) {
@@ -776,6 +821,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             else if (!settings.value.gigaamLivePreview) tips.offer(AssistantTipKind.LIVE_TEXT)
             if (settings.value.notePunctuationModel == "whisper") tips.offer(AssistantTipKind.PUNCTUATION)
         }
+        if (recognition.text.isNotBlank()) tips.acknowledge(AssistantTipKind.RECOGNITION)
         recognition.notice?.let { publishNotice(it, null) }
         val target = recognitionTarget
         val sessionId = noteDictationSessionId
@@ -784,7 +830,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
             "whisper" else settings.value.notePunctuationModel
         update(log) { it.copy(isRecording = false, isProcessing = true) }
         viewModelScope.launch {
-            val punctuated = ru.nezabudka.app.speech.restoreVoicePunctuation(
+            val restoredPunctuation = ru.nezabudka.app.speech.restoreVoicePunctuation(
                 recognition, punctuationModel, { text, model ->
                     container.notePunctuation.restore(text, model,
                         fullPunctuation = target == RecognitionTarget.NOTE_DICTATION && settings.value.editorFullPunctuation)
@@ -796,6 +842,7 @@ class AssistantViewModel(private val container: AppContainer) : ViewModel() {
                         else "Не удалось обработать знаки препинания. Сохранён текст распознавания.",
                     errorSettingsTarget = AssistantSettingsTarget.PUNCTUATION, whisperModelMissing = false) }
             }
+            val punctuated = if (settings.value.spokenSymbolsEnabled) restoredPunctuation.copy(text = ru.nezabudka.app.speech.replaceSpokenSymbols(restoredPunctuation.text, settings.value.spokenSymbols)) else restoredPunctuation
             if (recognitionTarget != target || noteDictationSessionId != sessionId) return@launch
             if (target == RecognitionTarget.NOTE_DICTATION) {
                 if (punctuated.text.isNotBlank()) offerPunctuationTip(editor = true)

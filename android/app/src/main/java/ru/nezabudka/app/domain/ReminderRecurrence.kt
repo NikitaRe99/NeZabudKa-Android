@@ -106,6 +106,27 @@ fun normalizeReminderRecurrence(value: String?): String? =
     ReminderRecurrence.fromStored(value)?.storedValue
         ?: CustomReminderRecurrence.fromStored(value)?.storedValue()
 
+/** The first alarm must obey the selected weekdays too, not only subsequent repeats. */
+fun alignReminderOccurrence(date: LocalDateTime, recurrence: String?): LocalDateTime {
+    if (ReminderRecurrence.fromStored(recurrence) == ReminderRecurrence.WEEKDAYS) {
+        return when (date.dayOfWeek) {
+            DayOfWeek.SATURDAY -> date.plusDays(2)
+            DayOfWeek.SUNDAY -> date.plusDays(1)
+            else -> date
+        }
+    }
+    val rule = CustomReminderRecurrence.fromStored(recurrence) ?: return date
+    if (rule.unit != ReminderRecurrenceUnit.WEEK || rule.weekdays.isEmpty()) return date
+    val anchor = rule.start.toLocalDate().minusDays((rule.start.dayOfWeek.value - 1).toLong())
+    var candidate = maxOf(date, rule.start)
+    repeat(7 * 1000) {
+        val week = candidate.toLocalDate().minusDays((candidate.dayOfWeek.value - 1).toLong())
+        if (candidate.dayOfWeek in rule.weekdays && ChronoUnit.WEEKS.between(anchor, week) % rule.interval == 0L) return candidate
+        candidate = candidate.plusDays(1)
+    }
+    return date
+}
+
 fun nextReminderOccurrence(
     current: LocalDateTime,
     recurrence: String?,

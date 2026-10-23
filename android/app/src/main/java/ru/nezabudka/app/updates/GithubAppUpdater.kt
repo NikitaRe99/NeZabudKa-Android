@@ -43,6 +43,8 @@ data class AppUpdateState(
     val message: String?,
     val searchEnabled: Boolean = true,
     val checkedAt: Long = 0L,
+    val changes: String = "",
+    val size: Long = 0L,
 )
 
 object GithubAppUpdater {
@@ -74,6 +76,8 @@ object GithubAppUpdater {
             message = prefs.getString("message", null),
             searchEnabled = prefs.getBoolean("search_enabled", true),
             checkedAt = prefs.getLong("checked_at", 0L),
+            changes = prefs.getString("changes", "").orEmpty(),
+            size = prefs.getLong("size", 0L),
         )
     }
 
@@ -95,6 +99,10 @@ object GithubAppUpdater {
             .putString("message", message)
         if (status in setOf("none", "available", "ready")) editor.putLong("checked_at", System.currentTimeMillis())
         editor.apply()
+    }
+
+    internal fun releaseDetails(context: Context, release: GithubRelease) {
+        preferences(context).edit().putString("changes", release.changes).putLong("size", release.size).apply()
     }
 
 
@@ -162,19 +170,27 @@ class GithubUpdateWorker(context: Context, parameters: WorkerParameters) : Corou
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
                 .build()
-            val request = Request.Builder().url(GithubAppUpdater.API_URL)
-                .header("Accept", "application/vnd.github+json")
-                .header("User-Agent", "NeZabudKa-Android")
-                .build()
-            val releases = client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) error("GitHub: HTTP ${response.code}")
-                response.body?.string() ?: error("Пустой ответ GitHub")
+            val pages = mutableListOf<kotlinx.serialization.json.JsonElement>()
+            var page = 1
+            while (true) {
+                val request = Request.Builder().url("${GithubAppUpdater.API_URL}&page=$page")
+                    .header("Accept", "application/vnd.github+json").header("User-Agent", "NeZabudKa-Android").build()
+                val batch = client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) error("GitHub: HTTP ${response.code}")
+                    kotlinx.serialization.json.Json.parseToJsonElement(response.body?.string() ?: error("Пустой ответ GitHub")) as kotlinx.serialization.json.JsonArray
+                }
+                pages.addAll(batch)
+                if (batch.size < 30) break
+                page++
+                if (isStopped) throw CancellationException()
             }
+            val releases = kotlinx.serialization.json.JsonArray(pages).toString()
             val release = findAppRelease(releases, BuildConfig.VERSION_NAME, Build.SUPPORTED_ABIS.toList())
             if (release == null) {
                 GithubAppUpdater.update(context, "none")
                 return@withContext Result.success()
             }
+            GithubAppUpdater.releaseDetails(context, release)
             val target = GithubAppUpdater.file(context)
             if (target.isFile && validDownload(target, release)) {
                 GithubAppUpdater.update(context, "ready", release.version, 100)

@@ -34,6 +34,7 @@ internal val SETTINGS_CATALOG = listOf(
     SettingsEntry("yandex", SettingsCategory.SPEECH, "Yandex SpeechKit", "яндекс облако ключ токен api"),
     SettingsEntry("google_cloud", SettingsCategory.SPEECH, "Google Cloud", "гугл облако ключ токен oauth"),
     SettingsEntry("vk_cloud", SettingsCategory.SPEECH, "VK Cloud", "вк облако ключ токен endpoint"),
+    SettingsEntry("spoken-symbols", SettingsCategory.SPEECH, "Слова в символы", "двоеточие тире скобка запятая замена символы произнести вставить словарь"),
     SettingsEntry("Пунктуация голосового ввода", SettingsCategory.SPEECH, "Пунктуация голосового ввода", "запятые знаки препинания rupunc модель скачать помощник напоминания заметки редактор голос"),
     SettingsEntry("Модель Whisper.cpp", SettingsCategory.SPEECH, "Whisper", "виспер чистый без словарей подсказок исправлений потоки обработка точность точный режим скорость тест оптимальное количество скачать импорт память base q5 small ru"),
     SettingsEntry("Модель GigaAM", SettingsCategory.SPEECH, "GigaAM", "гигаам модель v1 v2 v3 int8 потоки память оптимальное количество скачать импорт офлайн"),

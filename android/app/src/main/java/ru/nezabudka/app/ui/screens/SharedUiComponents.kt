@@ -173,7 +173,7 @@ internal fun AppNoticeCard(
         modifier.fillMaxWidth().padding(horizontal = AppLayout.horizontalPadding, vertical = 4.dp),
         shape = RoundedCornerShape(theme.shapes.card),
         colors = CardDefaults.cardColors(containerColor = containerColor ?: theme.colors.card, contentColor = if (isError) theme.colors.danger else theme.colors.textPrimary),
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (isError) theme.colors.danger else theme.colors.outline),
+        border = androidx.compose.foundation.BorderStroke(1.dp, theme.colors.talkButton),
         elevation = CardDefaults.cardElevation(defaultElevation = appShadowElevation(2.dp)),
     ) {
         if (inlineClose) {

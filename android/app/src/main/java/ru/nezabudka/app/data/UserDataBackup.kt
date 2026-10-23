@@ -111,6 +111,13 @@ class UserDataBackupManager(
         }
     }
 
+    suspend fun useDefaultRoot(deletePrevious: Boolean) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            storage.useDefaultRoot(deletePrevious)
+            writeCurrent()
+        }
+    }
+
     private suspend fun writeCurrent() {
         write(
             reminders.observeAll().first(),

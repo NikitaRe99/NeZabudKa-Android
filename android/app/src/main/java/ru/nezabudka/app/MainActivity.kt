@@ -22,6 +22,10 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -138,7 +142,8 @@ class MainActivity : ComponentActivity() {
                     ru.nezabudka.app.notifications.NotificationChannels.enabledForMode(this@MainActivity, appSettings.reminderAlarmMode)
                 viewModel.refreshPermissionTips(ru.nezabudka.app.domain.ReminderPermissionStatus(
                     notificationsEnabled.value, exactAlarmsAllowed.value, backgroundRunAllowed.value,
-                    fullScreenAlarmsAllowed.value, overlayWindowsAllowed.value),
+                    fullScreenAlarmsAllowed.value, overlayWindowsAllowed.value,
+                    backgroundVerifiable = !Build.MANUFACTURER.equals("samsung", true)),
                     appSettings.reminderAlarmMode && appSettings.reminderAlarmPresentation == ALARM_PRESENTATION_SCREEN,
                     DeviceAutoStartSettings.destination(this@MainActivity) != null ||
                         DeviceAutoStartSettings.alarmPermissionDestination(this@MainActivity) != null)
@@ -342,7 +347,7 @@ class MainActivity : ComponentActivity() {
         val exactAllowed = Build.VERSION.SDK_INT < 31 || getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
         val backgroundAllowed = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
         if (!notificationsAllowed || !ru.nezabudka.app.notifications.NotificationChannels.enabledForMode(this, viewModel.settings.value.reminderAlarmMode) ||
-            (requiresExactTime && !exactAllowed) || !backgroundAllowed) viewModel.offerTip(AssistantTipKind.REMINDER_DELIVERY)
+            (requiresExactTime && !exactAllowed) || (!backgroundAllowed && !Build.MANUFACTURER.equals("samsung", true))) viewModel.offerTip(AssistantTipKind.REMINDER_DELIVERY)
         if (DeviceAutoStartSettings.destination(this) != null || DeviceAutoStartSettings.alarmPermissionDestination(this) != null)
             viewModel.offerTip(AssistantTipKind.REMINDER_DELIVERY)
     }
@@ -527,6 +532,14 @@ private fun AssistantApp(
     val updateState by remember(widgetContext) { ru.nezabudka.app.updates.GithubAppUpdater.observe(widgetContext) }
         .collectAsStateWithLifecycle(initialValue = ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext))
     var startupUpdatePending by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
+    var installWhenDownloaded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(updateState.status, installWhenDownloaded) {
+        if (installWhenDownloaded && updateState.status == "ready") {
+            installWhenDownloaded = false
+            startupUpdatePending = false
+            ru.nezabudka.app.updates.GithubAppUpdater.install(widgetContext)
+        }
+    }
     val startupCheckBaseline = androidx.compose.runtime.saveable.rememberSaveable { ru.nezabudka.app.updates.GithubAppUpdater.read(widgetContext).checkedAt }
     var startupCheckRequested by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -542,17 +555,31 @@ private fun AssistantApp(
     if (startupUpdatePending && currentRoute == "assistant" && !permissionDialogVisible && !whisperModelsMenu &&
         !voiceState.isRecording && !voiceState.isProcessing && voiceState.recognizedText.isBlank() &&
         updateState.searchEnabled && updateState.checkedAt != 0L && updateState.checkedAt != startupCheckBaseline &&
-        updateState.status in setOf("available", "ready")) {
+        (updateState.status in setOf("available", "ready") || installWhenDownloaded)) {
         AppAlertDialog(
-            onDismissRequest = { startupUpdatePending = false },
+            onDismissRequest = { startupUpdatePending = false; installWhenDownloaded = false },
             title = { Text("Доступно обновление") },
-            text = { Text("Найдена версия ${updateState.version}. Перейдите в настройки обновлений, чтобы скачать и установить её.") },
-            confirmButton = { TextButton(onClick = {
-                startupUpdatePending = false
+            text = { Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState()).clickable {
+                startupUpdatePending = false; installWhenDownloaded = false
                 settingsSearchRequest = "обновления"
                 nav.navigate("settings") { launchSingleTop = true }
-            }) { Text("К обновлению") } },
-            dismissButton = { TextButton(onClick = { startupUpdatePending = false }) { Text("Отмена") } },
+            }) {
+                Text("Версия ${updateState.version} · ${"%.1f".format(updateState.size / 1_048_576.0)} МБ")
+                Text(updateState.changes.ifBlank { "Описание изменений не добавлено." }, Modifier.padding(top = 12.dp))
+                if (updateState.status == "downloading") Text("Загрузка: ${updateState.percent}%", Modifier.padding(top = 12.dp))
+                if (updateState.status == "error") Text(updateState.message.orEmpty(), color = MaterialTheme.colorScheme.error)
+                Text("Нажмите на описание, чтобы открыть настройки обновления", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 12.dp))
+            } },
+            confirmButton = { TextButton(enabled = updateState.status != "downloading" && updateState.status != "checking", onClick = {
+                if (updateState.status == "ready") {
+                    startupUpdatePending = false
+                    ru.nezabudka.app.updates.GithubAppUpdater.install(widgetContext)
+                } else {
+                    installWhenDownloaded = true
+                    ru.nezabudka.app.updates.GithubAppUpdater.checkNow(widgetContext, download = true)
+                }
+            }) { Text(if (updateState.status == "downloading") "${updateState.percent}%" else "Обновить") } },
+            dismissButton = { TextButton(onClick = { startupUpdatePending = false; installWhenDownloaded = false }) { Text("Отмена") } },
         )
     }
     val destinations = remember { listOf(
@@ -733,6 +760,9 @@ private fun AssistantApp(
                     requestedSearch = settingsSearchRequest,
                     setGigaamLivePreview = vm::setGigaamLivePreview,
                     setEditorFullPunctuation = vm::setEditorFullPunctuation,
+                    useDefaultModelsDirectory = vm::useDefaultModelsDirectory,
+                    setSpokenSymbolsEnabled = vm::setSpokenSymbolsEnabled,
+                    setSpokenSymbols = vm::setSpokenSymbols,
                     consumeRequestedSearch = { settingsSearchRequest = null },
                     appIcon = appIcon,
                     selectAppIcon = vm::setAppIcon,
@@ -839,6 +869,8 @@ private fun AssistantApp(
                 },
                 reducedUiEffects = reducedUiEffects,
                 isLoading = notesUi.isLoading,
+                trashRetentionDays = settings.noteTrashRetentionDays,
+                setTrashRetentionDays = vm::setNoteTrashRetentionDays,
                 openTrashSettings = { assistantSettingsRequest = AssistantSettingsTarget.TRASH; nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
