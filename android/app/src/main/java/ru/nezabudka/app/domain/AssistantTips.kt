@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 enum class AssistantSettingsTarget(val query: String, val path: String) {
+    SCREENS("экраны приложения", "Настройки → Интерфейс → Экраны приложения"),
     SPEECH("", "Настройки → Речь и команды → Распознавание речи"),
     WHISPER("потоки", "Настройки → Речь и команды → Whisper → Проверить оптимальное количество потоков"),
     GIGAAM("потоки", "Настройки → Речь и команды → GigaAM → Проверить оптимальное количество потоков"),

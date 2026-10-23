@@ -625,7 +625,8 @@ private fun AssistantApp(
             val notesDestination = launch.destination in setOf(WidgetDestination.NOTES, WidgetDestination.NOTE, WidgetDestination.NEW_NOTE)
             val route = if (notesDestination) "notes" else "reminders"
             if (launch.destination == WidgetDestination.SETTINGS || route !in visibleScreens) {
-                settingsSearchRequest = "Экраны приложения"
+                settingsSearchRequest = null
+                assistantSettingsRequest = AssistantSettingsTarget.SCREENS
                 nav.navigate("settings") { popUpTo(nav.graph.id); launchSingleTop = true }
                 return@LaunchedEffect
             }

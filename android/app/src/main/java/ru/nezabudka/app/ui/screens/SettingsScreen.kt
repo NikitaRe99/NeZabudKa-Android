@@ -359,9 +359,10 @@ internal fun SettingsScreen(
     LaunchedEffect(requestedTarget) {
         requestedTarget?.let { target ->
             searchQuery = ""
-            openedFromAssistant = true
+            openedFromAssistant = target != ru.nezabudka.app.domain.AssistantSettingsTarget.SCREENS
             openedFromNotes = target == ru.nezabudka.app.domain.AssistantSettingsTarget.TRASH
             targetSettingsKey = when (target) {
+                ru.nezabudka.app.domain.AssistantSettingsTarget.SCREENS -> "app-screens"
                 ru.nezabudka.app.domain.AssistantSettingsTarget.SPEECH -> "Распознавание речи"
                 ru.nezabudka.app.domain.AssistantSettingsTarget.CLOUD -> settings.sttEngine
                 ru.nezabudka.app.domain.AssistantSettingsTarget.WHISPER -> if (settings.sttEngine == "whisper") "Модель Whisper.cpp" else "Распознавание речи"
@@ -386,6 +387,7 @@ internal fun SettingsScreen(
                 ru.nezabudka.app.domain.AssistantSettingsTarget.ALARM -> SettingsCategory.REMINDERS
                 ru.nezabudka.app.domain.AssistantSettingsTarget.TRASH,
                 ru.nezabudka.app.domain.AssistantSettingsTarget.FOLDERS -> SettingsCategory.NOTES
+                ru.nezabudka.app.domain.AssistantSettingsTarget.SCREENS,
                 ru.nezabudka.app.domain.AssistantSettingsTarget.WELCOME -> SettingsCategory.APPEARANCE
                 else -> SettingsCategory.SPEECH
             }
@@ -620,6 +622,7 @@ internal fun SettingsScreen(
                         onCheckedChange = { setVisibleScreens(proposed) })
                 }
                 SettingsSupportingText("Оставьте хотя бы заметки или напоминания. Если выбран один экран, настройки доступны через его меню «…», а нижняя панель скрыта.")
+                SettingsSupportingText("Скрытие экранов не удаляет записи. Созданные напоминания продолжают срабатывать.")
             }
         }
         if (showSection("interface-behavior")) item(key = "interface-behavior", contentType = "settings-section") {
