@@ -45,8 +45,9 @@ class InterfaceReviewActivity : ComponentActivity() {
         setContent {
             LocalAssistantTheme(settings) {
                 Surface(Modifier.fillMaxSize(), color = AppTheme.tokens.colors.background) {
-                    if (intent.getStringExtra("scenario") == "reminder-editor") {
-                        val reminder = remember { LocalDateTime.now().let { Reminder(900002, "Проверка редактора", it.plusHours(1), null, "active", it) } }
+                    if (intent.getStringExtra("scenario") in listOf("reminder-editor", "completed-reminder-editor")) {
+                        val reminder = remember { LocalDateTime.now().let { Reminder(900002, "Проверка редактора", it.plusHours(1), null,
+                            if (intent.getStringExtra("scenario") == "completed-reminder-editor") "completed" else "active", it) } }
                         ReminderEditorScreen(reminder, back = { editorClosed = true },
                             save = { _, _, _, _, _, completed, done -> lastReminderCompleted = completed; done() },
                             delete = { _, done -> done() })

@@ -6,7 +6,7 @@ object GigaamCatalog {
     val downloads = listOf(
         WhisperDownload("gigaam-v3", "GigaAM v3 CTC INT8 (рекомендуется)", "Русская модель третьего поколения", "gigaam-v3-ctc-int8.onnx", "306 МиБ", "$BASE_URL/gigaam-v3-ctc-int8.onnx"),
         WhisperDownload("gigaam-v3-lite", "GigaAM v3 Lite INT8 (экспериментальная)",
-            "Меньше памяти; на S9 примерно на 10% быстрее. Точность может немного отличаться от обычной v3",
+            "Облегчённая модель. Точность может немного отличаться от обычной v3",
             "gigaam-v3-ctc-lite-int8.onnx", "225 МиБ",
             "https://github.com/NikitaRe99/NeZabudKa-Android/releases/download/models-v4/gigaam-v3-ctc-lite-int8.onnx"),
     )

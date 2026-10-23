@@ -59,18 +59,26 @@ class ReminderActions(
         } else {
             alignedDate
         }
+        val completingOccurrence = completed && original.status != "completed"
         val updated = reminders.saveEditor(
             original.id,
             text,
             effectiveRemindAt,
             normalizedRecurrence,
             favorite,
-            completed && !(normalizedRecurrence != null && effectiveRemindAt != null),
+            completed && !(completingOccurrence && normalizedRecurrence != null && effectiveRemindAt != null),
         )
         if (completed) {
+            // saveEditor already completed a one-off reminder. find() only searches
+            // active rows, so completing it a second time would report "not found".
+            if (updated.status == "completed") {
+                scheduler.cancel(updated.id)
+                return updated
+            }
             return setCompleted(updated.id, true)
+        } else if (original.status == "completed") {
+            return setCompleted(updated.id, false)
         } else if (
-            original.status == "completed" ||
             original.remindAt != updated.remindAt ||
             original.recurrence != updated.recurrence
         ) {

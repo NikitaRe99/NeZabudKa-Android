@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Repeat
@@ -67,6 +67,7 @@ internal fun ReminderEditorScreen(
     onTimedReminderSaved: () -> Unit = {},
 ) {
     val theme = AppTheme.tokens
+    val completed = reminder.status == "completed"
     var text by remember(reminder.id) { mutableStateOf(reminder.text) }
     var favorite by remember(reminder.id) { mutableStateOf(reminder.favorite) }
     var date by remember(reminder.id) { mutableStateOf(reminder.remindAt?.toLocalDate()) }
@@ -139,21 +140,19 @@ internal fun ReminderEditorScreen(
             Row(
                 Modifier.fillMaxWidth().navigationBarsPadding()
                     .padding(horizontal = ReminderEditorHorizontalPadding, vertical = 20.dp),
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (reminder.status != "completed") TextButton(
+                Button(
                     enabled = text.isNotBlank(),
                     onClick = { completeDialog = true },
                 ) {
-                    Icon(Icons.Default.CheckCircleOutline, null)
-                    Spacer(Modifier.width(6.dp))
+                    if (completed) {
+                        Icon(Icons.Default.Check, "Выполнено")
+                        Spacer(Modifier.width(8.dp))
+                    }
                     Text("Выполнено")
                 }
-                Spacer(Modifier.weight(1f))
-                Button(
-                    enabled = text.isNotBlank(),
-                    onClick = saveAndClose,
-                ) { Text("Сохранить") }
             }
         },
     ) { inner ->
@@ -284,14 +283,15 @@ internal fun ReminderEditorScreen(
     }
     if (completeDialog) AppAlertDialog(
         onDismissRequest = { completeDialog = false },
-        title = { Text("Отметить напоминание выполненным?") },
-        text = { Text(if (recurrence == null) "Напоминание перейдёт в выполненные."
+        title = { Text(if (completed) "Вернуть напоминание в активные?" else "Отметить напоминание выполненным?") },
+        text = { Text(if (completed) "Напоминание снова появится среди активных."
+            else if (recurrence == null) "Напоминание перейдёт в выполненные."
             else "Этот повтор будет выполнен. Следующий останется по расписанию.") },
         dismissButton = { TextButton(onClick = { completeDialog = false }) { Text("Отмена") } },
         confirmButton = { TextButton(enabled = text.isNotBlank(), onClick = {
             completeDialog = false
-            save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, true, back)
-        }) { Text("Отметить выполненным") } },
+            save(reminder, text, date?.atTime(time ?: LocalTime.of(9, 0)), recurrence, favorite, !completed, back)
+        }) { Text(if (completed) "Вернуть в активные" else "Отметить выполненным") } },
     )
     if (deleteDialog) AppAlertDialog(
         onDismissRequest = { deleteDialog = false },
